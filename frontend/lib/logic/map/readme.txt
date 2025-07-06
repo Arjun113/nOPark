@@ -1,0 +1,1 @@
+Map handling (connection to map server, handling objects, etc) goes here

@@ -1,0 +1,1 @@
+Allows riders and passengers to rate each other.

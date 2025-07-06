@@ -1,0 +1,1 @@
+This directory holds all the constants (theming, API keys, etc) that we have to work with
