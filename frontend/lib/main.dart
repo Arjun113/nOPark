@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:dynamic_color/dynamic_color.dart';
+import 'package:nopark/logic/utilities/themeBuilder.dart';
 
 void main() {
   runApp(const MainApp());
@@ -7,14 +9,28 @@ void main() {
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
+  static final Color fallbackSeed = Colors.blueAccent;
+
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
-      ),
+    return DynamicColorBuilder(
+      builder: (dynamicLightTheme, dynamicDarkTheme) {
+        final dynamicLightScheme = dynamicLightTheme ??
+            ColorScheme.fromSeed(seedColor: fallbackSeed);
+        final dynamicDarkScheme = dynamicDarkTheme ??
+            ColorScheme.fromSeed(
+              seedColor: fallbackSeed,
+              brightness: Brightness.dark,
+            );
+
+        return MaterialApp(
+          title: 'nOPark',
+          debugShowCheckedModeBanner: false,
+          theme: createTheme(dynamicLightScheme),
+          darkTheme: createTheme(dynamicDarkScheme),
+          themeMode: ThemeMode.system,
+        );
+      },
     );
   }
 }

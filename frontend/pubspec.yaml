@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  google_fonts: ^6.1.0
+  dynamic_color: ^1.6.6
 
 dev_dependencies:
   flutter_test:
