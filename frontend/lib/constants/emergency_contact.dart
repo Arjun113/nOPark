@@ -1,0 +1,1 @@
+final String victoriaEmergencyContact = '000';
