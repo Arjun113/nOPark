@@ -1,0 +1,1 @@
+enum LicenseType { p1, p2, l, full }
