@@ -12,6 +12,8 @@ dependencies:
   google_fonts: ^6.1.0
   dynamic_color: ^1.6.6
   geolocator: ^14.0.2
+  equatable: ^2.0.7
+  dartz: ^0.10.1
 
 dev_dependencies:
   flutter_test:
