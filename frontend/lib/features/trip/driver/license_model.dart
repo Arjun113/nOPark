@@ -39,4 +39,18 @@ class License {
       'licenseNumber': this.licenseNumber
     };
   }
+
+  int getMaxPassengerCarriage () {
+    if (licenseType == LicenseType.l) {
+      return 0;
+    }
+    else if (licenseType == LicenseType.p1 || licenseType == LicenseType.p2) {
+      return 1;
+    }
+    else {
+      return -1; // No limit on peer passenger carriage
+    }
+  }
+
+
 }
