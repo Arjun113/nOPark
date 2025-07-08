@@ -35,4 +35,16 @@ class User {
     final List<String> splitDate = strDate.split('/');
     return DateTime(int.parse(splitDate[2]), int.parse(splitDate[1]), int.parse(splitDate[0]));
   }
+
+  Map <String, dynamic> toJson () {
+    return {
+      'firstName': this.firstName,
+      'middleName': this.middleName,
+      'lastName': this.lastName,
+      'imageUrl': this.imageUrl,
+      'dateOfBirth': this.dateOfBirth.toString(),
+      'phoneNumber': this.phoneNumber,
+      'monashEmail': this.monashEmail
+    };
+  }
 }
