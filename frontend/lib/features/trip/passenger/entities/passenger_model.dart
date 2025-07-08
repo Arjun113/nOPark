@@ -28,6 +28,7 @@ class Passenger extends User {
     );
   }
 
+  @override
   Map<String, dynamic> toJson () {
     return {
       'firstName': this.firstName,
