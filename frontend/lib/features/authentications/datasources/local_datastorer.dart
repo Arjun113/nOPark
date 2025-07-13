@@ -8,7 +8,7 @@ abstract class SharedPreferences {
 }
 
 class SharedPreferencesImplement {
-  final keystore = FlutterSecureStorage(aOptions: AndroidOptions(encryptedSharedPreferences: true))
+  final keystore = FlutterSecureStorage(aOptions: AndroidOptions(encryptedSharedPreferences: true));
   final String emailKeyname = 'email';
   final String passwordKeyname = 'password';
   final String lastAccessDateKeyName = 'lastAccessDate';
