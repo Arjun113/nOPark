@@ -13,15 +13,15 @@ class License {
   });
 
   Set<LicenseCondition> getConditions() {
-    return this.licenseConditions;
+    return licenseConditions;
   }
 
   bool checkIfConditionPresent (LicenseCondition condition) {
-    return this.licenseConditions.contains(condition);
+    return licenseConditions.contains(condition);
   }
 
   void addCondition (LicenseCondition condition) {
-    this.licenseConditions.add(condition);
+    licenseConditions.add(condition);
   }
 
   factory License.fromJson (Map<String, dynamic> json) {
@@ -34,9 +34,9 @@ class License {
 
   Map <String, dynamic> toJson () {
     return {
-      'licenseType': this.licenseType,
-      'licenseConditions': this.licenseConditions.toString(),
-      'licenseNumber': this.licenseNumber
+      'licenseType': licenseType,
+      'licenseConditions': licenseConditions.toString(),
+      'licenseNumber': licenseNumber
     };
   }
 

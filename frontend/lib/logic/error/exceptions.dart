@@ -1,7 +1,6 @@
 // Implementing basic exception categories
 
 // An exception for situations where issues lies with the server
-import 'dart:io';
 
 class ServerException implements Exception {
   final String message;

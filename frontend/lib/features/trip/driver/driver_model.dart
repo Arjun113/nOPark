@@ -35,15 +35,15 @@ class Driver extends User {
   @override
   Map<String, dynamic> toJson () {
     return {
-      'firstName': this.firstName,
-      'middleName': this.middleName,
-      'lastName': this.lastName,
-      'imageUrl': this.imageUrl,
-      'dateOfBirth': this.dateOfBirth.toString(),
-      'phoneNumber': this.phoneNumber,
-      'monashEmail': this.monashEmail,
-      'rating': this.rating,
-      'licenseType': this.licenseType
+      'firstName': firstName,
+      'middleName': middleName,
+      'lastName': lastName,
+      'imageUrl': imageUrl,
+      'dateOfBirth': dateOfBirth.toString(),
+      'phoneNumber': phoneNumber,
+      'monashEmail': monashEmail,
+      'rating': rating,
+      'licenseType': licenseType
     };
   }
 

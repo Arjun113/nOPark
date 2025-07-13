@@ -38,13 +38,13 @@ class User {
 
   Map <String, dynamic> toJson () {
     return {
-      'firstName': this.firstName,
-      'middleName': this.middleName,
-      'lastName': this.lastName,
-      'imageUrl': this.imageUrl,
-      'dateOfBirth': this.dateOfBirth.toString(),
-      'phoneNumber': this.phoneNumber,
-      'monashEmail': this.monashEmail
+      'firstName': firstName,
+      'middleName': middleName,
+      'lastName': lastName,
+      'imageUrl': imageUrl,
+      'dateOfBirth': dateOfBirth.toString(),
+      'phoneNumber': phoneNumber,
+      'monashEmail': monashEmail
     };
   }
 }

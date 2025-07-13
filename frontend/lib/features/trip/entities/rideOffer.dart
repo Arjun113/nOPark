@@ -1,7 +1,6 @@
 import 'package:nopark/features/trip/passenger/entities/passenger_model.dart';
 import '../driver/driver_model.dart';
 
-import 'user.dart';
 import 'location.dart';
 
 class RideOffer {

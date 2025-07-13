@@ -17,6 +17,6 @@ class RideRequest {
   });
 
   void addNewAcceptedOffer (RideOffer offer) {
-    this.rideOffers.add(offer);
+    rideOffers.add(offer);
   }
 }
