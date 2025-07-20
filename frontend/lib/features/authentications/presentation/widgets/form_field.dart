@@ -31,7 +31,9 @@ class FormFieldState extends State<FormField> {
             borderRadius: BorderRadius.circular(50),
             color: Theme.of(context).primaryColor
           ),
-          child: TextField(),
+          child: TextField(
+            controller: widget.controller,
+          ),
         )
       ],
     );

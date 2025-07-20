@@ -32,6 +32,7 @@ class ObfuscatedFormFieldState extends State<ObfuscatedFormField>{
           ),
           child: TextField(
             obscureText: true,
+            controller: widget.controller,
           ),
         )
       ],
