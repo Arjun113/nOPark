@@ -5,6 +5,7 @@ import '../../emergency_call.dart';
 import '../../../../constants/emergency_contact.dart';
 
 class EmergencyButton extends StatelessWidget {
+  const EmergencyButton({super.key});
 
   @override
   Widget build(BuildContext context) {
