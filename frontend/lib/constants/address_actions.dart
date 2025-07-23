@@ -1,0 +1,2 @@
+enum AddressActions { addNew, updateExisting }
+
