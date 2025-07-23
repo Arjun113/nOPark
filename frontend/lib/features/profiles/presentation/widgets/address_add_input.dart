@@ -75,3 +75,23 @@ InputDecoration _inputDecoration(String hint) {
     ),
   );
 }
+
+
+class AddressAddInput extends StatelessWidget {
+  const AddressAddInput({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () async {
+        final result = await showAddressPopup(context);
+        if (result != null) { // Print is only for debugging
+          print("Name: ${result.addressNameController.text}");
+          print("Line 1: ${result.addressLine1Controller.text}");
+          print("Line 2: ${result.addressLine2Controller.text}");
+        }
+      },
+      child: const Text("Add", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),),
+    );
+  }
+}
