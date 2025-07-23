@@ -16,6 +16,7 @@ class AddressCardData {
 }) : addressNameController = TextEditingController(text: name),
      addressLine1Controller = TextEditingController(text: line1),
      addressLine2Controller = TextEditingController(text: line2);
+  
 }
 
 
