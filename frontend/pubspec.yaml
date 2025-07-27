@@ -20,6 +20,8 @@ dependencies:
   shared_preferences: ^2.5.3
   flutter_secure_storage:
   responsive_sizer: ^3.3.1
+  smooth_page_indicator:
+  intl: 
 
 dev_dependencies:
   flutter_test:
