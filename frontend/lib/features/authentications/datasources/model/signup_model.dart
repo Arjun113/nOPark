@@ -3,7 +3,7 @@ import 'dart:io';
 import '../../domain/entities/signup_payload.dart';
 
 class SignupModel extends SignupPayload {
-  SignupModel({
+  const SignupModel({
     required super.name,
     required super.age,
     required super.monashEmail,
@@ -27,32 +27,32 @@ class SignupModel extends SignupPayload {
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
-      'name': this.name,
-      'age': this.age.toString(),
-      'password': this.password,
-      'monashEmail': this.monashEmail,
-      'profilePicturePath': this.profilePicture?.path,
+      'name': name,
+      'age': age.toString(),
+      'password': password,
+      'monashEmail': monashEmail,
+      'profilePicturePath': profilePicture?.path,
     };
   }
 }
 
 class VerifyOtpModel {
-  final int Otp;
+  final int otp;
   final bool signedUp;
 
-  const VerifyOtpModel({required this.Otp, required this.signedUp});
+  const VerifyOtpModel({required this.otp, required this.signedUp});
 
   factory VerifyOtpModel.fromJson(Map<String, dynamic> json) {
     return VerifyOtpModel(
-      Otp: int.parse(json['otp']),
+      otp: int.parse(json['otp']),
       signedUp: bool.parse(json['signedUp']),
     );
   }
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
-      'otp': this.Otp.toString(),
-      'signedUp': this.signedUp.toString(),
+      'otp': otp.toString(),
+      'signedUp': signedUp.toString(),
     };
   }
 }

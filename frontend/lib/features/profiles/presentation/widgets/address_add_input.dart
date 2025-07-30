@@ -1,6 +1,7 @@
 // Purpose: Get the new address in
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_scroller.dart';
 
 Future<AddressCardData?> showAddressPopup(BuildContext context) async {
@@ -91,9 +92,11 @@ class AddressAddInput extends StatelessWidget {
         final result = await showAddressPopup(context);
         if (result != null) {
           // Print is only for debugging
-          print("Name: ${result.addressNameController.text}");
-          print("Line 1: ${result.addressLine1Controller.text}");
-          print("Line 2: ${result.addressLine2Controller.text}");
+          if (kDebugMode) {
+            print("Name: ${result.addressNameController.text}");
+            print("Line 1: ${result.addressLine1Controller.text}");
+            print("Line 2: ${result.addressLine2Controller.text}");
+          }
         }
       },
       child: const Text(

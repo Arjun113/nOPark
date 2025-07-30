@@ -7,5 +7,5 @@ class LoginPayload extends Equatable {
   const LoginPayload({required this.email, required this.password});
 
   @override
-  List<Object?> get props => <Object>[this.email];
+  List<Object?> get props => <Object>[email];
 }
