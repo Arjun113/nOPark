@@ -10,13 +10,13 @@ class DriverOnTheWay extends StatelessWidget {
   final String carColour;
 
   const DriverOnTheWay({
-   super.key,
-   required this.driverName,
-   required this.carImageURL,
-   required this.carMakeModel,
-   required this.carColour,
-   required this.carRegistration
-});
+    super.key,
+    required this.driverName,
+    required this.carImageURL,
+    required this.carMakeModel,
+    required this.carColour,
+    required this.carRegistration,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,20 +24,30 @@ class DriverOnTheWay extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Text("Your driver is on the way", style: Theme.of(context).textTheme.headlineMedium,),
+          Text(
+            "Your driver is on the way",
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          Center(child: Image(image: NetworkImage(carImageURL))),
           Center(
-            child: Image(image: NetworkImage(carImageURL)),
+            child: Text(
+              this.carMakeModel,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
           ),
           Center(
-            child: Text(this.carMakeModel, style: Theme.of(context).textTheme.headlineSmall,),
+            child: Text(
+              this.carColour,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
           ),
+          const SizedBox(height: 15),
           Center(
-            child: Text(this.carColour, style: Theme.of(context).textTheme.headlineSmall,)
+            child: Text(
+              this.carRegistration,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
           ),
-          const SizedBox(height: 15,),
-          Center(
-            child: Text(this.carRegistration, style: Theme.of(context).textTheme.titleMedium,),
-          )
         ],
       ),
     );

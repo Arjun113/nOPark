@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'dart:io';
-import '../../../../constants/userRoles.dart';
+import '../../../../constants/user_roles.dart';
 
 class SignupPayload extends Equatable {
   final String name;
@@ -11,16 +11,23 @@ class SignupPayload extends Equatable {
   final Role role;
   final String password;
 
-  SignupPayload ({
+  const SignupPayload({
     required this.name,
     required this.monashEmail,
     required this.password,
     required this.phoneNumber,
     required this.age,
     required this.role,
-    this.profilePicture
+    this.profilePicture,
   });
 
   @override
-  List<Object?> get props => <Object>[this.name, this.monashEmail, this.phoneNumber, this,age, this.role];
+  List<Object?> get props => <Object>[
+    name,
+    monashEmail,
+    phoneNumber,
+    this,
+    age,
+    role,
+  ];
 }

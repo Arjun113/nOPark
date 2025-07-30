@@ -5,7 +5,7 @@ class Driver extends User {
   final double rating;
   final LicenseType licenseType;
 
-  Driver ({
+  Driver({
     required this.rating,
     required this.licenseType,
     required super.firstName,
@@ -14,26 +14,26 @@ class Driver extends User {
     required super.phoneNumber,
     required super.dateOfBirth,
     required super.monashEmail,
-    required super.imageUrl
-});
+    required super.imageUrl,
+  });
 
-  factory Driver.fromJson (Map<String, dynamic> json) {
+  factory Driver.fromJson(Map<String, dynamic> json) {
     final baseUser = User.fromJson(json);
     return Driver(
-        firstName: baseUser.firstName,
-        lastName: baseUser.lastName,
-        middleName: baseUser.middleName,
-        monashEmail: baseUser.monashEmail,
-        phoneNumber: baseUser.phoneNumber,
-        imageUrl: baseUser.imageUrl,
-        dateOfBirth: baseUser.dateOfBirth,
-        licenseType: json['licenseType'],
-        rating: json['rating']
+      firstName: baseUser.firstName,
+      lastName: baseUser.lastName,
+      middleName: baseUser.middleName,
+      monashEmail: baseUser.monashEmail,
+      phoneNumber: baseUser.phoneNumber,
+      imageUrl: baseUser.imageUrl,
+      dateOfBirth: baseUser.dateOfBirth,
+      licenseType: json['licenseType'],
+      rating: json['rating'],
     );
   }
 
   @override
-  Map<String, dynamic> toJson () {
+  Map<String, dynamic> toJson() {
     return {
       'firstName': firstName,
       'middleName': middleName,
@@ -43,8 +43,7 @@ class Driver extends User {
       'phoneNumber': phoneNumber,
       'monashEmail': monashEmail,
       'rating': rating,
-      'licenseType': licenseType
+      'licenseType': licenseType,
     };
   }
-
 }

@@ -10,13 +10,14 @@ class EmergencyButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-        onPressed: EmergencyCaller.callEmergencyServices,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.redAccent,
-            borderRadius: BorderRadius.circular(30)
-          ),
-          child: Text("Call $victoriaEmergencyContact"),
-        ));
+      onPressed: EmergencyCaller.callEmergencyServices,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.redAccent,
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Text("Call $victoriaEmergencyContact"),
+      ),
+    );
   }
 }

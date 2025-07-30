@@ -14,8 +14,7 @@ class RideOffer {
   final String status;
   final bool accepted;
 
-
-  RideOffer ({
+  RideOffer({
     required this.accepted,
     required this.originAddress,
     required this.destinationAddress,
@@ -24,6 +23,6 @@ class RideOffer {
     required this.price,
     required this.recommendedBid,
     required this.rideOfferId,
-    required this.status
+    required this.status,
   });
 }

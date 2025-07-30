@@ -14,7 +14,7 @@ class WhereToNextWidget extends StatefulWidget {
     required this.userName,
     required this.profileURL,
     required this.addresses,
-    required this.onAddressSelected
+    required this.onAddressSelected,
   });
 
   @override
@@ -25,7 +25,12 @@ class _WhereToNextWidgetState extends State<WhereToNextWidget> {
   bool isExpanded = false;
   bool isInputMode = false;
   final TextEditingController _controller = TextEditingController();
-  final List<String> defaultSuggestions = ['Clayton', 'Caulfield', 'Peninsula', 'Law Chambers'];
+  final List<String> defaultSuggestions = [
+    'Clayton',
+    'Caulfield',
+    'Peninsula',
+    'Law Chambers',
+  ];
 
   void toggleExpansion() {
     setState(() {
@@ -101,7 +106,9 @@ class _WhereToNextWidgetState extends State<WhereToNextWidget> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               CircleAvatar(
-                backgroundImage: NetworkImage(widget.profileURL), // update as needed
+                backgroundImage: NetworkImage(
+                  widget.profileURL,
+                ), // update as needed
               ),
             ],
           ),
@@ -115,7 +122,9 @@ class _WhereToNextWidgetState extends State<WhereToNextWidget> {
               decoration: const InputDecoration(
                 hintText: 'Enter destination',
                 prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
               ),
               onSubmitted: widget.onAddressSelected,
             ),
@@ -126,9 +135,8 @@ class _WhereToNextWidgetState extends State<WhereToNextWidget> {
           AnimatedCrossFade(
             firstChild: buildSuggestions(),
             secondChild: buildAutocompletePlaceholder(),
-            crossFadeState: isTyping
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
+            crossFadeState:
+                isTyping ? CrossFadeState.showSecond : CrossFadeState.showFirst,
             duration: const Duration(milliseconds: 300),
           ),
         ],
@@ -138,28 +146,32 @@ class _WhereToNextWidgetState extends State<WhereToNextWidget> {
 
   Widget buildSuggestions() {
     return Column(
-      children: defaultSuggestions
-          .map(
-            (s) => GestureDetector(
-          onTap: () => onSelectAddress(s),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(s, style: const TextStyle(fontSize: 16)),
-                const Icon(Icons.arrow_forward_ios, size: 16),
-              ],
-            ),
-          ),
-        ),
-      )
-          .toList(),
+      children:
+          defaultSuggestions
+              .map(
+                (s) => GestureDetector(
+                  onTap: () => onSelectAddress(s),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(s, style: const TextStyle(fontSize: 16)),
+                        const Icon(Icons.arrow_forward_ios, size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
     );
   }
 
@@ -178,7 +190,10 @@ class _WhereToNextWidgetState extends State<WhereToNextWidget> {
             children: [
               const Icon(Icons.place_outlined),
               const SizedBox(width: 10),
-              Text("Autocomplete result ${index + 1}", style: const TextStyle(fontSize: 16)),
+              Text(
+                "Autocomplete result ${index + 1}",
+                style: const TextStyle(fontSize: 16),
+              ),
             ],
           ),
         );

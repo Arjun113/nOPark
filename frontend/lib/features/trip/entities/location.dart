@@ -4,14 +4,11 @@ class Location {
 
   Location({required this.lat, required this.long});
 
-  factory Location.fromJson (dynamic json) {
+  factory Location.fromJson(dynamic json) {
     return Location(lat: json['lat'] as double, long: json['long'] as double);
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'lat': lat,
-      'long': long
-    };
+    return {'lat': lat, 'long': long};
   }
 }

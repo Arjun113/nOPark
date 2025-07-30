@@ -8,7 +8,6 @@ class ServerException implements Exception {
   ServerException(this.message);
 }
 
-
 // An exception to handle cache problems
 class CacheException implements Exception {
   final String message;

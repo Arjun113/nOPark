@@ -2,11 +2,15 @@
 
 import 'package:flutter/material.dart';
 
-class DatePickerField extends StatefulWidget{
+class DatePickerField extends StatefulWidget {
   final String datePurpose;
   final TextEditingController controller;
 
-  const DatePickerField({super.key, required this.datePurpose, required this.controller});
+  const DatePickerField({
+    super.key,
+    required this.datePurpose,
+    required this.controller,
+  });
 
   @override
   State<StatefulWidget> createState() {
@@ -15,15 +19,12 @@ class DatePickerField extends StatefulWidget{
 }
 
 class DatePickerFieldState extends State<DatePickerField> {
-
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.datePurpose
-        ),
+        Text(widget.datePurpose),
         SizedBox(height: 5),
         TextField(
           controller: widget.controller,
@@ -32,7 +33,11 @@ class DatePickerFieldState extends State<DatePickerField> {
           ),
           readOnly: true,
           onTap: () async {
-            DateTime? selectedDate = await showDatePicker(context: context, firstDate: DateTime(1900), lastDate: DateTime.now().subtract(Duration(days: 365*17)));
+            DateTime? selectedDate = await showDatePicker(
+              context: context,
+              firstDate: DateTime(1900),
+              lastDate: DateTime.now().subtract(Duration(days: 365 * 17)),
+            );
 
             if (selectedDate != null) {
               String formattedDate = selectedDate.toString();
@@ -41,7 +46,7 @@ class DatePickerFieldState extends State<DatePickerField> {
               });
             }
           },
-        )
+        ),
       ],
     );
   }

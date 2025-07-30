@@ -11,10 +11,10 @@ class Passenger extends User {
     required super.lastName,
     required super.monashEmail,
     required super.imageUrl,
-    required super.phoneNumber
-});
+    required super.phoneNumber,
+  });
 
-  factory Passenger.fromJson (Map<String, dynamic> json) {
+  factory Passenger.fromJson(Map<String, dynamic> json) {
     final baseUser = User.fromJson(json);
     return Passenger(
       firstName: baseUser.firstName,
@@ -24,12 +24,12 @@ class Passenger extends User {
       phoneNumber: baseUser.phoneNumber,
       imageUrl: baseUser.imageUrl,
       dateOfBirth: baseUser.dateOfBirth,
-      rating: json['rating']
+      rating: json['rating'],
     );
   }
 
   @override
-  Map<String, dynamic> toJson () {
+  Map<String, dynamic> toJson() {
     return {
       'firstName': firstName,
       'middleName': middleName,
@@ -38,8 +38,7 @@ class Passenger extends User {
       'dateOfBirth': dateOfBirth.toString(),
       'phoneNumber': phoneNumber,
       'monashEmail': monashEmail,
-      'rating': rating
+      'rating': rating,
     };
   }
 }
-

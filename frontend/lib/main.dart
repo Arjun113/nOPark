@@ -15,9 +15,10 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return DynamicColorBuilder(
       builder: (dynamicLightTheme, dynamicDarkTheme) {
-        final dynamicLightScheme = dynamicLightTheme ??
-            ColorScheme.fromSeed(seedColor: fallbackSeed);
-        final dynamicDarkScheme = dynamicDarkTheme ??
+        final dynamicLightScheme =
+            dynamicLightTheme ?? ColorScheme.fromSeed(seedColor: fallbackSeed);
+        final dynamicDarkScheme =
+            dynamicDarkTheme ??
             ColorScheme.fromSeed(
               seedColor: fallbackSeed,
               brightness: Brightness.dark,

@@ -6,13 +6,12 @@ class Car {
   final String carSeatingCapacity;
   final String carImage;
 
-  Car ({
+  Car({
     required this.carLicensePlate,
     required this.carMake,
     required this.carModel,
     required this.carImage,
     required this.carColour,
-    required this.carSeatingCapacity
+    required this.carSeatingCapacity,
   });
-
 }

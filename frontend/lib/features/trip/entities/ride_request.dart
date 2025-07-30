@@ -13,10 +13,10 @@ class RideRequest {
     required this.driver,
     required this.currentLocation,
     required this.rideOffers,
-    required this.car
+    required this.car,
   });
 
-  void addNewAcceptedOffer (RideOffer offer) {
+  void addNewAcceptedOffer(RideOffer offer) {
     rideOffers.add(offer);
   }
 }

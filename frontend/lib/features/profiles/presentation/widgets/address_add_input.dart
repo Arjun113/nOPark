@@ -18,7 +18,10 @@ Future<AddressCardData?> showAddressPopup(BuildContext context) async {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("New Address", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(
+                "New Address",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 16),
               TextField(
                 controller: nameController,
@@ -53,9 +56,12 @@ Future<AddressCardData?> showAddressPopup(BuildContext context) async {
                     borderRadius: BorderRadius.circular(30),
                   ),
                   alignment: Alignment.center,
-                  child: const Text("Add", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  child: const Text(
+                    "Add",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -63,7 +69,6 @@ Future<AddressCardData?> showAddressPopup(BuildContext context) async {
     },
   );
 }
-
 
 InputDecoration _inputDecoration(String hint) {
   return InputDecoration(
@@ -76,7 +81,6 @@ InputDecoration _inputDecoration(String hint) {
   );
 }
 
-
 class AddressAddInput extends StatelessWidget {
   const AddressAddInput({super.key});
 
@@ -85,13 +89,17 @@ class AddressAddInput extends StatelessWidget {
     return ElevatedButton(
       onPressed: () async {
         final result = await showAddressPopup(context);
-        if (result != null) { // Print is only for debugging
+        if (result != null) {
+          // Print is only for debugging
           print("Name: ${result.addressNameController.text}");
           print("Line 1: ${result.addressLine1Controller.text}");
           print("Line 2: ${result.addressLine2Controller.text}");
         }
       },
-      child: const Text("Add", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),),
+      child: const Text(
+        "Add",
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+      ),
     );
   }
 }

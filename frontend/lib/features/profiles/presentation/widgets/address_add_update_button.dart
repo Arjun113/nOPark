@@ -43,7 +43,6 @@ class OptionButton extends StatelessWidget {
   }
 }
 
-
 void showCarActionDialog(BuildContext context) {
   showDialog(
     context: context,
@@ -51,9 +50,7 @@ void showCarActionDialog(BuildContext context) {
     builder: (context) {
       return AlertDialog(
         backgroundColor: Colors.grey.shade200,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -86,7 +83,7 @@ void showCarActionDialog(BuildContext context) {
                   },
                 ),
               ],
-            )
+            ),
           ],
         ),
       );

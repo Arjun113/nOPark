@@ -13,8 +13,8 @@ class RoleButton extends StatefulWidget {
     required this.role,
     required this.icon,
     required this.description,
-    required this.color
-});
+    required this.color,
+  });
 
   @override
   State<StatefulWidget> createState() {
@@ -22,17 +22,15 @@ class RoleButton extends StatefulWidget {
   }
 }
 
-
 class RoleButtonState extends State<RoleButton> {
   bool selected = false;
   Color fillCol = Colors.grey.shade400;
 
-  void selectionChange () {
+  void selectionChange() {
     if (selected == true) {
       selected == false;
       fillCol = Colors.grey.shade400;
-    }
-    else {
+    } else {
       selected == true;
       fillCol = Colors.grey.shade600;
     }
@@ -41,8 +39,8 @@ class RoleButtonState extends State<RoleButton> {
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-        onPressed: selectionChange,
-        child: Container(
+      onPressed: selectionChange,
+      child: Container(
         decoration: BoxDecoration(
           border: Border.all(width: 5, color: widget.color),
           color: fillCol,
@@ -52,27 +50,19 @@ class RoleButtonState extends State<RoleButton> {
           children: [
             Row(
               children: [
-                Text(widget.role,
-                style: TextStyle(
-                  fontSize: 50
-                ),),
-                SizedBox(height: 10,),
-                widget.icon
+                Text(widget.role, style: TextStyle(fontSize: 50)),
+                SizedBox(height: 10),
+                widget.icon,
               ],
             ),
             Row(
               children: [
-                Text(
-                  widget.description,
-                  style: TextStyle(
-                    fontSize: 25
-                  ),
-                )
+                Text(widget.description, style: TextStyle(fontSize: 25)),
               ],
-            )
+            ),
           ],
         ),
-      )
+      ),
     );
   }
 }

@@ -72,26 +72,44 @@ class TripCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Column(children: [
-                  Text(trip.fromCode, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 28)),
-                  Text(trip.from, style: const TextStyle(fontSize: 18)),
-                ]),
+                Column(
+                  children: [
+                    Text(
+                      trip.fromCode,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 28,
+                      ),
+                    ),
+                    Text(trip.from, style: const TextStyle(fontSize: 18)),
+                  ],
+                ),
                 const SizedBox(width: 16),
                 const Icon(Icons.arrow_downward),
                 const SizedBox(width: 16),
-                Column(children: [
-                  Text(trip.toCode, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 28)),
-                  Text(trip.to, style: const TextStyle(fontSize: 18)),
-                ]),
+                Column(
+                  children: [
+                    Text(
+                      trip.toCode,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 28,
+                      ),
+                    ),
+                    Text(trip.to, style: const TextStyle(fontSize: 18)),
+                  ],
+                ),
               ],
             ),
 
             const SizedBox(height: 12),
 
             // Trip Date and Time
-            Text(DateFormat('d MMMM yyyy\nhh:mm a zzz').format(trip.startTime),
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16)),
+            Text(
+              DateFormat('d MMMM yyyy\nhh:mm a zzz').format(trip.startTime),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
+            ),
 
             const SizedBox(height: 16),
 
@@ -105,7 +123,10 @@ class TripCard extends StatelessWidget {
                 ),
                 child: SingleChildScrollView(
                   child: Column(
-                    children: trip.stops.map((stop) => StopWidget(stop: stop)).toList(),
+                    children:
+                        trip.stops
+                            .map((stop) => StopWidget(stop: stop))
+                            .toList(),
                   ),
                 ),
               ),
@@ -126,12 +147,20 @@ class StopWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(stop.label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-        Text(DateFormat('hh:mm a zzz').format(stop.time), style: const TextStyle(fontSize: 14)),
+        Text(
+          stop.label,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+        Text(
+          DateFormat('hh:mm a zzz').format(stop.time),
+          style: const TextStyle(fontSize: 14),
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Text('${stop.distanceKm}km, ${stop.duration.inMinutes}min',
-              style: const TextStyle(fontSize: 14)),
+          child: Text(
+            '${stop.distanceKm}km, ${stop.duration.inMinutes}min',
+            style: const TextStyle(fontSize: 14),
+          ),
         ),
         const Icon(Icons.arrow_downward),
       ],

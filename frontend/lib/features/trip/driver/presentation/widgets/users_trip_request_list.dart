@@ -20,7 +20,7 @@ class AddressCardList extends StatefulWidget {
     required this.costs,
     required this.detours,
     required this.users,
-    required this.ratings
+    required this.ratings,
   });
 
   @override

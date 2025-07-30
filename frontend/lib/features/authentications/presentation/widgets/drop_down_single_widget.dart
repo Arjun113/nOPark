@@ -7,14 +7,18 @@ class DropDownSingleSelect extends StatefulWidget {
   final TextEditingController controller;
   final String purpose;
 
-  const DropDownSingleSelect({super.key, required this.options, required this.controller, required this.purpose});
+  const DropDownSingleSelect({
+    super.key,
+    required this.options,
+    required this.controller,
+    required this.purpose,
+  });
 
   @override
   State<StatefulWidget> createState() {
     return DropDownSingleSelectState();
   }
 }
-
 
 class DropDownSingleSelectState extends State<DropDownSingleSelect> {
   String? selectedItem;
@@ -26,16 +30,23 @@ class DropDownSingleSelectState extends State<DropDownSingleSelect> {
       children: [
         Text(widget.purpose),
         SizedBox(height: 10),
-        DropdownButton(items: widget.options.map<DropdownMenuItem<String>>((String value) {
-          return DropdownMenuItem<String>(child: Text(value), value: value);
-        }).toList(), onChanged: (_) => onUpdate(),
-        hint: Text(widget.purpose),
-        value: selectedItem)
+        DropdownButton(
+          items:
+              widget.options.map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  child: Text(value),
+                  value: value,
+                );
+              }).toList(),
+          onChanged: (_) => onUpdate(),
+          hint: Text(widget.purpose),
+          value: selectedItem,
+        ),
       ],
     );
   }
 
-  void onUpdate () {
+  void onUpdate() {
     widget.controller.text = selectedItem!;
   }
 }

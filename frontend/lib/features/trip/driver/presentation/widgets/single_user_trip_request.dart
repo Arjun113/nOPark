@@ -48,7 +48,10 @@ class AddressCard extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
                 ),
                 Row(
                   children: [
@@ -63,17 +66,29 @@ class AddressCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text(address.addressLine1Controller.text, style: const TextStyle(fontSize: 14)),
+            Text(
+              address.addressLine1Controller.text,
+              style: const TextStyle(fontSize: 14),
+            ),
             const SizedBox(height: 4),
-            Text(address.addressLine2Controller.text, style: const TextStyle(fontSize: 14)),
-            Text(detourInfo.toString(), style: TextStyle(fontSize: 12, color: Colors.black)),
+            Text(
+              address.addressLine2Controller.text,
+              style: const TextStyle(fontSize: 14),
+            ),
+            Text(
+              detourInfo.toString(),
+              style: TextStyle(fontSize: 12, color: Colors.black),
+            ),
             const SizedBox(height: 8),
             Center(
               child: Text(
                 cost.toString(),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
-            )
+            ),
           ],
         ),
       ),

@@ -1,0 +1,1 @@
+enum LicenseCondition { A, I, S, V, X, Z }
