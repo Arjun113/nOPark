@@ -19,7 +19,7 @@ type api struct {
 	logger     *zap.Logger
 	httpClient *http.Client
 
-	// usersRepo         domain.UsersRepository
+	// accountsRepo         domain.accountsRepository
 	// mapsRepo          domain.MapsRepository
 	// ridesRepo		domain.RidesRepository
 	
@@ -27,7 +27,7 @@ type api struct {
 
 func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 
-	// usersRepo := repository.NewPostgresUsers(pool)
+	// accountsRepo := repository.NewPostgresaccounts(pool)
 	// mapsRepo := repository.NewPostgresMaps(pool)
 	// ridesRepo := repository.NewPostgresRides(pool)
 
@@ -37,7 +37,7 @@ func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 		logger:     logger,
 		httpClient: client,
 
-		// usersRepo: usersRepo,
+		// accountsRepo: accountsRepo,
 		// mapsRepo:  mapsRepo,
 		// ridesRepo: ridesRepo,
 	}
@@ -55,11 +55,11 @@ func (a *api) Routes() *mux.Router {
 
 	// r.HandleFunc("/v1/health", a.healthCheckHandler).Methods("GET")
 
-	// r.HandleFunc("/v1/users", a.listUsersHandler).Methods("GET")
-	// r.HandleFunc("/v1/users", a.createUserHandler).Methods("POST")
-	// r.HandleFunc("/v1/users/{userID}", a.getUserHandler).Methods("GET")
-	// r.HandleFunc("/v1/users/{userID}", a.updateUserHandler).Methods("PUT")
-	// r.HandleFunc("/v1/users/{userID}", a.deleteUserHandler).Methods("DELETE")
+	// r.HandleFunc("/v1/accounts", a.listaccountsHandler).Methods("GET")
+	// r.HandleFunc("/v1/accounts", a.createUserHandler).Methods("POST")
+	// r.HandleFunc("/v1/accounts/{userID}", a.getUserHandler).Methods("GET")
+	// r.HandleFunc("/v1/accounts/{userID}", a.updateUserHandler).Methods("PUT")
+	// r.HandleFunc("/v1/accounts/{userID}", a.deleteUserHandler).Methods("DELETE")
 
 	// r.HandleFunc("/v1/rides", a.listRidesHandler).Methods("GET")
 	// r.HandleFunc("/v1/rides", a.createRideHandler).Methods("POST")
