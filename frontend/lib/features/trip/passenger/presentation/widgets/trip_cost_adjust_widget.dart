@@ -94,7 +94,7 @@ class TripCostAdjustState extends State<TripCostAdjust> {
                 adjustBidAmount(false);
               },
               child: const Center(
-                child: const Icon(Icons.remove, color: Colors.black),
+                child: Icon(Icons.remove, color: Colors.black),
               ),
             ),
             Text(controller.text),
@@ -102,9 +102,7 @@ class TripCostAdjustState extends State<TripCostAdjust> {
               onPressed: () {
                 adjustBidAmount(true);
               },
-              child: const Center(
-                child: const Icon(Icons.add, color: Colors.black),
-              ),
+              child: const Center(child: Icon(Icons.add, color: Colors.black)),
             ),
           ],
         ),

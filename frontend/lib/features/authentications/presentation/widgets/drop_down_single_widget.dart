@@ -34,8 +34,8 @@ class DropDownSingleSelectState extends State<DropDownSingleSelect> {
           items:
               widget.options.map<DropdownMenuItem<String>>((String value) {
                 return DropdownMenuItem<String>(
-                  child: Text(value),
                   value: value,
+                  child: Text(value),
                 );
               }).toList(),
           onChanged: (_) => onUpdate(),

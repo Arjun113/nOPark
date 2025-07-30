@@ -31,20 +31,20 @@ class DriverOnTheWay extends StatelessWidget {
           Center(child: Image(image: NetworkImage(carImageURL))),
           Center(
             child: Text(
-              this.carMakeModel,
+              carMakeModel,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
           ),
           Center(
             child: Text(
-              this.carColour,
+              carColour,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
           ),
           const SizedBox(height: 15),
           Center(
             child: Text(
-              this.carRegistration,
+              carRegistration,
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ),

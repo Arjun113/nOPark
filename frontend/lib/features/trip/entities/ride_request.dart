@@ -1,4 +1,4 @@
-import 'rideOffer.dart';
+import 'ride_offer.dart';
 import 'location.dart';
 import '../driver/driver_model.dart';
 import 'car.dart';
