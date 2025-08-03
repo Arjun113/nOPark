@@ -7,19 +7,21 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Arjun113/nOPark/internal/domain"
+	"github.com/Arjun113/nOPark/internal/repository"
+	"github.com/Arjun113/nOPark/internal/services/email"
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
-	// "github.com/Arjun113/nOPark/internal/domain"
-	// "github.com/Arjun113/nOPark/internal/repository"
 )
 
 type api struct {
-	logger     *zap.Logger
-	httpClient *http.Client
+	logger       *zap.Logger
+	httpClient   *http.Client
+	emailService *email.Service
 
-	// accountsRepo         domain.accountsRepository
+	accountsRepo domain.AccountsRepository
 	// mapsRepo          domain.MapsRepository
 	// ridesRepo		domain.RidesRepository
 	
@@ -27,17 +29,19 @@ type api struct {
 
 func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 
-	// accountsRepo := repository.NewPostgresaccounts(pool)
+	accountsRepo := repository.NewPostgresAccounts(pool)
 	// mapsRepo := repository.NewPostgresMaps(pool)
 	// ridesRepo := repository.NewPostgresRides(pool)
 
 	client := &http.Client{}
+	emailService := email.NewService()
 
 	return &api{
-		logger:     logger,
-		httpClient: client,
+		logger:       logger,
+		httpClient:   client,
+		emailService: emailService,
 
-		// accountsRepo: accountsRepo,
+		accountsRepo: accountsRepo,
 		// mapsRepo:  mapsRepo,
 		// ridesRepo: ridesRepo,
 	}
@@ -53,13 +57,16 @@ func (a *api) Server(port int) *http.Server {
 func (a *api) Routes() *mux.Router {
 	r := mux.NewRouter()
 
-	// r.HandleFunc("/v1/health", a.healthCheckHandler).Methods("GET")
+	r.HandleFunc("/v1/health", a.healthCheckHandler).Methods("GET")
 
-	// r.HandleFunc("/v1/accounts", a.listaccountsHandler).Methods("GET")
-	// r.HandleFunc("/v1/accounts", a.createUserHandler).Methods("POST")
-	// r.HandleFunc("/v1/accounts/{userID}", a.getUserHandler).Methods("GET")
-	// r.HandleFunc("/v1/accounts/{userID}", a.updateUserHandler).Methods("PUT")
-	// r.HandleFunc("/v1/accounts/{userID}", a.deleteUserHandler).Methods("DELETE")
+	r.HandleFunc("/v1/accounts", a.createUserHandler).Methods("POST")
+	r.HandleFunc("/v1/accounts/login", a.loginUserHandler).Methods("POST")
+	r.HandleFunc("/v1/accounts/logout", a.logoutUserHandler).Methods("POST")
+	r.HandleFunc("/v1/accounts/{userID}", a.getUserHandler).Methods("GET")
+	r.HandleFunc("/v1/accounts/verify-email", a.verifyEmailHandler).Methods("POST")
+	r.HandleFunc("/v1/accounts/request-password-reset", a.requestPasswordResetHandler).Methods("POST")
+	r.HandleFunc("/v1/accounts/reset-password", a.resetPasswordHandler).Methods("POST")
+	r.HandleFunc("/v1/accounts/change-password", a.changePasswordHandler).Methods("POST")
 
 	// r.HandleFunc("/v1/rides", a.listRidesHandler).Methods("GET")
 	// r.HandleFunc("/v1/rides", a.createRideHandler).Methods("POST")
@@ -140,14 +147,19 @@ func (a *api) loggingMiddleware(next http.Handler) http.Handler {
 			zap.Int("response#bytes", lrw.bytes),
 			zap.Int("status", lrw.statusCode),
 			zap.String("uri", r.RequestURI),
-			zap.String("request#id", lrw.Header().Get("X-Apollo-Request-Id")),
+			zap.String("request#id", lrw.Header().Get("X-nOPark-Request-Id")),
 		}
 
 		if lrw.statusCode == 200 {
 			a.logger.Info("", fields...)
 		} else {
-			err := lrw.Header().Get("X-Apollo-Error")
+			err := lrw.Header().Get("X-nOPark-Error")
 			a.logger.Error(err, fields...)
 		}
 	})
+}
+
+func (a *api) errorResponse(w http.ResponseWriter, _ *http.Request, status int, err error) {
+	w.Header().Set("X-nOPark-Error", err.Error())
+	http.Error(w, err.Error(), status)
 }

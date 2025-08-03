@@ -6,14 +6,20 @@ CREATE TABLE accounts (
     firstname VARCHAR(50) NOT NULL,
     middlename VARCHAR(50),
     lastname VARCHAR(50) NOT NULL,
+    email_verified BOOLEAN DEFAULT FALSE NOT NULL,
+    email_verification_token TEXT,
+    email_verification_expires_at TIMESTAMP WITH TIME ZONE,
+    password_reset_token TEXT,
+    password_reset_expires_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE sessions (
     id TEXT NOT NULL PRIMARY KEY,
+    account_id BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
     secret_hash BYTEA NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 -- Indices -------------------------------------------------------
