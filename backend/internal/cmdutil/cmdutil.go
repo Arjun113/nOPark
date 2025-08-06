@@ -33,7 +33,7 @@ func NewDatabasePool(ctx context.Context, maxConns int) (*pgxpool.Pool, error) {
 
 	url := fmt.Sprintf(
 		"%s?pool_max_conns=%d&pool_min_conns=%d",
-		os.Getenv("DATABASE_CONNECTION_POOL_URL"),
+		os.Getenv("DATABASE_URL"),
 		maxConns,
 		2,
 	)

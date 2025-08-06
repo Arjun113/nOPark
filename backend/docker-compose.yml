@@ -1,4 +1,4 @@
-name: nopark
+name: nOPark
 services:
   db:
     image: postgres
@@ -9,7 +9,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: nopark
+      POSTGRES_DB: nOPark
     volumes:
       - dbdata:/var/lib/postgresql/data
 

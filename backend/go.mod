@@ -9,7 +9,14 @@ require (
 	go.uber.org/zap v1.27.0
 )
 
-require golang.org/x/sys v0.34.0 // indirect
+require (
+	github.com/golang-migrate/migrate/v4 v4.18.3 // indirect
+	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438 // indirect
+	go.uber.org/atomic v1.11.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
+)
 
 require (
 	github.com/gofrs/uuid v4.4.0+incompatible
