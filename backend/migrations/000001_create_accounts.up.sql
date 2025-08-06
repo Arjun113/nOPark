@@ -2,6 +2,7 @@
 CREATE TABLE accounts (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     email VARCHAR(200) NOT NULL UNIQUE,
+    phone VARCHAR(20) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     firstname VARCHAR(50) NOT NULL,
     middlename VARCHAR(50),
@@ -11,6 +12,16 @@ CREATE TABLE accounts (
     email_verification_expires_at TIMESTAMP WITH TIME ZONE,
     password_reset_token TEXT,
     password_reset_expires_at TIMESTAMP WITH TIME ZONE,
+    current_latitude DECIMAL(9, 6) CHECK (current_latitude BETWEEN -90 AND 90),
+    current_longitude DECIMAL(9, 6) CHECK (current_longitude BETWEEN -180 AND 180),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE TABLE account_addresses (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    address_line VARCHAR(100) NOT NULL,
+    account_id BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
