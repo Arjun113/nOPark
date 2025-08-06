@@ -150,7 +150,7 @@ func (a *api) loggingMiddleware(next http.Handler) http.Handler {
 			zap.String("request#id", lrw.Header().Get("X-nOPark-Request-Id")),
 		}
 
-		if lrw.statusCode == 200 {
+		if lrw.statusCode >= 200 && lrw.statusCode < 300 {
 			a.logger.Info("", fields...)
 		} else {
 			err := lrw.Header().Get("X-nOPark-Error")

@@ -1,0 +1,25 @@
+meta {
+  name: 01 Register
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:4000/v1/accounts
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email": "test@nopark.com",
+    "password": "nOPark123",
+    "first_name": "James",
+    "middle_name": "nOPark",
+    "last_name": "Smith"
+  }
+}
+
+settings {
+  encodeUrl: true
+}
