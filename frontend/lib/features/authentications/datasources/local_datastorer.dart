@@ -1,47 +1,35 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../logic/error/exceptions.dart';
 
-abstract class SharedPreferences {
-  Future<bool> doesLoginExist();
-  Future<void> setLogin(String email, String password);
-}
+class CredentialStorage {
+  static Future<bool> doesLoginExist () async {
+    FlutterSecureStorage storage = FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true));
 
-class SharedPreferencesImplement {
-  final keystore = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-  );
-  final String emailKeyname = 'email';
-  final String passwordKeyname = 'password';
-  final String lastAccessDateKeyName = 'lastAccessDate';
-  final int lastAccessTimeout = 14;
+    final bool doesTokenExist = await storage.containsKey(key: 'authToken');
 
-  Future<bool> doesLoginExist() async {
-    try {
-      final String? lastAccessDt = await keystore.read(
-        key: lastAccessDateKeyName,
-      );
-
-      // If the last access date exists (which it won't on first load) or it is old, ask for reauth
-
-      if (lastAccessDt == null ||
-          (DateTime.parse(
-            lastAccessDt,
-          ).add(Duration(days: 14)).isBefore(DateTime.now()))) {
-        return false;
-      } else {
-        return true;
-      }
-    } catch (err) {
-      throw CacheException;
+    if (doesTokenExist == false) {
+      return false;
     }
+    return true;
+    }
+
+  static Future<String?> fetchLoginToken() async {
+    final bool doesLogin = await CredentialStorage.doesLoginExist();
+    if (doesLogin == false) {
+      return null;
+    }
+
+    FlutterSecureStorage storage = FlutterSecureStorage(
+        aOptions: AndroidOptions(encryptedSharedPreferences: true));
+
+    final String? authToken = await storage.read(key: 'authToken');
+    return authToken;
   }
 
-  Future<void> setLogin(String email, String password) async {
-    await keystore.write(key: emailKeyname, value: email);
-    await keystore.write(key: passwordKeyname, value: password);
-    await keystore.write(
-      key: lastAccessDateKeyName,
-      value: DateTime.now().toString(),
-    );
+  static Future<void> setLoginToken (String token) async{
+    FlutterSecureStorage storage = FlutterSecureStorage(aOptions: AndroidOptions(encryptedSharedPreferences: true));
+
+    storage.write(key: 'authToken', value: token);
   }
 }
