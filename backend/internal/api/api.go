@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Arjun113/nOPark/internal/domain"
 	"github.com/Arjun113/nOPark/internal/repository"
 	"github.com/Arjun113/nOPark/internal/services/email"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -20,6 +22,7 @@ type api struct {
 	logger       *zap.Logger
 	httpClient   *http.Client
 	emailService *email.Service
+	validator    *validator.Validate
 
 	accountsRepo domain.AccountsRepository
 	// mapsRepo          domain.MapsRepository
@@ -35,11 +38,13 @@ func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 
 	client := &http.Client{}
 	emailService := email.NewService()
+	validate := validator.New()
 
 	return &api{
 		logger:       logger,
 		httpClient:   client,
 		emailService: emailService,
+		validator:    validate,
 
 		accountsRepo: accountsRepo,
 		// mapsRepo:  mapsRepo,
@@ -162,4 +167,48 @@ func (a *api) loggingMiddleware(next http.Handler) http.Handler {
 func (a *api) errorResponse(w http.ResponseWriter, _ *http.Request, status int, err error) {
 	w.Header().Set("X-nOPark-Error", err.Error())
 	http.Error(w, err.Error(), status)
+}
+
+func (a *api) validateRequest(req any) error {
+	if err := a.validator.Struct(req); err != nil {
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			for _, fieldError := range validationErrors {
+				fieldName := a.getFieldDisplayName(fieldError.Field())
+				switch fieldError.Tag() {
+				case "required":
+					return fmt.Errorf("%s is required", fieldName)
+				case "email":
+					return fmt.Errorf("invalid email format")
+				case "min":
+					return fmt.Errorf("%s must be at least %s characters long", fieldName, fieldError.Param())
+				default:
+					return fmt.Errorf("validation failed for %s", fieldName)
+				}
+			}
+		}
+		return err
+	}
+	return nil
+}
+
+func (a *api) getFieldDisplayName(fieldName string) string {
+	var result []string
+	var current string
+	
+	for i, char := range fieldName {
+		if i > 0 && char >= 'A' && char <= 'Z' {
+			if current != "" {
+				result = append(result, strings.ToLower(current))
+			}
+			current = string(char)
+		} else {
+			current += string(char)
+		}
+	}
+	
+	if current != "" {
+		result = append(result, strings.ToLower(current))
+	}
+	
+	return strings.Join(result, " ")
 }

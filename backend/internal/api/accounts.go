@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/mail"
 	"strings"
 	"time"
 
@@ -14,11 +13,11 @@ import (
 )
 
 type CreateUserRequest struct {
-	Email      string `json:"email"`
-	Password   string `json:"password"`
-	FirstName  string `json:"first_name"`
+	Email      string `json:"email" validate:"required,email"`
+	Password   string `json:"password" validate:"required,min=8"`
+	FirstName  string `json:"first_name" validate:"required"`
 	MiddleName string `json:"middle_name,omitempty"`
-	LastName   string `json:"last_name"`
+	LastName   string `json:"last_name" validate:"required"`
 }
 
 type CreateUserResponse struct {
@@ -33,40 +32,17 @@ func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	// Parse request body
 	var req CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		a.errorResponse(w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	// Validate required fields
-	if strings.TrimSpace(req.Email) == "" {
-		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("email is required"))
-		return
-	}
-	if _, err := mail.ParseAddress(req.Email); err != nil {
-		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("invalid email format"))
-		return
-	}
-	if strings.TrimSpace(req.Password) == "" {
-		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("password is required"))
-		return
-	}
-	if len(req.Password) < 8 {
-		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("password must be at least 8 characters long"))
-		return
-	}
-	if strings.TrimSpace(req.FirstName) == "" {
-		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("first name is required"))
-		return
-	}
-	if strings.TrimSpace(req.LastName) == "" {
-		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("last name is required"))
+	if err := a.validateRequest(req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	// Check if user already exists
 	existingAccount, err := a.accountsRepo.GetAccountByEmail(ctx, req.Email)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
@@ -77,14 +53,12 @@ func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Hash password
 	hashedPassword, err := domain.HashPassword(req.Password)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
-	// Create account
 	account := &domain.AccountDBModel{
 		Email:        req.Email,
 		PasswordHash: hashedPassword,
@@ -99,7 +73,6 @@ func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create session
 	id, token, secretHash := domain.GenerateSession()
 	_, err = a.accountsRepo.CreateSession(ctx, id, secretHash, createdAccount.ID)
 	if err != nil {
@@ -107,7 +80,6 @@ func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return response
 	response := CreateUserResponse{
 		Email:     createdAccount.Email,
 		FirstName: createdAccount.FirstName,
@@ -123,8 +95,8 @@ func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 
 
 type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
 }
 
 type LoginResponse struct {
@@ -139,47 +111,32 @@ func (a *api) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	// Parse request body
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		a.errorResponse(w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	// Validate required fields
-	if strings.TrimSpace(req.Email) == "" {
-		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("email is required"))
-		return
-	}
-	if _, err := mail.ParseAddress(req.Email); err != nil {
-		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("invalid email format"))
-		return
-	}
-	if strings.TrimSpace(req.Password) == "" {
-		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("password is required"))
+	if err := a.validateRequest(req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	// Get account by email
 	account, err := a.accountsRepo.GetAccountByEmail(ctx, req.Email)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return
 	}
 	if account == nil {
-		// Use generic error message to prevent email enumeration
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("incorrect email or password"))
 		return
 	}
 
-	// Verify password
 	if !domain.CheckPasswordHash(req.Password, account.PasswordHash) {
-		// Use generic error message to prevent email enumeration
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("incorrect email or password"))
 		return
 	}
 
-	// Create session
 	id, token, secretHash := domain.GenerateSession()
 	_, err = a.accountsRepo.CreateSession(ctx, id, secretHash, account.ID)
 	if err != nil {
@@ -187,7 +144,6 @@ func (a *api) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return response
 	response := LoginResponse{
 		Email:     account.Email,
 		FirstName: account.FirstName,
@@ -212,19 +168,16 @@ func (a *api) logoutUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate and delete the session from database
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
 	session, err := a.accountsRepo.ValidateSessionToken(ctx, sessionToken)
 	if err != nil {
-		// Session validation failed
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
 	if session != nil {
-		// Delete the session from database
 		err = a.accountsRepo.DeleteSession(ctx, session.ID)
 		if err != nil {
 			a.errorResponse(w, r, http.StatusInternalServerError, err)
@@ -237,15 +190,15 @@ func (a *api) logoutUserHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "logged out successfully"})
 }
 
-// getUserHandler is the HTTP handler for getting user account information
 type GetUserResponse struct {
 	Email     string          `json:"email"`
 	FirstName string          `json:"first_name"`
 	MiddleName string         `json:"middle_name,omitempty"`
 	LastName  string          `json:"last_name"`
 }
+
 func (a *api) getUserHandler(w http.ResponseWriter, r *http.Request) {
-	account, err := a.getCurrentUser(r)
+	account, err := a.getUserFromAuthHeader(r)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 		return
@@ -264,7 +217,7 @@ func (a *api) getUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type VerifyEmailRequest struct {
-	Token string `json:"token"`
+	Token string `json:"token" validate:"required"`
 }
 
 func (a *api) verifyEmailHandler(w http.ResponseWriter, r *http.Request) {
@@ -276,8 +229,8 @@ func (a *api) verifyEmailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Token == "" {
-		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("token is required"))
+	if err := a.validateRequest(req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
 		return
 	}
 
@@ -292,7 +245,7 @@ func (a *api) verifyEmailHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type RequestPasswordResetRequest struct {
-	Email string `json:"email"`
+	Email string `json:"email" validate:"required,email"`
 }
 
 func (a *api) requestPasswordResetHandler(w http.ResponseWriter, r *http.Request) {
@@ -304,29 +257,24 @@ func (a *api) requestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Validate email
-	if _, err := mail.ParseAddress(req.Email); err != nil {
-		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("invalid email address"))
+	if err := a.validateRequest(req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	// Check if account exists
 	account, err := a.accountsRepo.GetAccountByEmail(ctx, req.Email)
 	if err != nil || account == nil {
-		// Don't reveal whether the email exists or not
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"message": "If the email exists, a password reset link has been sent"})
 		return
 	}
 
-	// Generate password reset token
 	token, err := domain.GenerateSecureToken()
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, fmt.Errorf("failed to generate reset token"))
 		return
 	}
 
-	// Set expiration time (15 minutes from now)
 	expiresAt := domain.GetCurrentTimeRFC3339()
 	expiresAt, err = domain.AddTimeToRFC3339(expiresAt, 15*time.Minute)
 	if err != nil {
@@ -334,18 +282,15 @@ func (a *api) requestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Store the token in database
 	err = a.accountsRepo.SetPasswordResetToken(ctx, req.Email, token, expiresAt)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, fmt.Errorf("failed to set reset token"))
 		return
 	}
 
-	// Send password reset email
 	err = a.emailService.SendPasswordReset(req.Email, token)
 	if err != nil {
 		a.logger.Error("Failed to send password reset email", zap.Error(err))
-		// Don't fail the request, just log the error
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -353,8 +298,8 @@ func (a *api) requestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 }
 
 type ResetPasswordRequest struct {
-	Token       string `json:"token"`
-	NewPassword string `json:"new_password"`
+	Token       string `json:"token" validate:"required"`
+	NewPassword string `json:"new_password" validate:"required,min=8"`
 }
 
 func (a *api) resetPasswordHandler(w http.ResponseWriter, r *http.Request) {
@@ -366,32 +311,23 @@ func (a *api) resetPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Token == "" || req.NewPassword == "" {
-		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("token and new password are required"))
+	if err := a.validateRequest(req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	// Validate password strength
-	if len(req.NewPassword) < 8 {
-		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("password must be at least 8 characters long"))
-		return
-	}
-
-	// Hash the new password
 	hashedPassword, err := domain.HashPassword(req.NewPassword)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, fmt.Errorf("failed to hash password"))
 		return
 	}
 
-	// Reset password using the token
 	account, err := a.accountsRepo.ResetPassword(ctx, req.Token, hashedPassword)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("invalid or expired reset token"))
 		return
 	}
 
-	// Invalidate all sessions for this user for security
 	err = a.accountsRepo.DeleteAllUserSessions(ctx, account.ID)
 	if err != nil {
 		a.logger.Error("Failed to invalidate user sessions after password reset", zap.Error(err))
@@ -402,8 +338,8 @@ func (a *api) resetPasswordHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type ChangePasswordRequest struct {
-	CurrentPassword string `json:"current_password"`
-	NewPassword     string `json:"new_password"`
+	CurrentPassword string `json:"current_password" validate:"required"`
+	NewPassword     string `json:"new_password" validate:"required,min=8"`
 }
 
 func (a *api) changePasswordHandler(w http.ResponseWriter, r *http.Request) {
@@ -415,58 +351,45 @@ func (a *api) changePasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.CurrentPassword == "" || req.NewPassword == "" {
-		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("current password and new password are required"))
+	if err := a.validateRequest(req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	// Get the current user from session
-	account, err := a.getCurrentUser(r)
+	account, err := a.getUserFromAuthHeader(r)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 		return
 	}
 
-	// Get full account details to verify current password
 	fullAccount, err := a.accountsRepo.GetAccountByID(ctx, account.ID)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, fmt.Errorf("failed to get account"))
 		return
 	}
 
-	// Verify current password
 	if !domain.CheckPasswordHash(req.CurrentPassword, fullAccount.PasswordHash) {
 		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("current password is incorrect"))
 		return
 	}
 
-	// Validate new password strength
-	if len(req.NewPassword) < 8 {
-		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("new password must be at least 8 characters long"))
-		return
-	}
-
-	// Hash the new password
 	hashedPassword, err := domain.HashPassword(req.NewPassword)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, fmt.Errorf("failed to hash password"))
 		return
 	}
 
-	// Update password in database
 	err = a.accountsRepo.ChangePassword(ctx, account.ID, hashedPassword)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, fmt.Errorf("failed to update password"))
 		return
 	}
 
-	// Invalidate all sessions for this user for security
 	err = a.accountsRepo.DeleteAllUserSessions(ctx, account.ID)
 	if err != nil {
 		a.logger.Error("Failed to invalidate user sessions", zap.Error(err))
 	}
 
-	// Create a new session for the user since all sessions were invalidated
 	id, token, secretHash := domain.GenerateSession()
 	_, err = a.accountsRepo.CreateSession(ctx, id, secretHash, account.ID)
 	if err != nil {
@@ -482,9 +405,7 @@ func (a *api) changePasswordHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Helpers
-// getCurrentUser extracts the current user from the Authorization header
-func (a *api) getCurrentUser(r *http.Request) (*domain.AccountDBModel, error) {
+func (a *api) getUserFromAuthHeader(r *http.Request) (*domain.AccountDBModel, error) {
 	ctx := r.Context()
 	var sessionToken string
 
