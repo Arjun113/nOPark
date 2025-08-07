@@ -26,7 +26,7 @@ type api struct {
 
 	accountsRepo domain.AccountsRepository
 	// mapsRepo          domain.MapsRepository
-	// ridesRepo		domain.RidesRepository
+	ridesRepo		domain.RidesRepository
 	
 }
 
@@ -34,7 +34,7 @@ func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 
 	accountsRepo := repository.NewPostgresAccounts(pool)
 	// mapsRepo := repository.NewPostgresMaps(pool)
-	// ridesRepo := repository.NewPostgresRides(pool)
+	ridesRepo := repository.NewPostgresRides(pool)
 
 	client := &http.Client{}
 	emailService := email.NewService()
@@ -48,7 +48,7 @@ func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 
 		accountsRepo: accountsRepo,
 		// mapsRepo:  mapsRepo,
-		// ridesRepo: ridesRepo,
+		ridesRepo: ridesRepo,
 	}
 }
 
@@ -74,7 +74,7 @@ func (a *api) Routes() *mux.Router {
 	r.HandleFunc("/v1/accounts/change-password", a.changePasswordHandler).Methods("POST")
 
 	// r.HandleFunc("/v1/rides", a.listRidesHandler).Methods("GET")
-	// r.HandleFunc("/v1/rides", a.createRideHandler).Methods("POST")
+	r.HandleFunc("/v1/rides/requests", a.createRideRequestHandler).Methods("POST")
 	// r.HandleFunc("/v1/rides/{rideID}", a.getRideHandler).Methods("GET")
 	// r.HandleFunc("/v1/rides/{rideID}", a.updateRideHandler).Methods("PUT")
 	// r.HandleFunc("/v1/rides/{rideID}", a.deleteRideHandler).Methods("DELETE")

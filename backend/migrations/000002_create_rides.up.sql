@@ -13,7 +13,7 @@ CREATE TABLE requests (
     dropoff_location VARCHAR(255) NOT NULL,
     compensation DECIMAL(10, 2) NOT NULL,
     passenger_id BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-    ride_id BIGINT NOT NULL REFERENCES rides(id) ON DELETE CASCADE,
+    ride_id BIGINT REFERENCES rides(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
