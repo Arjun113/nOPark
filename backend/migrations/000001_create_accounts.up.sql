@@ -2,7 +2,6 @@
 CREATE TABLE accounts (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     email VARCHAR(200) NOT NULL UNIQUE,
-    phone VARCHAR(20) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     firstname VARCHAR(50) NOT NULL,
     middlename VARCHAR(50),
