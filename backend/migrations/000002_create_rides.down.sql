@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS proposals;
+DROP TABLE IF EXISTS requests;
+DROP TABLE IF EXISTS rides;
