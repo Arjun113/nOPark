@@ -52,7 +52,7 @@ func (a *api) createRideRequestHandler(w http.ResponseWriter, r *http.Request) {
 		PassengerID:     account.ID,
 	}
 
-	createdRequest, err := a.ridesRepo.CreateRequest(ctx, request)
+	createdRequest, err := a.ridesRepo.CreateRideRequest(ctx, request)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return
@@ -69,5 +69,52 @@ func (a *api) createRideRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
+}
+
+type GetRideRequestsResponseIndividual struct {
+	ID              int64   `json:"id"`
+	PickupLocation  string  `json:"pickup_location"`
+	DropoffLocation string  `json:"dropoff_location"`
+	Compensation    float64 `json:"compensation"`
+	CreatedAt       string  `json:"created_at"`
+}
+
+type GetRideRequestsResponse struct {
+	Requests []GetRideRequestsResponseIndividual `json:"requests"`
+}
+
+func (a *api) getRideRequestsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	_, err := a.getUserFromAuthHeader(r)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
+		return
+	}
+
+	requests, err := a.ridesRepo.GetActiveRideRequests(ctx)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	response := GetRideRequestsResponse{
+		Requests: make([]GetRideRequestsResponseIndividual, len(requests)),
+	}
+
+	for i, req := range requests {
+		response.Requests[i] = GetRideRequestsResponseIndividual{
+			ID:              req.ID,
+			PickupLocation:  req.PickupLocation,
+			DropoffLocation: req.DropoffLocation,
+			Compensation:    req.Compensation,
+			CreatedAt:       req.CreatedAt,
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }

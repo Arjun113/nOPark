@@ -14,23 +14,7 @@ func NewPostgresRides(conn Connection) domain.RidesRepository {
 	return &postgresRidesRepository{conn: conn}
 }
 
-func (p *postgresRidesRepository) CreateRide(ctx context.Context, ride *domain.RideDBModel) (*domain.RideDBModel, error) {
-	row := p.conn.QueryRow(ctx,
-		`INSERT INTO rides (status) 
-		 VALUES ($1) 
-		 RETURNING id, status, created_at, updated_at`,
-		ride.Status)
-
-	var rideModel domain.RideDBModel
-	err := row.Scan(&rideModel.ID, &rideModel.Status, &rideModel.CreatedAt, &rideModel.UpdatedAt)
-	if err != nil {
-		return nil, err
-	}
-
-	return &rideModel, nil
-}
-
-func (p *postgresRidesRepository) CreateRequest(ctx context.Context, req *domain.RequestDBModel) (*domain.RequestDBModel, error) {
+func (p *postgresRidesRepository) CreateRideRequest(ctx context.Context, req *domain.RequestDBModel) (*domain.RequestDBModel, error) {
 	row := p.conn.QueryRow(ctx,
 		`INSERT INTO requests (pickup_location, dropoff_location, compensation, passenger_id) 
 		 VALUES ($1, $2, $3, $4) 
@@ -44,4 +28,29 @@ func (p *postgresRidesRepository) CreateRequest(ctx context.Context, req *domain
 	}
 
 	return &request, nil
+}
+
+func (p *postgresRidesRepository) GetActiveRideRequests(ctx context.Context) ([]*domain.RequestDBModel, error) {
+	rows, err := p.conn.Query(ctx,
+		`SELECT id, pickup_location, dropoff_location, compensation, passenger_id, created_at 
+		 FROM requests WHERE ride_id IS NULL`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var requests []*domain.RequestDBModel
+	for rows.Next() {
+		var req domain.RequestDBModel
+		if err := rows.Scan(&req.ID, &req.PickupLocation, &req.DropoffLocation, &req.Compensation, &req.PassengerID, &req.CreatedAt); err != nil {
+			return nil, err
+		}
+		requests = append(requests, &req)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return requests, nil
 }

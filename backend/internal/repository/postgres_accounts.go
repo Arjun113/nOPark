@@ -21,13 +21,13 @@ func NewPostgresAccounts(conn Connection) domain.AccountsRepository {
 
 func (p *postgresAccountsRepository) CreateAccount(ctx context.Context, acc *domain.AccountDBModel) (*domain.AccountDBModel, error) {
 	row := p.conn.QueryRow(ctx,
-		`INSERT INTO accounts (email, password_hash, firstname, middlename, lastname) 
-		 VALUES ($1, $2, $3, $4, $5) 
-		 RETURNING id, email, firstname, middlename, lastname, email_verified, created_at, updated_at`,
-		acc.Email, acc.PasswordHash, acc.FirstName, acc.MiddleName, acc.LastName)
+		`INSERT INTO accounts (type, email, password_hash, firstname, middlename, lastname) 
+		 VALUES ($1, $2, $3, $4, $5, $6) 
+		 RETURNING id, type, email, firstname, middlename, lastname, email_verified, created_at, updated_at`,
+		acc.Type, acc.Email, acc.PasswordHash, acc.FirstName, acc.MiddleName, acc.LastName)
 
 	var account domain.AccountDBModel
-	err := row.Scan(&account.ID, &account.Email, &account.FirstName, &account.MiddleName, &account.LastName, &account.EmailVerified, &account.CreatedAt, &account.UpdatedAt)
+	err := row.Scan(&account.ID, &account.Type, &account.Email, &account.FirstName, &account.MiddleName, &account.LastName, &account.EmailVerified, &account.CreatedAt, &account.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -37,13 +37,13 @@ func (p *postgresAccountsRepository) CreateAccount(ctx context.Context, acc *dom
 
 func (p *postgresAccountsRepository) GetAccountByEmail(ctx context.Context, email string) (*domain.AccountDBModel, error) {
 	row := p.conn.QueryRow(ctx,
-		`SELECT id, email, password_hash, firstname, middlename, lastname, email_verified,
+		`SELECT id, type, email, firstname, middlename, lastname, email_verified,
 		        current_latitude, current_longitude, created_at, updated_at 
 		 FROM accounts WHERE email = $1`,
 		email)
 
 	var account domain.AccountDBModel
-	err := row.Scan(&account.ID, &account.Email, &account.PasswordHash, &account.FirstName, &account.MiddleName, 
+	err := row.Scan(&account.ID, &account.Type, &account.Email, &account.FirstName, &account.MiddleName, 
 		&account.LastName, &account.EmailVerified, &account.CurrentLatitude, &account.CurrentLongitude,
 		&account.CreatedAt, &account.UpdatedAt)
 	if err != nil {
@@ -58,13 +58,13 @@ func (p *postgresAccountsRepository) GetAccountByEmail(ctx context.Context, emai
 
 func (p *postgresAccountsRepository) GetAccountByID(ctx context.Context, accountID int64) (*domain.AccountDBModel, error) {
 	row := p.conn.QueryRow(ctx,
-		`SELECT id, email, password_hash, firstname, middlename, lastname, email_verified,
+		`SELECT id, type, email, firstname, middlename, lastname, email_verified,
 		        current_latitude, current_longitude, created_at, updated_at 
 		 FROM accounts WHERE id = $1`,
 		accountID)
 
 	var account domain.AccountDBModel
-	err := row.Scan(&account.ID, &account.Email, &account.PasswordHash, &account.FirstName, &account.MiddleName, 
+	err := row.Scan(&account.ID, &account.Type, &account.Email, &account.FirstName, &account.MiddleName, 
 		&account.LastName, &account.EmailVerified, &account.CurrentLatitude, &account.CurrentLongitude,
 		&account.CreatedAt, &account.UpdatedAt)
 	if err != nil {
@@ -77,6 +77,32 @@ func (p *postgresAccountsRepository) GetAccountByID(ctx context.Context, account
 	return &account, nil
 }
 
+func (p *postgresAccountsRepository) GetAccountsByType(ctx context.Context, accountType string) ([]*domain.AccountDBModel, error) {
+	rows, err := p.conn.Query(ctx,
+		`SELECT id, type, email, firstname, middlename, lastname, email_verified,
+		        current_latitude, current_longitude, created_at, updated_at 
+		 FROM accounts WHERE type = $1`,
+		accountType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var accounts []*domain.AccountDBModel
+	for rows.Next() {
+		var account domain.AccountDBModel
+		err := rows.Scan(&account.ID, &account.Type, &account.Email, &account.FirstName, &account.MiddleName, 
+			&account.LastName, &account.EmailVerified, &account.CurrentLatitude, &account.CurrentLongitude,
+			&account.CreatedAt, &account.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		accounts = append(accounts, &account)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return accounts, nil
+}
 func (p *postgresAccountsRepository) CreateSession(ctx context.Context, id string, secretHash []byte, accountID int64) (*domain.SessionDBModelWithToken, error) {
 	row := p.conn.QueryRow(ctx,
 		`INSERT INTO sessions (id, account_id, secret_hash) 
@@ -124,21 +150,21 @@ func (p *postgresAccountsRepository) DeleteAllUserSessions(ctx context.Context, 
 
 func (p *postgresAccountsRepository) UpdateAccount(ctx context.Context, acc *domain.AccountDBModel) (*domain.AccountDBModel, error) {
 	row := p.conn.QueryRow(ctx,
-		`UPDATE accounts SET email = $1, firstname = $2, middlename = $3, lastname = $4, email_verified = $5, 
-		 email_verification_token = $6, email_verification_expires_at = $7, 
-		 password_reset_token = $8, password_reset_expires_at = $9,
-		 current_latitude = $10, current_longitude = $11
-		 WHERE id = $12
-		 RETURNING id, email, firstname, middlename, lastname, email_verified, 
+		`UPDATE accounts SET type = $1, email = $2, firstname = $3, middlename = $4, lastname = $5, email_verified = $6, 
+		 email_verification_token = $7, email_verification_expires_at = $8, 
+		 password_reset_token = $9, password_reset_expires_at = $10,
+		 current_latitude = $11, current_longitude = $12
+		 WHERE id = $13
+		 RETURNING id, type, email, firstname, middlename, lastname, email_verified, 
 		           current_latitude, current_longitude, created_at, updated_at`,
-		acc.Email, acc.FirstName, acc.MiddleName, acc.LastName, acc.EmailVerified,
+		acc.Type, acc.Email, acc.FirstName, acc.MiddleName, acc.LastName, acc.EmailVerified,
 		NullString(acc.EmailVerificationToken), NullTime(acc.EmailVerificationExpiresAt),
 		NullString(acc.PasswordResetToken), NullTime(acc.PasswordResetExpiresAt),
 		NullFloat64(acc.CurrentLatitude), NullFloat64(acc.CurrentLongitude),
 		acc.ID)
 
 	var account domain.AccountDBModel
-	err := row.Scan(&account.ID, &account.Email, &account.FirstName, &account.MiddleName, &account.LastName, 
+	err := row.Scan(&account.ID, &account.Type, &account.Email, &account.FirstName, &account.MiddleName, &account.LastName, 
 		&account.EmailVerified, &account.CurrentLatitude, &account.CurrentLongitude, 
 		&account.CreatedAt, &account.UpdatedAt)
 	if err != nil {
@@ -164,11 +190,11 @@ func (p *postgresAccountsRepository) VerifyEmail(ctx context.Context, token stri
 	row := p.conn.QueryRow(ctx,
 		`UPDATE accounts SET email_verified = true, email_verification_token = NULL, email_verification_expires_at = NULL
 		 WHERE email_verification_token = $1 AND email_verification_expires_at > now()
-		 RETURNING id, email, firstname, middlename, lastname, email_verified, created_at, updated_at`,
+		 RETURNING id, type, email, firstname, middlename, lastname, email_verified, created_at, updated_at`,
 		token)
 
 	var account domain.AccountDBModel
-	err := row.Scan(&account.ID, &account.Email, &account.FirstName, &account.MiddleName, &account.LastName, &account.EmailVerified, &account.CreatedAt, &account.UpdatedAt)
+	err := row.Scan(&account.ID, &account.Type, &account.Email, &account.FirstName, &account.MiddleName, &account.LastName, &account.EmailVerified, &account.CreatedAt, &account.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -192,11 +218,11 @@ func (p *postgresAccountsRepository) ResetPassword(ctx context.Context, token, n
 	row := p.conn.QueryRow(ctx,
 		`UPDATE accounts SET password_hash = $1, password_reset_token = NULL, password_reset_expires_at = NULL
 		 WHERE password_reset_token = $2 AND password_reset_expires_at > now()
-		 RETURNING id, email, firstname, middlename, lastname, email_verified, created_at, updated_at`,
+		 RETURNING id, type, email, firstname, middlename, lastname, email_verified, created_at, updated_at`,
 		newPasswordHash, token)
 
 	var account domain.AccountDBModel
-	err := row.Scan(&account.ID, &account.Email, &account.FirstName, &account.MiddleName, &account.LastName, &account.EmailVerified, &account.CreatedAt, &account.UpdatedAt)
+	err := row.Scan(&account.ID, &account.Type, &account.Email, &account.FirstName, &account.MiddleName, &account.LastName, &account.EmailVerified, &account.CreatedAt, &account.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}

@@ -5,8 +5,8 @@ import (
 )
 
 type RidesRepository interface {
-	CreateRide(ctx context.Context, ride *RideDBModel) (*RideDBModel, error)
-	CreateRequest(ctx context.Context, req *RequestDBModel) (*RequestDBModel, error)
+	CreateRideRequest(ctx context.Context, req *RequestDBModel) (*RequestDBModel, error)
+	GetActiveRideRequests(ctx context.Context) ([]*RequestDBModel, error)
 }
 
 type RideDBModel struct {

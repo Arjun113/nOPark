@@ -13,6 +13,7 @@ import (
 )
 
 type CreateUserRequest struct {
+	Type       string `json:"type" validate:"required,oneof=passenger driver"`
 	Email      string `json:"email" validate:"required,email"`
 	Password   string `json:"password" validate:"required,min=8"`
 	FirstName  string `json:"first_name" validate:"required"`
@@ -21,6 +22,7 @@ type CreateUserRequest struct {
 }
 
 type CreateUserResponse struct {
+	Type      string          `json:"type"`
 	Email     string          `json:"email"`
 	FirstName string          `json:"first_name"`
 	MiddleName string         `json:"middle_name"`
@@ -60,6 +62,7 @@ func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	account := &domain.AccountDBModel{
+		Type:         req.Type,
 		Email:        req.Email,
 		PasswordHash: hashedPassword,
 		FirstName:    req.FirstName,
@@ -81,6 +84,7 @@ func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := CreateUserResponse{
+		Type:      createdAccount.Type,
 		Email:     createdAccount.Email,
 		FirstName: createdAccount.FirstName,
 		MiddleName: createdAccount.MiddleName,
@@ -100,6 +104,7 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
+	Type      string          `json:"type"`
 	Email     string          `json:"email"`
 	FirstName string          `json:"first_name"`
 	MiddleName string         `json:"middle_name"`
@@ -145,6 +150,7 @@ func (a *api) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := LoginResponse{
+		Type:      account.Type,
 		Email:     account.Email,
 		FirstName: account.FirstName,
 		MiddleName: account.MiddleName,
@@ -191,6 +197,7 @@ func (a *api) logoutUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type GetUserResponse struct {
+	Type             string   `json:"type"`
 	Email            string   `json:"email"`
 	FirstName        string   `json:"first_name"`
 	MiddleName       string   `json:"middle_name"`
@@ -208,6 +215,7 @@ func (a *api) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := GetUserResponse{
+		Type:             account.Type,
 		Email:            account.Email,
 		FirstName:        account.FirstName,
 		MiddleName:       account.MiddleName,
@@ -412,6 +420,7 @@ func (a *api) changePasswordHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type UpdateUserRequest struct {
+	Type             string   `json:"type" validate:"omitempty,oneof=passenger driver"`
 	Email            string   `json:"email" validate:"email"`
 	FirstName        string   `json:"first_name"`
 	MiddleName       string   `json:"middle_name"`
@@ -421,6 +430,7 @@ type UpdateUserRequest struct {
 }
 
 type UpdateUserResponse struct {
+	Type             string   `json:"type"`
 	Email            string   `json:"email"`
 	FirstName        string   `json:"first_name"`
 	MiddleName       string   `json:"middle_name"`
@@ -454,6 +464,7 @@ func (a *api) updateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	updatedAccount := &domain.AccountDBModel{
 		ID:               account.ID,
+		Type:             account.Type,
 		Email:            account.Email,
 		FirstName:        account.FirstName,
 		MiddleName:       account.MiddleName,
@@ -482,6 +493,9 @@ func (a *api) updateUserHandler(w http.ResponseWriter, r *http.Request) {
 		emailChanged = true
 	}
 
+	if req.Type != "" {
+		updatedAccount.Type = req.Type
+	}
 	if req.FirstName != "" {
 		updatedAccount.FirstName = req.FirstName
 	}
@@ -498,7 +512,7 @@ func (a *api) updateUserHandler(w http.ResponseWriter, r *http.Request) {
 		updatedAccount.CurrentLongitude = req.CurrentLongitude
 	}
 
-	if req.Email == "" && req.FirstName == "" && req.MiddleName == "" && req.LastName == "" &&
+	if req.Type == "" && req.Email == "" && req.FirstName == "" && req.MiddleName == "" && req.LastName == "" &&
 		req.CurrentLatitude == nil && req.CurrentLongitude == nil {
 		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("no fields to update"))
 		return
@@ -511,6 +525,7 @@ func (a *api) updateUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := UpdateUserResponse{
+		Type:             acc.Type,
 		Email:            acc.Email,
 		FirstName:        acc.FirstName,
 		MiddleName:       acc.MiddleName,

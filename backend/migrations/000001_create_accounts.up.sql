@@ -1,6 +1,7 @@
 -- Table Definition ----------------------------------------------
 CREATE TABLE accounts (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    type VARCHAR(50) NOT NULL CHECK (type IN ('passenger', 'driver')),
     email VARCHAR(200) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     firstname VARCHAR(50) NOT NULL,

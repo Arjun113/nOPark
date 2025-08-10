@@ -18,6 +18,7 @@ type AccountsRepository interface {
 	CreateAccount(ctx context.Context, acc *AccountDBModel) (*AccountDBModel, error)
 	GetAccountByID(ctx context.Context, accountID int64) (*AccountDBModel, error)
 	GetAccountByEmail(ctx context.Context, email string) (*AccountDBModel, error)
+	GetAccountsByType(ctx context.Context, accountType string) ([]*AccountDBModel, error)
 	UpdateAccount(ctx context.Context, acc *AccountDBModel) (*AccountDBModel, error)
 	SetEmailVerificationToken(ctx context.Context, accountID, token string, expiresAt string) error
 	VerifyEmail(ctx context.Context, token string) (*AccountDBModel, error)
@@ -38,6 +39,7 @@ const PasswordResetExpiresInSeconds = 60 * 60 // 1 hour
 
 type AccountDBModel struct {
 	ID                        int64
+	Type                      string
 	Email                     string
 	PasswordHash              string
 	FirstName                 string

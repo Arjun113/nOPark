@@ -75,6 +75,7 @@ func (a *api) Routes() *mux.Router {
 	r.HandleFunc("/v1/accounts/change-password", a.changePasswordHandler).Methods("POST")
 
 	// r.HandleFunc("/v1/rides", a.listRidesHandler).Methods("GET")
+	r.HandleFunc("/v1/rides/requests", a.getRideRequestsHandler).Methods("GET")
 	r.HandleFunc("/v1/rides/requests", a.createRideRequestHandler).Methods("POST")
 	// r.HandleFunc("/v1/rides/{rideID}", a.getRideHandler).Methods("GET")
 	// r.HandleFunc("/v1/rides/{rideID}", a.updateRideHandler).Methods("PUT")
