@@ -25,7 +25,7 @@ type AccountsRepository interface {
 	SetPasswordResetToken(ctx context.Context, email, token string, expiresAt string) error
 	ResetPassword(ctx context.Context, token, newPasswordHash string) (*AccountDBModel, error)
 	ChangePassword(ctx context.Context, accountID int64, newPasswordHash string) error
-	CreateSession(ctx context.Context, id string, secretHash []byte, accountID int64) (*SessionDBModelWithToken, error)
+	CreateSession(ctx context.Context, id string, secretHash []byte, accountID int64) (*SessionDBModel, error)
 	ValidateSessionToken(ctx context.Context, token string) (*SessionDBModel, error)
 	GetSession(ctx context.Context, sessionID string) (*SessionDBModel, error)
 	DeleteSession(ctx context.Context, sessionID string) error
@@ -57,15 +57,15 @@ type AccountDBModel struct {
 }
 
 type SessionDBModel struct {
-	ID             string `json:"id"`
-	AccountID      int64 `json:"-"`
-	SecretHash     []byte `json:"-"`
-	CreatedAt      string `json:"created_at"`
+	ID             string
+	AccountID      int64
+	SecretHash     []byte
+	CreatedAt      string
 }
 
 type SessionDBModelWithToken struct {
-	SessionModel *SessionDBModel `json:"session"`
-	Token        string          `json:"token"`
+	SessionModel *SessionDBModel
+	Token        string
 }
 
 func HashPassword(password string) (string, error) {

@@ -18,6 +18,8 @@ func Execute(ctx context.Context) int {
 
 	rootCmd.AddCommand(APICmd(ctx))
 	rootCmd.AddCommand(MigrateCmd(ctx))
+	rootCmd.AddCommand(SchedulerCmd(ctx))
+	rootCmd.AddCommand(WorkerCmd(ctx))
 
 	if err := rootCmd.Execute(); err != nil {
 		return 1

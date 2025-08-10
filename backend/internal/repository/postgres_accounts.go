@@ -103,7 +103,7 @@ func (p *postgresAccountsRepository) GetAccountsByType(ctx context.Context, acco
 	}
 	return accounts, nil
 }
-func (p *postgresAccountsRepository) CreateSession(ctx context.Context, id string, secretHash []byte, accountID int64) (*domain.SessionDBModelWithToken, error) {
+func (p *postgresAccountsRepository) CreateSession(ctx context.Context, id string, secretHash []byte, accountID int64) (*domain.SessionDBModel, error) {
 	row := p.conn.QueryRow(ctx,
 		`INSERT INTO sessions (id, account_id, secret_hash) 
 		 VALUES ($1, $2, $3) 
@@ -116,12 +116,7 @@ func (p *postgresAccountsRepository) CreateSession(ctx context.Context, id strin
 		return nil, err
 	}
 
-	// The token should be provided separately or generated in the service layer
-	// For now, return empty token as this might be handled elsewhere
-	return &domain.SessionDBModelWithToken{
-		SessionModel: &session,
-		Token:        "", // Token should be handled by the service layer
-	}, nil
+	return &session, nil
 }
 
 func (p *postgresAccountsRepository) GetSession(ctx context.Context, sessionID string) (*domain.SessionDBModel, error) {
