@@ -16,16 +16,16 @@ type CreateUserRequest struct {
 	Email      string `json:"email" validate:"required,email"`
 	Password   string `json:"password" validate:"required,min=8"`
 	FirstName  string `json:"first_name" validate:"required"`
-	MiddleName string `json:"middle_name,omitempty"`
+	MiddleName string `json:"middle_name"`
 	LastName   string `json:"last_name" validate:"required"`
 }
 
 type CreateUserResponse struct {
 	Email     string          `json:"email"`
 	FirstName string          `json:"first_name"`
-	MiddleName string         `json:"middle_name,omitempty"`
+	MiddleName string         `json:"middle_name"`
 	LastName  string          `json:"last_name"`
-	Token   string          `json:"token,omitempty"`
+	Token   string          `json:"token"`
 }
 
 func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -102,9 +102,9 @@ type LoginRequest struct {
 type LoginResponse struct {
 	Email     string          `json:"email"`
 	FirstName string          `json:"first_name"`
-	MiddleName string         `json:"middle_name,omitempty"`
+	MiddleName string         `json:"middle_name"`
 	LastName  string          `json:"last_name"`
-	Token   string          `json:"token,omitempty"`
+	Token   string          `json:"token"`
 }
 
 func (a *api) loginUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -191,10 +191,13 @@ func (a *api) logoutUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type GetUserResponse struct {
-	Email     string          `json:"email"`
-	FirstName string          `json:"first_name"`
-	MiddleName string         `json:"middle_name,omitempty"`
-	LastName  string          `json:"last_name"`
+	Email            string   `json:"email"`
+	FirstName        string   `json:"first_name"`
+	MiddleName       string   `json:"middle_name"`
+	LastName         string   `json:"last_name"`
+	EmailVerified    bool     `json:"email_verified"`
+	CurrentLatitude  *float64 `json:"current_latitude"`
+	CurrentLongitude *float64 `json:"current_longitude"`
 }
 
 func (a *api) getUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -205,10 +208,13 @@ func (a *api) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := GetUserResponse{
-		Email:     account.Email,
-		FirstName: account.FirstName,
-		MiddleName: account.MiddleName,
-		LastName:  account.LastName,
+		Email:            account.Email,
+		FirstName:        account.FirstName,
+		MiddleName:       account.MiddleName,
+		LastName:         account.LastName,
+		EmailVerified:    account.EmailVerified,
+		CurrentLatitude:  account.CurrentLatitude,
+		CurrentLongitude: account.CurrentLongitude,
 	}
 	
 	w.Header().Set("Content-Type", "application/json")
@@ -399,10 +405,150 @@ func (a *api) changePasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	json.NewEncoder(w).Encode(map[string]any{
 		"message": "Password changed successfully",
 		"token":   token,
 	})
+}
+
+type UpdateUserRequest struct {
+	Email            string   `json:"email" validate:"email"`
+	FirstName        string   `json:"first_name"`
+	MiddleName       string   `json:"middle_name"`
+	LastName         string   `json:"last_name"`
+	CurrentLatitude  *float64 `json:"current_latitude"`
+	CurrentLongitude *float64 `json:"current_longitude"`
+}
+
+type UpdateUserResponse struct {
+	Email            string   `json:"email"`
+	FirstName        string   `json:"first_name"`
+	MiddleName       string   `json:"middle_name"`
+	LastName         string   `json:"last_name"`
+	EmailVerified    bool     `json:"email_verified"`
+	CurrentLatitude  *float64 `json:"current_latitude"`
+	CurrentLongitude *float64 `json:"current_longitude"`
+	Message          string   `json:"message"`
+}
+
+func (a *api) updateUserHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	account, err := a.getUserFromAuthHeader(r)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
+		return
+	}
+
+	var req UpdateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := a.validateRequest(req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	updatedAccount := &domain.AccountDBModel{
+		ID:               account.ID,
+		Email:            account.Email,
+		FirstName:        account.FirstName,
+		MiddleName:       account.MiddleName,
+		LastName:         account.LastName,
+		EmailVerified:    account.EmailVerified,
+		CurrentLatitude:  account.CurrentLatitude,
+		CurrentLongitude: account.CurrentLongitude,
+	}
+
+	// Update only the fields that are provided
+	emailChanged := false
+	if req.Email != "" && req.Email != account.Email {
+		// Check if the new email is already in use
+		existingAccount, err := a.accountsRepo.GetAccountByEmail(ctx, req.Email)
+		if err != nil {
+			a.errorResponse(w, r, http.StatusInternalServerError, err)
+			return
+		}
+		if existingAccount != nil {
+			a.errorResponse(w, r, http.StatusConflict, fmt.Errorf("email already in use"))
+			return
+		}
+
+		updatedAccount.Email = req.Email
+		updatedAccount.EmailVerified = false // Reset verification when email changes
+		emailChanged = true
+	}
+
+	if req.FirstName != "" {
+		updatedAccount.FirstName = req.FirstName
+	}
+	if req.MiddleName != "" {
+		updatedAccount.MiddleName = req.MiddleName
+	}
+	if req.LastName != "" {
+		updatedAccount.LastName = req.LastName
+	}
+	if req.CurrentLatitude != nil {
+		updatedAccount.CurrentLatitude = req.CurrentLatitude
+	}
+	if req.CurrentLongitude != nil {
+		updatedAccount.CurrentLongitude = req.CurrentLongitude
+	}
+
+	if req.Email == "" && req.FirstName == "" && req.MiddleName == "" && req.LastName == "" &&
+		req.CurrentLatitude == nil && req.CurrentLongitude == nil {
+		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("no fields to update"))
+		return
+	}
+
+	acc, err := a.accountsRepo.UpdateAccount(ctx, updatedAccount)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	response := UpdateUserResponse{
+		Email:            acc.Email,
+		FirstName:        acc.FirstName,
+		MiddleName:       acc.MiddleName,
+		LastName:         acc.LastName,
+		EmailVerified:    acc.EmailVerified,
+		CurrentLatitude:  acc.CurrentLatitude,
+		CurrentLongitude: acc.CurrentLongitude,
+	}
+
+	if emailChanged {
+		token, err := domain.GenerateSecureToken()
+		if err != nil {
+			a.logger.Error("Failed to generate email verification token", zap.Error(err))
+		} else {
+			expiresAt := domain.GetCurrentTimeRFC3339()
+			expiresAt, err = domain.AddTimeToRFC3339(expiresAt, 24*time.Hour)
+			if err != nil {
+				a.logger.Error("Failed to set email verification expiration", zap.Error(err))
+			} else {
+				err = a.accountsRepo.SetEmailVerificationToken(ctx, fmt.Sprintf("%d", acc.ID), token, expiresAt)
+				if err != nil {
+					a.logger.Error("Failed to set email verification token", zap.Error(err))
+				} else {
+					err = a.emailService.SendEmailVerification(acc.Email, token)
+					if err != nil {
+						a.logger.Error("Failed to send email verification", zap.Error(err))
+					}
+				}
+			}
+		}
+		response.Message = "Profile updated successfully. A verification email has been sent to your new email address."
+	} else {
+		response.Message = "Profile updated successfully."
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (a *api) getUserFromAuthHeader(r *http.Request) (*domain.AccountDBModel, error) {
@@ -416,7 +562,6 @@ func (a *api) getUserFromAuthHeader(r *http.Request) (*domain.AccountDBModel, er
 		return nil, fmt.Errorf("no session token provided")
 	}
 
-	// Validate session token
 	session, err := a.accountsRepo.ValidateSessionToken(ctx, sessionToken)
 	if err != nil {
 		return nil, err
@@ -425,7 +570,6 @@ func (a *api) getUserFromAuthHeader(r *http.Request) (*domain.AccountDBModel, er
 		return nil, fmt.Errorf("invalid session")
 	}
 
-	// Get account by ID using the AccountID from session
 	account, err := a.accountsRepo.GetAccountByID(ctx, session.AccountID)
 	if err != nil {
 		return nil, err

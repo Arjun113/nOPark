@@ -37,19 +37,21 @@ const EmailVerificationExpiresInSeconds = 24 * 60 * 60 // 24 hours
 const PasswordResetExpiresInSeconds = 60 * 60 // 1 hour
 
 type AccountDBModel struct {
-	ID                        int64 `json:"id"`
-	Email                     string `json:"email"`
-	PasswordHash              string `json:"-"`
-	FirstName                 string `json:"first_name"`
-	MiddleName                string `json:"middle_name,omitempty"`
-	LastName                  string `json:"last_name"`
-	EmailVerified             bool   `json:"email_verified"`
-	EmailVerificationToken    string `json:"-"`
-	EmailVerificationExpiresAt string `json:"-"`
-	PasswordResetToken        string `json:"-"`
-	PasswordResetExpiresAt    string `json:"-"`
-	CreatedAt                 string `json:"created_at"`
-	UpdatedAt                 string `json:"updated_at"`
+	ID                        int64
+	Email                     string
+	PasswordHash              string
+	FirstName                 string
+	MiddleName                string
+	LastName                  string
+	EmailVerified             bool
+	EmailVerificationToken    string
+	EmailVerificationExpiresAt string
+	PasswordResetToken        string
+	PasswordResetExpiresAt    string
+	CurrentLatitude           *float64 // can be nil
+	CurrentLongitude          *float64 // can be nil
+	CreatedAt                 string
+	UpdatedAt                 string
 }
 
 type SessionDBModel struct {

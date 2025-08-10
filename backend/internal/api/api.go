@@ -65,9 +65,10 @@ func (a *api) Routes() *mux.Router {
 	r.HandleFunc("/v1/health", a.healthCheckHandler).Methods("GET")
 
 	r.HandleFunc("/v1/accounts", a.createUserHandler).Methods("POST")
+	r.HandleFunc("/v1/accounts", a.updateUserHandler).Methods("PUT")
+	r.HandleFunc("/v1/accounts/{userID}", a.getUserHandler).Methods("GET")
 	r.HandleFunc("/v1/accounts/login", a.loginUserHandler).Methods("POST")
 	r.HandleFunc("/v1/accounts/logout", a.logoutUserHandler).Methods("POST")
-	r.HandleFunc("/v1/accounts/{userID}", a.getUserHandler).Methods("GET")
 	r.HandleFunc("/v1/accounts/verify-email", a.verifyEmailHandler).Methods("POST")
 	r.HandleFunc("/v1/accounts/request-password-reset", a.requestPasswordResetHandler).Methods("POST")
 	r.HandleFunc("/v1/accounts/reset-password", a.resetPasswordHandler).Methods("POST")

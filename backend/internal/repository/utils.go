@@ -20,3 +20,10 @@ func NullTime(s string) *time.Time {
 	}
 	return &t
 }
+
+func NullFloat64(f *float64) *float64 {
+	if f == nil {
+		return nil
+	}
+	return f
+}

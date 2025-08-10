@@ -37,12 +37,15 @@ func (p *postgresAccountsRepository) CreateAccount(ctx context.Context, acc *dom
 
 func (p *postgresAccountsRepository) GetAccountByEmail(ctx context.Context, email string) (*domain.AccountDBModel, error) {
 	row := p.conn.QueryRow(ctx,
-		`SELECT id, email, password_hash, firstname, middlename, lastname, created_at, updated_at 
+		`SELECT id, email, password_hash, firstname, middlename, lastname, email_verified,
+		        current_latitude, current_longitude, created_at, updated_at 
 		 FROM accounts WHERE email = $1`,
 		email)
 
 	var account domain.AccountDBModel
-	err := row.Scan(&account.ID, &account.Email, &account.PasswordHash, &account.FirstName, &account.MiddleName, &account.LastName, &account.CreatedAt, &account.UpdatedAt)
+	err := row.Scan(&account.ID, &account.Email, &account.PasswordHash, &account.FirstName, &account.MiddleName, 
+		&account.LastName, &account.EmailVerified, &account.CurrentLatitude, &account.CurrentLongitude,
+		&account.CreatedAt, &account.UpdatedAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil // Account not found
@@ -55,12 +58,15 @@ func (p *postgresAccountsRepository) GetAccountByEmail(ctx context.Context, emai
 
 func (p *postgresAccountsRepository) GetAccountByID(ctx context.Context, accountID int64) (*domain.AccountDBModel, error) {
 	row := p.conn.QueryRow(ctx,
-		`SELECT id, email, password_hash, firstname, middlename, lastname, created_at, updated_at 
+		`SELECT id, email, password_hash, firstname, middlename, lastname, email_verified,
+		        current_latitude, current_longitude, created_at, updated_at 
 		 FROM accounts WHERE id = $1`,
 		accountID)
 
 	var account domain.AccountDBModel
-	err := row.Scan(&account.ID, &account.Email, &account.PasswordHash, &account.FirstName, &account.MiddleName, &account.LastName, &account.CreatedAt, &account.UpdatedAt)
+	err := row.Scan(&account.ID, &account.Email, &account.PasswordHash, &account.FirstName, &account.MiddleName, 
+		&account.LastName, &account.EmailVerified, &account.CurrentLatitude, &account.CurrentLongitude,
+		&account.CreatedAt, &account.UpdatedAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil // Account not found
@@ -118,18 +124,23 @@ func (p *postgresAccountsRepository) DeleteAllUserSessions(ctx context.Context, 
 
 func (p *postgresAccountsRepository) UpdateAccount(ctx context.Context, acc *domain.AccountDBModel) (*domain.AccountDBModel, error) {
 	row := p.conn.QueryRow(ctx,
-		`UPDATE accounts SET firstname = $1, middlename = $2, lastname = $3, email_verified = $4, 
-		 email_verification_token = $5, email_verification_expires_at = $6, 
-		 password_reset_token = $7, password_reset_expires_at = $8
-		 WHERE id = $9
-		 RETURNING id, email, firstname, middlename, lastname, email_verified, created_at, updated_at`,
-		acc.FirstName, acc.MiddleName, acc.LastName, acc.EmailVerified,
+		`UPDATE accounts SET email = $1, firstname = $2, middlename = $3, lastname = $4, email_verified = $5, 
+		 email_verification_token = $6, email_verification_expires_at = $7, 
+		 password_reset_token = $8, password_reset_expires_at = $9,
+		 current_latitude = $10, current_longitude = $11
+		 WHERE id = $12
+		 RETURNING id, email, firstname, middlename, lastname, email_verified, 
+		           current_latitude, current_longitude, created_at, updated_at`,
+		acc.Email, acc.FirstName, acc.MiddleName, acc.LastName, acc.EmailVerified,
 		NullString(acc.EmailVerificationToken), NullTime(acc.EmailVerificationExpiresAt),
 		NullString(acc.PasswordResetToken), NullTime(acc.PasswordResetExpiresAt),
+		NullFloat64(acc.CurrentLatitude), NullFloat64(acc.CurrentLongitude),
 		acc.ID)
 
 	var account domain.AccountDBModel
-	err := row.Scan(&account.ID, &account.Email, &account.FirstName, &account.MiddleName, &account.LastName, &account.EmailVerified, &account.CreatedAt, &account.UpdatedAt)
+	err := row.Scan(&account.ID, &account.Email, &account.FirstName, &account.MiddleName, &account.LastName, 
+		&account.EmailVerified, &account.CurrentLatitude, &account.CurrentLongitude, 
+		&account.CreatedAt, &account.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
