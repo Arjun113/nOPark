@@ -13,9 +13,10 @@ import 'package:url_launcher/url_launcher.dart';
 class FullScreenMap extends StatelessWidget {
   final StreamSubscription<Position> locations = locationStream;
 
+  FullScreenMap({super.key});
+
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Scaffold(
       extendBody: true,
       extendBodyBehindAppBar: true,
