@@ -1,7 +1,9 @@
 name: nOPark
 services:
   db:
-    image: ghcr.io/baosystems/postgis:17
+    build:
+      context: .
+      dockerfile: db.Dockerfile
     restart: always
     shm_size: 128mb
     ports:
