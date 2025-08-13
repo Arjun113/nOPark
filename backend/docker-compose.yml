@@ -21,6 +21,43 @@ services:
     ports:
       - 8080:8080
 
+  tileserv:
+    image: pramsey/pg_tileserv:latest
+    restart: always
+    ports:
+      - 7800:7800
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/nOPark
+    depends_on:
+      - db
+      - osm2pgsql
+
+  osm2pgsql:
+    build:
+      context: .
+      dockerfile: db-importer.Dockerfile
+    depends_on:
+      - db
+      - data
+    volumes:
+      - ./data:/data
+    restart: "no" # This is a one-off import job, don't restart it.
+
+  data:
+    image: alpine/curl
+    volumes:
+      - ./data:/data
+    command: >
+      /bin/sh -c "
+      apk add --no-cache curl;
+      if [ ! -f /data/melbourne-latest.osm.pbf ]; then
+        echo 'Downloading Melbourne OSM data...';
+        curl -o /data/melbourne-latest.osm.pbf 'https://download.bbbike.org/osm/bbbike/Melbourne/Melbourne.osm.pbf';
+      fi;
+      exit 0;
+      "
+    restart: "no" # This is a one-off download job, don't restart it.
+
   obj:
     image: minio/minio
     restart: always
