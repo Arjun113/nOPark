@@ -1,7 +1,7 @@
 name: nOPark
 services:
   db:
-    image: postgres
+    image: ghcr.io/baosystems/postgis:17
     restart: always
     shm_size: 128mb
     ports:
