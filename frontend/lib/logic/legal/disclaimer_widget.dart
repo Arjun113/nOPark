@@ -5,10 +5,10 @@ class DisclaimerWidget extends StatefulWidget {
   final VoidCallback onDecline;
 
   const DisclaimerWidget({
-    Key? key,
+    super.key,
     required this.onAccept,
     required this.onDecline,
-  }) : super(key: key);
+  });
 
   @override
   State<DisclaimerWidget> createState() => _DisclaimerWidgetState();
@@ -125,7 +125,7 @@ class _DisclaimerWidgetState extends State<DisclaimerWidget> {
 }
 
 class TermsScreen extends StatelessWidget {
-  const TermsScreen({Key? key}) : super(key: key);
+  const TermsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

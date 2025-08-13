@@ -1,7 +1,9 @@
 name: nOPark
 services:
   db:
-    image: postgres
+    build:
+      context: .
+      dockerfile: db.Dockerfile
     restart: always
     shm_size: 128mb
     ports:
