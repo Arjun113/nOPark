@@ -9,10 +9,10 @@ class HomePage extends StatelessWidget {
   final List<Map<String, dynamic>> addresses;
 
   const HomePage({
-    Key? key,
+    super.key,
     required this.user,
     required this.addresses
-  }) : super(key: key);
+  });
 
   List<AddressCardData> convertListToAddressCard() {
     return addresses.map((elem) => AddressCardData(name: elem['name'], line1: elem['line1'], line2: elem['line2'], editing: false)).toList();
