@@ -3,16 +3,13 @@ package api
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/Arjun113/nOPark/internal/domain"
 	"github.com/Arjun113/nOPark/internal/repository"
 	"github.com/Arjun113/nOPark/internal/services/email"
 	"github.com/go-playground/validator/v10"
-	"github.com/gofrs/uuid"
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
@@ -66,7 +63,7 @@ func (a *api) Routes() *mux.Router {
 
 	r.HandleFunc("/v1/accounts", a.createUserHandler).Methods("POST")
 	r.HandleFunc("/v1/accounts", a.updateUserHandler).Methods("PUT")
-	r.HandleFunc("/v1/accounts/{userID}", a.getUserHandler).Methods("GET")
+	r.HandleFunc("/v1/accounts", a.getUserHandler).Methods("GET")
 	r.HandleFunc("/v1/accounts/login", a.loginUserHandler).Methods("POST")
 	r.HandleFunc("/v1/accounts/logout", a.logoutUserHandler).Methods("POST")
 	r.HandleFunc("/v1/accounts/verify-email", a.verifyEmailHandler).Methods("POST")
@@ -87,99 +84,10 @@ func (a *api) Routes() *mux.Router {
 	// r.HandleFunc("/v1/maps/{mapID}", a.updateMapHandler).Methods("PUT")
 	// r.HandleFunc("/v1/maps/{mapID}", a.deleteMapHandler).Methods("DELETE")
 
-	r.Use(a.loggingMiddleware)
-	r.Use(a.requestIdMiddleware)
+	r.Use(repository.NewLoggingMiddleware(a.logger))
+	r.Use(repository.RequestIdMiddleware)
 
 	return r
-}
-
-func MonashEmail(fl validator.FieldLevel) bool {
-	email := fl.Field().String()
-	atIdx := strings.Index(email, "@")
-	if atIdx == -1 {
-		return false
-	}
-	domain := email[atIdx+1:]
-	if !strings.Contains(domain, "monash") {
-		return false
-	}
-	if !strings.HasSuffix(domain, ".edu") {
-		return false
-	}
-	return true
-}
-
-type LoggingResponseWriter struct {
-	w          http.ResponseWriter
-	statusCode int
-	bytes      int
-}
-
-func (lrw *LoggingResponseWriter) Header() http.Header {
-	return lrw.w.Header()
-}
-
-func (lrw *LoggingResponseWriter) Write(bb []byte) (int, error) {
-	wb, err := lrw.w.Write(bb)
-	lrw.bytes += wb
-	return wb, err
-}
-
-func (lrw *LoggingResponseWriter) WriteHeader(statusCode int) {
-	lrw.w.WriteHeader(statusCode)
-	lrw.statusCode = statusCode
-}
-
-func (a *api) requestIdMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		id := uuid.Must(uuid.NewV4()).String()
-		w.Header().Set("X-nOPark-Request-Id", id)
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (a *api) loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Skip logging health checks
-		if r.RequestURI == "/v1/health" {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		start := time.Now()
-		lrw := &LoggingResponseWriter{w: w}
-
-		// Call the next handler, which can be another middleware in the chain, or the final handler.
-		next.ServeHTTP(lrw, r)
-
-		duration := time.Since(start).Milliseconds()
-
-		remoteAddr := r.Header.Get("X-Forwarded-For")
-		if remoteAddr == "" {
-			if ip, _, err := net.SplitHostPort(r.RemoteAddr); err != nil {
-				remoteAddr = "unknown"
-			} else {
-				remoteAddr = ip
-			}
-		}
-
-		fields := []zap.Field{
-			zap.Int64("duration", duration),
-			zap.String("method", r.Method),
-			zap.String("remote#addr", remoteAddr),
-			zap.Int("response#bytes", lrw.bytes),
-			zap.Int("status", lrw.statusCode),
-			zap.String("uri", r.RequestURI),
-			zap.String("request#id", lrw.Header().Get("X-nOPark-Request-Id")),
-		}
-
-		if lrw.statusCode >= 200 && lrw.statusCode < 300 {
-			a.logger.Info("", fields...)
-		} else {
-			err := lrw.Header().Get("X-nOPark-Error")
-			a.logger.Error(err, fields...)
-		}
-	})
 }
 
 func (a *api) errorResponse(w http.ResponseWriter, _ *http.Request, status int, err error) {
@@ -231,4 +139,20 @@ func (a *api) getFieldDisplayName(fieldName string) string {
 	}
 
 	return strings.Join(result, " ")
+}
+
+func MonashEmail(fl validator.FieldLevel) bool {
+	email := fl.Field().String()
+	atIdx := strings.Index(email, "@")
+	if atIdx == -1 {
+		return false
+	}
+	domain := email[atIdx+1:]
+	if !strings.Contains(domain, "monash") {
+		return false
+	}
+	if !strings.HasSuffix(domain, ".edu") {
+		return false
+	}
+	return true
 }
