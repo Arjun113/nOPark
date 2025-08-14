@@ -31,6 +31,7 @@ type AccountsRepository interface {
 	DeleteSession(ctx context.Context, sessionID string) error
 	DeleteAllUserSessions(ctx context.Context, accountID int64) error
 	CleanupExpiredSessions(ctx context.Context) error
+	GetAccountFromSession(ctx context.Context) (*AccountDBModel, error)
 }
 
 const SessionExpiresInSeconds = 7 * 24 * 60 * 60       // 7 days

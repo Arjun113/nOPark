@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/Arjun113/nOPark/internal/domain"
+	"github.com/Arjun113/nOPark/internal/repository"
 	"go.uber.org/zap"
 )
 
@@ -162,31 +162,19 @@ func (a *api) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *api) logoutUserHandler(w http.ResponseWriter, r *http.Request) {
-	var sessionToken string
-
-	authHeader := r.Header.Get("Authorization")
-	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
-		sessionToken = strings.TrimPrefix(authHeader, "Bearer ")
-	} else {
-		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("auth token is required"))
+	session, ok := repository.GetSessionFromContext(r.Context())
+	if !ok {
+		a.errorResponse(w, r, http.StatusInternalServerError, fmt.Errorf("failed to get session from context"))
 		return
 	}
 
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	session, err := a.accountsRepo.ValidateSessionToken(ctx, sessionToken)
+	err := a.accountsRepo.DeleteSession(ctx, session.ID)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return
-	}
-
-	if session != nil {
-		err = a.accountsRepo.DeleteSession(ctx, session.ID)
-		if err != nil {
-			a.errorResponse(w, r, http.StatusInternalServerError, err)
-			return
-		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -206,7 +194,7 @@ type GetUserResponse struct {
 }
 
 func (a *api) getUserHandler(w http.ResponseWriter, r *http.Request) {
-	account, err := a.getUserFromAuthHeader(r)
+	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
 	if err != nil {
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 		return
@@ -368,7 +356,7 @@ func (a *api) changePasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account, err := a.getUserFromAuthHeader(r)
+	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
 	if err != nil {
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 		return
@@ -443,7 +431,7 @@ func (a *api) updateUserHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	account, err := a.getUserFromAuthHeader(r)
+	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
 	if err != nil {
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 		return
@@ -562,34 +550,4 @@ func (a *api) updateUserHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
-}
-
-func (a *api) getUserFromAuthHeader(r *http.Request) (*domain.AccountDBModel, error) {
-	ctx := r.Context()
-	var sessionToken string
-
-	authHeader := r.Header.Get("Authorization")
-	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
-		sessionToken = strings.TrimPrefix(authHeader, "Bearer ")
-	} else {
-		return nil, fmt.Errorf("no session token provided")
-	}
-
-	session, err := a.accountsRepo.ValidateSessionToken(ctx, sessionToken)
-	if err != nil {
-		return nil, err
-	}
-	if session == nil {
-		return nil, fmt.Errorf("invalid session")
-	}
-
-	account, err := a.accountsRepo.GetAccountByID(ctx, session.AccountID)
-	if err != nil {
-		return nil, err
-	}
-	if account == nil {
-		return nil, fmt.Errorf("account not found")
-	}
-
-	return account, nil
 }

@@ -39,7 +39,7 @@ func (a *api) createRideRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account, err := a.getUserFromAuthHeader(r)
+	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
 	if err != nil {
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 		return
@@ -88,11 +88,8 @@ func (a *api) getRideRequestsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	_, err := a.getUserFromAuthHeader(r)
-	if err != nil {
-		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
-		return
-	}
+	// Authentication is already handled by the middleware
+	// We don't need to get the account here since we're just listing all active requests
 
 	requests, err := a.ridesRepo.GetActiveRideRequests(ctx)
 	if err != nil {

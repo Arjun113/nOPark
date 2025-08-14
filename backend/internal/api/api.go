@@ -59,33 +59,42 @@ func (a *api) Server(port int) *http.Server {
 func (a *api) Routes() *mux.Router {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/v1/health", a.healthCheckHandler).Methods("GET")
-
-	r.HandleFunc("/v1/accounts", a.createUserHandler).Methods("POST")
-	r.HandleFunc("/v1/accounts", a.updateUserHandler).Methods("PUT")
-	r.HandleFunc("/v1/accounts", a.getUserHandler).Methods("GET")
-	r.HandleFunc("/v1/accounts/login", a.loginUserHandler).Methods("POST")
-	r.HandleFunc("/v1/accounts/logout", a.logoutUserHandler).Methods("POST")
-	r.HandleFunc("/v1/accounts/verify-email", a.verifyEmailHandler).Methods("POST")
-	r.HandleFunc("/v1/accounts/request-password-reset", a.requestPasswordResetHandler).Methods("POST")
-	r.HandleFunc("/v1/accounts/reset-password", a.resetPasswordHandler).Methods("POST")
-	r.HandleFunc("/v1/accounts/change-password", a.changePasswordHandler).Methods("POST")
-
-	// r.HandleFunc("/v1/rides", a.listRidesHandler).Methods("GET")
-	r.HandleFunc("/v1/rides/requests", a.getRideRequestsHandler).Methods("GET")
-	r.HandleFunc("/v1/rides/requests", a.createRideRequestHandler).Methods("POST")
-	// r.HandleFunc("/v1/rides/{rideID}", a.getRideHandler).Methods("GET")
-	// r.HandleFunc("/v1/rides/{rideID}", a.updateRideHandler).Methods("PUT")
-	// r.HandleFunc("/v1/rides/{rideID}", a.deleteRideHandler).Methods("DELETE")
-
-	// r.HandleFunc("/v1/maps", a.listMapsHandler).Methods("GET")
-	// r.HandleFunc("/v1/maps", a.createMapHandler).Methods("POST")
-	// r.HandleFunc("/v1/maps/{mapID}", a.getMapHandler).Methods("GET")
-	// r.HandleFunc("/v1/maps/{mapID}", a.updateMapHandler).Methods("PUT")
-	// r.HandleFunc("/v1/maps/{mapID}", a.deleteMapHandler).Methods("DELETE")
-
+	// Apply global middleware
 	r.Use(repository.NewLoggingMiddleware(a.logger))
 	r.Use(repository.RequestIdMiddleware)
+
+	// Public routes
+	r.HandleFunc("/v1/health", a.healthCheckHandler).Methods("GET")
+	r.HandleFunc("/v1/accounts", a.createUserHandler).Methods("POST")
+	r.HandleFunc("/v1/accounts/login", a.loginUserHandler).Methods("POST")
+	r.HandleFunc("/v1/accounts/request-password-reset", a.requestPasswordResetHandler).Methods("POST")
+	r.HandleFunc("/v1/accounts/reset-password", a.resetPasswordHandler).Methods("POST")
+
+	// Protected routes - require authentication
+	p := r.NewRoute().Subrouter()
+	p.Use(repository.AuthMiddleware(a.accountsRepo))
+
+	// Protected account routes
+	p.HandleFunc("/v1/accounts/verify-email", a.verifyEmailHandler).Methods("POST")
+	p.HandleFunc("/v1/accounts", a.updateUserHandler).Methods("PUT")
+	p.HandleFunc("/v1/accounts", a.getUserHandler).Methods("GET")
+	p.HandleFunc("/v1/accounts/logout", a.logoutUserHandler).Methods("POST")
+	p.HandleFunc("/v1/accounts/change-password", a.changePasswordHandler).Methods("POST")
+
+	// Protected ride routes
+	p.HandleFunc("/v1/rides/requests", a.getRideRequestsHandler).Methods("GET")
+	p.HandleFunc("/v1/rides/requests", a.createRideRequestHandler).Methods("POST")
+	// p.HandleFunc("/rides", a.listRidesHandler).Methods("GET")
+	// p.HandleFunc("/rides/{rideID}", a.getRideHandler).Methods("GET")
+	// p.HandleFunc("/rides/{rideID}", a.updateRideHandler).Methods("PUT")
+	// p.HandleFunc("/rides/{rideID}", a.deleteRideHandler).Methods("DELETE")
+
+	// Protected map routes (commented out for now)
+	// p.HandleFunc("/maps", a.listMapsHandler).Methods("GET")
+	// p.HandleFunc("/maps", a.createMapHandler).Methods("POST")
+	// p.HandleFunc("/maps/{mapID}", a.getMapHandler).Methods("GET")
+	// p.HandleFunc("/maps/{mapID}", a.updateMapHandler).Methods("PUT")
+	// p.HandleFunc("/maps/{mapID}", a.deleteMapHandler).Methods("DELETE")
 
 	return r
 }

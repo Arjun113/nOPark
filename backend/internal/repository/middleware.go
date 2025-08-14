@@ -1,10 +1,13 @@
 package repository
 
 import (
+	"context"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
+	"github.com/Arjun113/nOPark/internal/domain"
 	"github.com/gofrs/uuid"
 	"go.uber.org/zap"
 )
@@ -85,4 +88,53 @@ func NewLoggingMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 			}
 		})
 	}
+}
+
+// Context keys for storing authentication data
+type contextKey string
+
+const (
+	sessionContextKey = contextKey("session")
+)
+
+// AuthMiddleware validates bearer tokens and stores session information in context
+func AuthMiddleware(accountsRepo domain.AccountsRepository) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			var sessionToken string
+
+			// Extract bearer token from Authorization header
+			authHeader := r.Header.Get("Authorization")
+			if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+				sessionToken = strings.TrimPrefix(authHeader, "Bearer ")
+			} else {
+				http.Error(w, "authorization header required", http.StatusUnauthorized)
+				return
+			}
+
+			// Validate session token
+			session, err := accountsRepo.ValidateSessionToken(ctx, sessionToken)
+			if err != nil {
+				http.Error(w, "authentication failed", http.StatusUnauthorized)
+				return
+			}
+			if session == nil {
+				http.Error(w, "invalid session", http.StatusUnauthorized)
+				return
+			}
+
+			// Store session in context
+			ctx = context.WithValue(ctx, sessionContextKey, session)
+
+			// Continue with the authenticated request
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+// GetSessionFromContext retrieves the session from the request context
+func GetSessionFromContext(ctx context.Context) (*domain.SessionDBModel, bool) {
+	session, ok := ctx.Value(sessionContextKey).(*domain.SessionDBModel)
+	return session, ok
 }

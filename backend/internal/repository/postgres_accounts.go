@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"crypto/subtle"
+	"fmt"
 	"strings"
 	"time"
 
@@ -229,6 +230,24 @@ func (p *postgresAccountsRepository) ChangePassword(ctx context.Context, account
 	_, err := p.conn.Exec(ctx, "UPDATE accounts SET password_hash = $1 WHERE id = $2",
 		newPasswordHash, accountID)
 	return err
+}
+
+// GetAccountFromSession retrieves the account using the session stored in context
+func (p *postgresAccountsRepository) GetAccountFromSession(ctx context.Context) (*domain.AccountDBModel, error) {
+	session, ok := GetSessionFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("no session found in context")
+	}
+
+	account, err := p.GetAccountByID(ctx, session.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	if account == nil {
+		return nil, fmt.Errorf("account not found")
+	}
+
+	return account, nil
 }
 
 func (p *postgresAccountsRepository) ValidateSessionToken(ctx context.Context, token string) (*domain.SessionDBModel, error) {
