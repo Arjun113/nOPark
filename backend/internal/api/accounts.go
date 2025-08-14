@@ -14,7 +14,7 @@ import (
 
 type CreateUserRequest struct {
 	Type       string `json:"type" validate:"required,oneof=passenger driver"`
-	Email      string `json:"email" validate:"required,email"`
+	Email      string `json:"email" validate:"required,monash_email"`
 	Password   string `json:"password" validate:"required,min=8"`
 	FirstName  string `json:"first_name" validate:"required"`
 	MiddleName string `json:"middle_name"`
@@ -22,12 +22,12 @@ type CreateUserRequest struct {
 }
 
 type CreateUserResponse struct {
-	Type      string          `json:"type"`
-	Email     string          `json:"email"`
-	FirstName string          `json:"first_name"`
-	MiddleName string         `json:"middle_name"`
-	LastName  string          `json:"last_name"`
-	Token   string          `json:"token"`
+	Type       string `json:"type"`
+	Email      string `json:"email"`
+	FirstName  string `json:"first_name"`
+	MiddleName string `json:"middle_name"`
+	LastName   string `json:"last_name"`
+	Token      string `json:"token"`
 }
 
 func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -84,12 +84,12 @@ func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := CreateUserResponse{
-		Type:      createdAccount.Type,
-		Email:     createdAccount.Email,
-		FirstName: createdAccount.FirstName,
+		Type:       createdAccount.Type,
+		Email:      createdAccount.Email,
+		FirstName:  createdAccount.FirstName,
 		MiddleName: createdAccount.MiddleName,
-		LastName:  createdAccount.LastName,
-		Token: token,
+		LastName:   createdAccount.LastName,
+		Token:      token,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -97,19 +97,18 @@ func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-
 type LoginRequest struct {
-	Email    string `json:"email" validate:"required,email"`
+	Email    string `json:"email" validate:"required,monash_email"`
 	Password string `json:"password" validate:"required"`
 }
 
 type LoginResponse struct {
-	Type      string          `json:"type"`
-	Email     string          `json:"email"`
-	FirstName string          `json:"first_name"`
-	MiddleName string         `json:"middle_name"`
-	LastName  string          `json:"last_name"`
-	Token   string          `json:"token"`
+	Type       string `json:"type"`
+	Email      string `json:"email"`
+	FirstName  string `json:"first_name"`
+	MiddleName string `json:"middle_name"`
+	LastName   string `json:"last_name"`
+	Token      string `json:"token"`
 }
 
 func (a *api) loginUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -136,7 +135,6 @@ func (a *api) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("incorrect email or password"))
 		return
 	}
-
 	if !domain.CheckPasswordHash(req.Password, account.PasswordHash) {
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("incorrect email or password"))
 		return
@@ -150,12 +148,12 @@ func (a *api) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := LoginResponse{
-		Type:      account.Type,
-		Email:     account.Email,
-		FirstName: account.FirstName,
+		Type:       account.Type,
+		Email:      account.Email,
+		FirstName:  account.FirstName,
 		MiddleName: account.MiddleName,
-		LastName:  account.LastName,
-		Token: token,
+		LastName:   account.LastName,
+		Token:      token,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -224,7 +222,7 @@ func (a *api) getUserHandler(w http.ResponseWriter, r *http.Request) {
 		CurrentLatitude:  account.CurrentLatitude,
 		CurrentLongitude: account.CurrentLongitude,
 	}
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
@@ -259,7 +257,7 @@ func (a *api) verifyEmailHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type RequestPasswordResetRequest struct {
-	Email string `json:"email" validate:"required,email"`
+	Email string `json:"email" validate:"required,monash_email"`
 }
 
 func (a *api) requestPasswordResetHandler(w http.ResponseWriter, r *http.Request) {
@@ -421,7 +419,7 @@ func (a *api) changePasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 type UpdateUserRequest struct {
 	Type             string   `json:"type" validate:"omitempty,oneof=passenger driver"`
-	Email            string   `json:"email" validate:"email"`
+	Email            string   `json:"email" validate:"monash_email"`
 	FirstName        string   `json:"first_name"`
 	MiddleName       string   `json:"middle_name"`
 	LastName         string   `json:"last_name"`

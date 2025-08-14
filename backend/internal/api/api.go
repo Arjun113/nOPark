@@ -26,8 +26,7 @@ type api struct {
 
 	accountsRepo domain.AccountsRepository
 	// mapsRepo          domain.MapsRepository
-	ridesRepo		domain.RidesRepository
-	
+	ridesRepo domain.RidesRepository
 }
 
 func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
@@ -39,6 +38,7 @@ func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 	client := &http.Client{}
 	emailService := email.NewService()
 	validate := validator.New()
+	validate.RegisterValidation("monash_email", MonashEmail)
 
 	return &api{
 		logger:       logger,
@@ -80,7 +80,7 @@ func (a *api) Routes() *mux.Router {
 	// r.HandleFunc("/v1/rides/{rideID}", a.getRideHandler).Methods("GET")
 	// r.HandleFunc("/v1/rides/{rideID}", a.updateRideHandler).Methods("PUT")
 	// r.HandleFunc("/v1/rides/{rideID}", a.deleteRideHandler).Methods("DELETE")
-	
+
 	// r.HandleFunc("/v1/maps", a.listMapsHandler).Methods("GET")
 	// r.HandleFunc("/v1/maps", a.createMapHandler).Methods("POST")
 	// r.HandleFunc("/v1/maps/{mapID}", a.getMapHandler).Methods("GET")
@@ -91,6 +91,22 @@ func (a *api) Routes() *mux.Router {
 	r.Use(a.requestIdMiddleware)
 
 	return r
+}
+
+func MonashEmail(fl validator.FieldLevel) bool {
+	email := fl.Field().String()
+	atIdx := strings.Index(email, "@")
+	if atIdx == -1 {
+		return false
+	}
+	domain := email[atIdx+1:]
+	if !strings.Contains(domain, "monash") {
+		return false
+	}
+	if !strings.HasSuffix(domain, ".edu") {
+		return false
+	}
+	return true
 }
 
 type LoggingResponseWriter struct {
@@ -181,6 +197,8 @@ func (a *api) validateRequest(req any) error {
 					return fmt.Errorf("%s is required", fieldName)
 				case "email":
 					return fmt.Errorf("invalid email format")
+				case "monash_email":
+					return fmt.Errorf("email must be a valid Monash email address")
 				case "min":
 					return fmt.Errorf("%s must be at least %s characters long", fieldName, fieldError.Param())
 				default:
@@ -196,7 +214,7 @@ func (a *api) validateRequest(req any) error {
 func (a *api) getFieldDisplayName(fieldName string) string {
 	var result []string
 	var current string
-	
+
 	for i, char := range fieldName {
 		if i > 0 && char >= 'A' && char <= 'Z' {
 			if current != "" {
@@ -207,10 +225,10 @@ func (a *api) getFieldDisplayName(fieldName string) string {
 			current += string(char)
 		}
 	}
-	
+
 	if current != "" {
 		result = append(result, strings.ToLower(current))
 	}
-	
+
 	return strings.Join(result, " ")
 }

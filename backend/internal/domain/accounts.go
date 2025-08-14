@@ -33,34 +33,34 @@ type AccountsRepository interface {
 	CleanupExpiredSessions(ctx context.Context) error
 }
 
-const SessionExpiresInSeconds = 7 * 24 * 60 * 60 // 7 days
+const SessionExpiresInSeconds = 7 * 24 * 60 * 60       // 7 days
 const EmailVerificationExpiresInSeconds = 24 * 60 * 60 // 24 hours
-const PasswordResetExpiresInSeconds = 60 * 60 // 1 hour
+const PasswordResetExpiresInSeconds = 60 * 60          // 1 hour
 
 type AccountDBModel struct {
-	ID                        int64
-	Type                      string
-	Email                     string
-	PasswordHash              string
-	FirstName                 string
-	MiddleName                string
-	LastName                  string
-	EmailVerified             bool
-	EmailVerificationToken    string
+	ID                         int64
+	Type                       string
+	Email                      string
+	PasswordHash               string
+	FirstName                  string
+	MiddleName                 string
+	LastName                   string
+	EmailVerified              bool
+	EmailVerificationToken     string
 	EmailVerificationExpiresAt string
-	PasswordResetToken        string
-	PasswordResetExpiresAt    string
-	CurrentLatitude           *float64 // can be nil
-	CurrentLongitude          *float64 // can be nil
-	CreatedAt                 string
-	UpdatedAt                 string
+	PasswordResetToken         string
+	PasswordResetExpiresAt     string
+	CurrentLatitude            *float64 // can be nil
+	CurrentLongitude           *float64 // can be nil
+	CreatedAt                  string
+	UpdatedAt                  string
 }
 
 type SessionDBModel struct {
-	ID             string
-	AccountID      int64
-	SecretHash     []byte
-	CreatedAt      string
+	ID         string
+	AccountID  int64
+	SecretHash []byte
+	CreatedAt  string
 }
 
 type SessionDBModelWithToken struct {
@@ -83,7 +83,7 @@ func HashPassword(password string) (string, error) {
 	// Format: $argon2id$salt$hash
 	saltEncoded := base64.RawStdEncoding.EncodeToString(salt)
 	hashEncoded := base64.RawStdEncoding.EncodeToString(hash)
-	
+
 	return fmt.Sprintf("$argon2id$%s$%s", saltEncoded, hashEncoded), nil
 }
 
@@ -111,7 +111,6 @@ func CheckPasswordHash(password, storedHash string) bool {
 	return subtle.ConstantTimeCompare(hash, expectedHash) == 1
 }
 
-
 func GetCurrentTimeRFC3339() string {
 	return time.Now().Format(time.RFC3339)
 }
@@ -134,26 +133,26 @@ func GenerateSecureToken() (string, error) {
 }
 
 func generateSecureRandomString() string {
-    // Human readable alphabet (a-z, 0-9 without l, o, 0, 1 to avoid confusion)
-    alphabet := "abcdefghijkmnpqrstuvwxyz23456789"
+	// Human readable alphabet (a-z, 0-9 without l, o, 0, 1 to avoid confusion)
+	alphabet := "abcdefghijkmnpqrstuvwxyz23456789"
 
-    // Generate 24 bytes = 192 bits of entropy.
-    // We're only going to use 5 bits per byte so the total entropy will be 192 * 5 / 8 = 120 bits
-    bytes := make([]byte, 24)
-    rand.Read(bytes)
+	// Generate 24 bytes = 192 bits of entropy.
+	// We're only going to use 5 bits per byte so the total entropy will be 192 * 5 / 8 = 120 bits
+	bytes := make([]byte, 24)
+	rand.Read(bytes)
 
-    id := ""
-    for i := range bytes {
-        // >> 3 "removes" the right-most 3 bits of the byte
-        id += string(alphabet[bytes[i]>>3])
-    }
-    return id
+	id := ""
+	for i := range bytes {
+		// >> 3 "removes" the right-most 3 bits of the byte
+		id += string(alphabet[bytes[i]>>3])
+	}
+	return id
 }
 
 func hashSecret(secret string) []byte {
-    secretBytes := []byte(secret)
-    hash := sha256.Sum256(secretBytes)
-    return hash[:]
+	secretBytes := []byte(secret)
+	hash := sha256.Sum256(secretBytes)
+	return hash[:]
 }
 
 func GenerateSession() (string, string, []byte) {
