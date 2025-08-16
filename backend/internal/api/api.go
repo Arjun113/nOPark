@@ -84,6 +84,7 @@ func (a *api) Routes() *mux.Router {
 	// Protected ride routes
 	p.HandleFunc("/v1/rides/requests", a.getRideRequestsHandler).Methods("GET")
 	p.HandleFunc("/v1/rides/requests", a.createRideRequestHandler).Methods("POST")
+	p.HandleFunc("/v1/rides/", a.createRideDraftHandler).Methods("POST")
 	// p.HandleFunc("/rides", a.listRidesHandler).Methods("GET")
 	// p.HandleFunc("/rides/{rideID}", a.getRideHandler).Methods("GET")
 	// p.HandleFunc("/rides/{rideID}", a.updateRideHandler).Methods("PUT")

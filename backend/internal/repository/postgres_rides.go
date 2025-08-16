@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Arjun113/nOPark/internal/domain"
 )
@@ -69,3 +70,32 @@ func (p *postgresRidesRepository) GetActiveRideRequests(ctx context.Context, ids
 
 	return requests, nil
 }
+
+func (p *postgresRidesRepository) CreateRideAndProposals(ctx context.Context, proposals []*domain.ProposalDBModel) (*domain.RideDBModel, []*domain.ProposalDBModel, error) {
+	row := p.conn.QueryRow(ctx, `INSERT INTO rides DEFAULT VALUES RETURNING id, status, created_at, updated_at`)
+
+	var ride domain.RideDBModel
+	err := row.Scan(&ride.ID, &ride.Status, &ride.CreatedAt, &ride.UpdatedAt)
+	if err != nil {
+		return nil, nil, err
+	}
+	query := `INSERT INTO proposals (request_id, driver_id, status, ride_id)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, request_id, status, driver_id, ride_id, created_at, updated_at`
+
+	var createdProposals []*domain.ProposalDBModel
+	for _, proposal := range proposals {
+		var createdProposal domain.ProposalDBModel
+		row := p.conn.QueryRow(ctx, query,
+			proposal.RequestID, proposal.DriverID, proposal.Status, ride.ID)
+
+		err := row.Scan(&createdProposal.ID, &createdProposal.RequestID, &createdProposal.Status, &createdProposal.DriverID, &createdProposal.RideID, &createdProposal.CreatedAt, &createdProposal.UpdatedAt)
+		if err != nil {
+			return nil, nil, err
+		}
+		createdProposals = append(createdProposals, &createdProposal)
+	}
+
+	return &ride, createdProposals, nil
+}
+

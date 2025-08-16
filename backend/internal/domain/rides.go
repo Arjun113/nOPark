@@ -7,6 +7,7 @@ import (
 type RidesRepository interface {
 	CreateRideRequest(ctx context.Context, req *RequestDBModel) (*RequestDBModel, error)
 	GetActiveRideRequests(ctx context.Context, ids *[]string, ub_compensation *float64) ([]*RequestDBModel, error)
+	CreateRideAndProposals(ctx context.Context, proposals []*ProposalDBModel) (*RideDBModel, []*ProposalDBModel, error)
 }
 
 type RideDBModel struct {

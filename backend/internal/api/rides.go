@@ -139,3 +139,89 @@ func (a *api) getRideRequestsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
+
+type CreateRideDraftRequest struct {
+	RequestIds []int64 `json:"ids" validate:"required"`
+}
+
+type CreateRideProposalIndividual struct {
+	ID        int64  `json:"id"`
+	RequestID int64  `json:"request_id"`
+	Status    string `json:"status"`
+	DriverID  int64  `json:"driver_id"`
+	RideID    *int64 `json:"ride_id,omitempty"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+type CreateRideDraftResponse struct {
+	ID        int64                          `json:"id"`
+	Status    string                         `json:"status"`
+	Proposals []CreateRideProposalIndividual `json:"proposals"`
+}
+
+func (a *api) createRideDraftHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	var req CreateRideDraftRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := a.validateRequest(req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	// Get the account from the session
+	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
+	if err != nil {
+		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
+		return
+	}
+	if account.Type != "driver" {
+		a.errorResponse(w, r, http.StatusForbidden, fmt.Errorf("only drivers can create ride proposals"))
+		return
+	}
+
+	// Create ride proposals
+	var proposals []*domain.ProposalDBModel
+	for _, id := range req.RequestIds {
+		proposal := domain.ProposalDBModel{
+			RequestID: id,
+			DriverID:  account.ID,
+			Status:    "pending",
+		}
+		proposals = append(proposals, &proposal)
+	}
+	created_ride, created_proposals, err := a.ridesRepo.CreateRideAndProposals(ctx, proposals)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	response := CreateRideDraftResponse{
+		ID:        created_ride.ID,
+		Status:    created_ride.Status,
+		Proposals: make([]CreateRideProposalIndividual, len(created_proposals)),
+	}
+
+	for i, prop := range created_proposals {
+		response.Proposals[i] = CreateRideProposalIndividual{
+			ID:        prop.ID,
+			RequestID: prop.RequestID,
+			Status:    prop.Status,
+			DriverID:  prop.DriverID,
+			RideID:    prop.RideID,
+			CreatedAt: prop.CreatedAt,
+			UpdatedAt: prop.UpdatedAt,
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
+}
+
