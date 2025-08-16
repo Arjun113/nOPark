@@ -1,0 +1,25 @@
+meta {
+  name: 08 Proposal
+  type: http
+  seq: 10
+}
+
+post {
+  url: http://localhost:4000/v1/rides/proposals
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: thye688y7dhh7wibgdd3aghs.9g26u2fqaytkh2t5zzhdt7jd
+}
+
+body:json {
+  {
+    "ids": [7]
+  }
+}
+
+settings {
+  encodeUrl: true
+}

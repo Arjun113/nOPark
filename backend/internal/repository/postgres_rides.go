@@ -30,10 +30,25 @@ func (p *postgresRidesRepository) CreateRideRequest(ctx context.Context, req *do
 	return &request, nil
 }
 
-func (p *postgresRidesRepository) GetActiveRideRequests(ctx context.Context) ([]*domain.RequestDBModel, error) {
-	rows, err := p.conn.Query(ctx,
-		`SELECT id, pickup_location, dropoff_location, compensation, passenger_id, notifs_crtd, created_at 
-		 FROM requests WHERE ride_id IS NULL`)
+func (p *postgresRidesRepository) GetActiveRideRequests(ctx context.Context, ids *[]string, ub_compensation *float64) ([]*domain.RequestDBModel, error) {
+	query := `SELECT id, pickup_location, dropoff_location, compensation, passenger_id, notifs_crtd, created_at 
+			  FROM requests 
+			  WHERE ride_id IS NULL`
+	args := []any{}
+	argIdx := 1
+
+	if ids != nil && len(*ids) > 0 {
+		query += fmt.Sprintf(` AND id = ANY($%d)`, argIdx)
+		args = append(args, *ids)
+		argIdx++
+	}
+	if ub_compensation != nil && *ub_compensation >= 0 {
+		query += fmt.Sprintf(` AND compensation <= $%d`, argIdx)
+		args = append(args, *ub_compensation)
+		argIdx++
+	}
+
+	rows, err := p.conn.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

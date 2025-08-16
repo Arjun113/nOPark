@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/Arjun113/nOPark/internal/domain"
 )
@@ -44,6 +45,10 @@ func (a *api) createRideRequestHandler(w http.ResponseWriter, r *http.Request) {
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 		return
 	}
+	if account.Type != "passenger" {
+		a.errorResponse(w, r, http.StatusForbidden, fmt.Errorf("only passengers can create ride requests"))
+		return
+	}
 
 	request := &domain.RequestDBModel{
 		PickupLocation:  req.PickupLocation,
@@ -72,6 +77,11 @@ func (a *api) createRideRequestHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+type GetRideRequestsRequest struct {
+	IDs          *[]string `json:"ids,omitempty"`
+	Compensation *float64  `json:"compensation,omitempty"`
+}
+
 type GetRideRequestsResponseIndividual struct {
 	ID              int64   `json:"id"`
 	PickupLocation  string  `json:"pickup_location"`
@@ -88,20 +98,34 @@ func (a *api) getRideRequestsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	// Authentication is already handled by the middleware
-	// We don't need to get the account here since we're just listing all active requests
+	var ub_compensation *float64 = nil
+	if compStr := r.URL.Query().Get("compensation"); compStr != "" {
+		if val, err := strconv.ParseFloat(compStr, 64); err == nil {
+			ub_compensation = &val
+		}
+	}
 
-	requests, err := a.ridesRepo.GetActiveRideRequests(ctx)
+	ids := r.URL.Query()["ids"]
+	req := GetRideRequestsRequest{
+		IDs:          &ids,
+		Compensation: ub_compensation,
+	}
+	if err := a.validateRequest(req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	ride_requests, err := a.ridesRepo.GetActiveRideRequests(ctx, req.IDs, req.Compensation)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
 	response := GetRideRequestsResponse{
-		Requests: make([]GetRideRequestsResponseIndividual, len(requests)),
+		Requests: make([]GetRideRequestsResponseIndividual, len(ride_requests)),
 	}
 
-	for i, req := range requests {
+	for i, req := range ride_requests {
 		response.Requests[i] = GetRideRequestsResponseIndividual{
 			ID:              req.ID,
 			PickupLocation:  req.PickupLocation,
