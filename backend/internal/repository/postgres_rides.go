@@ -99,6 +99,44 @@ func (p *postgresRidesRepository) CreateRideAndProposals(ctx context.Context, pr
 	return &ride, createdProposals, nil
 }
 
+func (p *postgresRidesRepository) GetRideAndProposals(ctx context.Context, rideID int64) (*domain.RideDBModel, []*domain.ProposalDBModel, error) {
+	var ride domain.RideDBModel
+	var proposals []*domain.ProposalDBModel
+
+	// Get the ride details
+	row := p.conn.QueryRow(ctx,
+		`SELECT id, status, created_at, updated_at FROM rides WHERE id = $1`,
+		rideID)
+
+	err := row.Scan(&ride.ID, &ride.Status, &ride.CreatedAt, &ride.UpdatedAt)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Get the proposals for the ride
+	rows, err := p.conn.Query(ctx,
+		`SELECT id, request_id, status, driver_id, ride_id, created_at, updated_at FROM proposals WHERE ride_id = $1`,
+		rideID)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var proposal domain.ProposalDBModel
+		if err := rows.Scan(&proposal.ID, &proposal.RequestID, &proposal.Status, &proposal.DriverID, &proposal.RideID, &proposal.CreatedAt, &proposal.UpdatedAt); err != nil {
+			return nil, nil, err
+		}
+		proposals = append(proposals, &proposal)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, nil, err
+	}
+
+	return &ride, proposals, nil
+}
+
 func (p *postgresRidesRepository) ConfirmRideProposal(ctx context.Context, proposal *domain.ProposalDBModel, confirm string) (*domain.ProposalDBModel, error) {
 	var status string
 	switch confirm {
@@ -124,14 +162,14 @@ func (p *postgresRidesRepository) ConfirmRideProposal(ctx context.Context, propo
 		`SELECT COALESCE(count(id),0) FROM proposals WHERE ride_id = $1 AND status = 'pending'`,
 		proposal.RideID)
 
-	var pending_count int64
-	err = row.Scan(&pending_count)
+	var pendingCount int64
+	err = row.Scan(&pendingCount)
 	if err != nil {
 		return nil, err
 	}
 
 	// Update ride status if all proposals responded.
-	if pending_count == 0 {
+	if pendingCount == 0 {
 		row := p.conn.QueryRow(ctx,
 			`SELECT COUNT(id), ARRAY_AGG(request_id)
 			FROM proposals
@@ -139,23 +177,23 @@ func (p *postgresRidesRepository) ConfirmRideProposal(ctx context.Context, propo
 			proposal.RideID,
 		)
 
-		var accepted_count int64
-		var accepted_request_ids []int64
-		err = row.Scan(&accepted_count, &accepted_request_ids)
+		var acceptedCount int64
+		var AcceptedReqIDs []int64
+		err = row.Scan(&acceptedCount, &AcceptedReqIDs)
 		if err != nil {
 			return nil, err
 		}
 
-		var ride_status string
-		if accepted_count == 0 {
-			ride_status = "rejected"
+		var rideStatus string
+		if acceptedCount == 0 {
+			rideStatus = "rejected"
 		} else {
-			ride_status = "in_progress"
+			rideStatus = "in_progress"
 
 			// Update requests to be undiscoverable
 			_, err = p.conn.Exec(ctx,
 				`UPDATE requests SET ride_id = $1 WHERE id = ANY($2)`,
-				proposal.RideID, accepted_request_ids)
+				proposal.RideID, AcceptedReqIDs)
 			if err != nil {
 				return nil, err
 			}
@@ -164,7 +202,7 @@ func (p *postgresRidesRepository) ConfirmRideProposal(ctx context.Context, propo
 		// Update ride status
 		_, err = p.conn.Exec(ctx,
 			`UPDATE rides SET status = $1 WHERE id = $2`,
-			ride_status, proposal.RideID)
+			rideStatus, proposal.RideID)
 		if err != nil {
 			return nil, err
 		}

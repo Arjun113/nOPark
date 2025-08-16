@@ -115,6 +115,7 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
+	ID         int64  `json:"id"`
 	Type       string `json:"type"`
 	Email      string `json:"email"`
 	FirstName  string `json:"first_name"`
@@ -164,6 +165,7 @@ func (a *api) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := LoginResponse{
+		ID:         account.ID,
 		Type:       account.Type,
 		Email:      account.Email,
 		FirstName:  account.FirstName,

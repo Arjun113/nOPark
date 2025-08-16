@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/Arjun113/nOPark/internal/domain"
+	"github.com/Arjun113/nOPark/internal/repository"
 )
 
 type CreateRideRequestRequest struct {
@@ -99,34 +100,34 @@ func (a *api) getRideRequestsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	var ub_compensation *float64 = nil
+	var ubCompensation *float64 = nil
 	if compStr := r.URL.Query().Get("compensation"); compStr != "" {
 		if val, err := strconv.ParseFloat(compStr, 64); err == nil {
-			ub_compensation = &val
+			ubCompensation = &val
 		}
 	}
 
 	ids := r.URL.Query()["ids"]
 	req := GetRideRequestsRequest{
 		IDs:          &ids,
-		Compensation: ub_compensation,
+		Compensation: ubCompensation,
 	}
 	if err := a.validateRequest(req); err != nil {
 		a.errorResponse(w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	ride_requests, err := a.ridesRepo.GetActiveRideRequests(ctx, req.IDs, req.Compensation)
+	rideRequests, err := a.ridesRepo.GetActiveRideRequests(ctx, req.IDs, req.Compensation)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
 	response := GetRideRequestsResponse{
-		Requests: make([]GetRideRequestsResponseIndividual, len(ride_requests)),
+		Requests: make([]GetRideRequestsResponseIndividual, len(rideRequests)),
 	}
 
-	for i, req := range ride_requests {
+	for i, req := range rideRequests {
 		response.Requests[i] = GetRideRequestsResponseIndividual{
 			ID:              req.ID,
 			PickupLocation:  req.PickupLocation,
@@ -197,19 +198,19 @@ func (a *api) createRideDraftHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		proposals = append(proposals, &proposal)
 	}
-	created_ride, created_proposals, err := a.ridesRepo.CreateRideAndProposals(ctx, proposals)
+	newRide, newProposals, err := a.ridesRepo.CreateRideAndProposals(ctx, proposals)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
 	response := CreateRideDraftResponse{
-		ID:        created_ride.ID,
-		Status:    created_ride.Status,
-		Proposals: make([]CreateRideProposalIndividual, len(created_proposals)),
+		ID:        newRide.ID,
+		Status:    newRide.Status,
+		Proposals: make([]CreateRideProposalIndividual, len(newProposals)),
 	}
 
-	for i, prop := range created_proposals {
+	for i, prop := range newProposals {
 		response.Proposals[i] = CreateRideProposalIndividual{
 			ID:        prop.ID,
 			RequestID: prop.RequestID,
@@ -306,6 +307,110 @@ func (a *api) confirmRideProposalHandler(w http.ResponseWriter, r *http.Request)
 		RideID:         ride.ID,
 		CreatedAt:      proposal.CreatedAt,
 		UpdatedAt:      proposal.UpdatedAt,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+type GetRideSummaryRequest struct {
+	RideID int64 `json:"ride_id" validate:"required"`
+}
+
+type GetRideRequestIndividual struct {
+	ID              int64   `json:"id"`
+	PickupLocation  string  `json:"pickup_location"`
+	DropoffLocation string  `json:"dropoff_location"`
+	Compensation    float64 `json:"compensation"`
+	PassengerID     int64   `json:"passenger_id"`
+}
+
+type GetRideProposalIndividual struct {
+	ID       int64                    `json:"id"`
+	Status   string                   `json:"status"`
+	DriverID int64                    `json:"driver_id"`
+	Request  GetRideRequestIndividual `json:"request"`
+}
+
+type GetRideSummaryResponse struct {
+	ID        int64                       `json:"id"`
+	Status    string                      `json:"status"`
+	Proposals []GetRideProposalIndividual `json:"proposals"`
+}
+
+func (a *api) getRideSummaryHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	isAllowed := false
+	var rideID *int64 = nil
+
+	session, ok := repository.GetSessionFromContext(r.Context())
+	if !ok {
+		a.errorResponse(w, r, http.StatusInternalServerError, fmt.Errorf("failed to get session from context"))
+		return
+	}
+
+	if rideStr := r.URL.Query().Get("ride_id"); rideStr != "" {
+		if val, err := strconv.ParseInt(rideStr, 10, 64); err == nil {
+			rideID = &val
+		}
+	}
+	if rideID == nil {
+		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("ride_id is required"))
+		return
+	}
+
+	req := GetRideSummaryRequest{
+		RideID: *rideID,
+	}
+	if err := a.validateRequest(req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	ride, proposals, err := a.ridesRepo.GetRideAndProposals(ctx, req.RideID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	response := GetRideSummaryResponse{
+		ID:        ride.ID,
+		Status:    ride.Status,
+		Proposals: make([]GetRideProposalIndividual, len(proposals)),
+	}
+
+	for i, proposal := range proposals {
+		rideRequest, err := a.ridesRepo.GetRequestByID(ctx, proposal.RequestID)
+		if err != nil {
+			a.errorResponse(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		response.Proposals[i] = GetRideProposalIndividual{
+			ID:       proposal.ID,
+			Status:   proposal.Status,
+			DriverID: proposal.DriverID,
+			Request: GetRideRequestIndividual{
+				ID:              rideRequest.ID,
+				PickupLocation:  rideRequest.PickupLocation,
+				DropoffLocation: rideRequest.DropoffLocation,
+				Compensation:    rideRequest.Compensation,
+				PassengerID:     rideRequest.PassengerID,
+			},
+		}
+
+		if rideRequest.PassengerID == session.AccountID || proposal.DriverID == session.AccountID {
+			isAllowed = true
+		}
+	}
+
+	// Check permissions
+	if !isAllowed {
+		a.errorResponse(w, r, http.StatusForbidden, fmt.Errorf("you do not have permission to view this ride summary"))
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
