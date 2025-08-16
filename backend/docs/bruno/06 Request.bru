@@ -1,0 +1,27 @@
+meta {
+  name: 06 Request
+  type: http
+  seq: 8
+}
+
+post {
+  url: http://localhost:4000/v1/rides/requests
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: imhzj765zmzfjp72irnts59k.2mh6x4z26iba3y6enfygayk6
+}
+
+body:json {
+  {
+    "pickup_location": "North Avenue Monash",
+    "dropoff_location": "East Avenue Monash",
+    "compensation": 4
+  }
+}
+
+settings {
+  encodeUrl: true
+}

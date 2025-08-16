@@ -66,6 +66,7 @@ func (a *api) Routes() *mux.Router {
 	// Public routes
 	r.HandleFunc("/v1/health", a.healthCheckHandler).Methods("GET")
 	r.HandleFunc("/v1/accounts", a.createUserHandler).Methods("POST")
+	r.HandleFunc("/v1/accounts/verify-email", a.verifyEmailHandler).Methods("POST")
 	r.HandleFunc("/v1/accounts/login", a.loginUserHandler).Methods("POST")
 	r.HandleFunc("/v1/accounts/request-password-reset", a.requestPasswordResetHandler).Methods("POST")
 	r.HandleFunc("/v1/accounts/reset-password", a.resetPasswordHandler).Methods("POST")
@@ -75,7 +76,6 @@ func (a *api) Routes() *mux.Router {
 	p.Use(repository.AuthMiddleware(a.accountsRepo))
 
 	// Protected account routes
-	p.HandleFunc("/v1/accounts/verify-email", a.verifyEmailHandler).Methods("POST")
 	p.HandleFunc("/v1/accounts", a.updateUserHandler).Methods("PUT")
 	p.HandleFunc("/v1/accounts", a.getUserHandler).Methods("GET")
 	p.HandleFunc("/v1/accounts/logout", a.logoutUserHandler).Methods("POST")

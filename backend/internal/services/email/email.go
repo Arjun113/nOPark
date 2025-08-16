@@ -8,7 +8,7 @@ import (
 )
 
 type Service struct {
-	host string
+	host     string
 	port     int
 	username string
 	password string

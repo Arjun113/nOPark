@@ -27,7 +27,6 @@ type CreateUserResponse struct {
 	FirstName  string `json:"first_name"`
 	MiddleName string `json:"middle_name"`
 	LastName   string `json:"last_name"`
-	Token      string `json:"token"`
 }
 
 func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -76,11 +75,25 @@ func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, token, secretHash := domain.GenerateSession()
-	_, err = a.accountsRepo.CreateSession(ctx, id, secretHash, createdAccount.ID)
+	token, err := domain.GenerateSecureToken()
 	if err != nil {
-		a.errorResponse(w, r, http.StatusInternalServerError, err)
-		return
+		a.logger.Error("Failed to generate email verification token", zap.Error(err))
+	} else {
+		expiresAt := domain.GetCurrentTimeRFC3339()
+		expiresAt, err = domain.AddTimeToRFC3339(expiresAt, 24*time.Hour)
+		if err != nil {
+			a.logger.Error("Failed to set email verification expiration", zap.Error(err))
+		} else {
+			err = a.accountsRepo.SetEmailVerificationToken(ctx, fmt.Sprintf("%d", createdAccount.ID), token, expiresAt)
+			if err != nil {
+				a.logger.Error("Failed to set email verification token", zap.Error(err))
+			} else {
+				err = a.emailService.SendEmailVerification(createdAccount.Email, token)
+				if err != nil {
+					a.logger.Error("Failed to send email verification", zap.Error(err))
+				}
+			}
+		}
 	}
 
 	response := CreateUserResponse{
@@ -89,7 +102,6 @@ func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 		FirstName:  createdAccount.FirstName,
 		MiddleName: createdAccount.MiddleName,
 		LastName:   createdAccount.LastName,
-		Token:      token,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -137,6 +149,10 @@ func (a *api) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if !domain.CheckPasswordHash(req.Password, account.PasswordHash) {
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("incorrect email or password"))
+		return
+	}
+	if !account.EmailVerified {
+		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("email not verified"))
 		return
 	}
 
@@ -221,6 +237,12 @@ type VerifyEmailRequest struct {
 	Token string `json:"token" validate:"required"`
 }
 
+type VerifyEmailResponse struct {
+	Message string `json:"message"`
+	Email   string `json:"email"`
+	Token   string `json:"token"`
+}
+
 func (a *api) verifyEmailHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -235,14 +257,28 @@ func (a *api) verifyEmailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := a.accountsRepo.VerifyEmail(ctx, req.Token)
+	account, err := a.accountsRepo.VerifyEmail(ctx, req.Token)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("invalid or expired verification token"))
 		return
 	}
 
+	id, token, secretHash := domain.GenerateSession()
+	_, err = a.accountsRepo.CreateSession(ctx, id, secretHash, account.ID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	response := &VerifyEmailResponse{
+		Message: "email verified successfully",
+		Email:   account.Email,
+		Token:   token,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "email verified successfully"})
+	json.NewEncoder(w).Encode(response)
 }
 
 type RequestPasswordResetRequest struct {
