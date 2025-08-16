@@ -14,7 +14,7 @@ import (
 
 type CreateUserRequest struct {
 	Type       string `json:"type" validate:"required,oneof=passenger driver"`
-	Email      string `json:"email" validate:"required,monash_email"`
+	Email      string `json:"email" validate:"required,email,monash_email"`
 	Password   string `json:"password" validate:"required,min=8"`
 	FirstName  string `json:"first_name" validate:"required"`
 	MiddleName string `json:"middle_name"`
@@ -98,7 +98,7 @@ func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type LoginRequest struct {
-	Email    string `json:"email" validate:"required,monash_email"`
+	Email    string `json:"email" validate:"required,email,monash_email"`
 	Password string `json:"password" validate:"required"`
 }
 
@@ -217,6 +217,7 @@ func (a *api) getUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type VerifyEmailRequest struct {
+	Email string `json:"email" validate:"required,email,monash_email"`
 	Token string `json:"token" validate:"required"`
 }
 
@@ -245,7 +246,7 @@ func (a *api) verifyEmailHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type RequestPasswordResetRequest struct {
-	Email string `json:"email" validate:"required,monash_email"`
+	Email string `json:"email" validate:"required,email,monash_email"`
 }
 
 func (a *api) requestPasswordResetHandler(w http.ResponseWriter, r *http.Request) {
@@ -407,7 +408,7 @@ func (a *api) changePasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 type UpdateUserRequest struct {
 	Type             string   `json:"type" validate:"omitempty,oneof=passenger driver"`
-	Email            string   `json:"email" validate:"monash_email"`
+	Email            string   `json:"email" validate:"email,monash_email"`
 	FirstName        string   `json:"first_name"`
 	MiddleName       string   `json:"middle_name"`
 	LastName         string   `json:"last_name"`
