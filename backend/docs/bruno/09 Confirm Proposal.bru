@@ -1,0 +1,26 @@
+meta {
+  name: 09 Confirm Proposal
+  type: http
+  seq: 10
+}
+
+post {
+  url: http://localhost:4000/v1/rides/confirm
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: 6q8fp43swsbizivs8v8dqmsb.scttdhhe9hpv5eyh329xt9bu
+}
+
+body:json {
+  {
+    "proposal_id": 7,
+    "confirm": "accept"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

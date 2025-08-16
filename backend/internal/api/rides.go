@@ -87,6 +87,7 @@ type GetRideRequestsResponseIndividual struct {
 	PickupLocation  string  `json:"pickup_location"`
 	DropoffLocation string  `json:"dropoff_location"`
 	Compensation    float64 `json:"compensation"`
+	PassengerID     int64   `json:"passenger_id"`
 	CreatedAt       string  `json:"created_at"`
 }
 
@@ -131,6 +132,7 @@ func (a *api) getRideRequestsHandler(w http.ResponseWriter, r *http.Request) {
 			PickupLocation:  req.PickupLocation,
 			DropoffLocation: req.DropoffLocation,
 			Compensation:    req.Compensation,
+			PassengerID:     req.PassengerID,
 			CreatedAt:       req.CreatedAt,
 		}
 	}
@@ -141,7 +143,7 @@ func (a *api) getRideRequestsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type CreateRideDraftRequest struct {
-	RequestIds []int64 `json:"ids" validate:"required"`
+	RequestIds []int64 `json:"request_ids" validate:"required"`
 }
 
 type CreateRideProposalIndividual struct {
@@ -149,7 +151,6 @@ type CreateRideProposalIndividual struct {
 	RequestID int64  `json:"request_id"`
 	Status    string `json:"status"`
 	DriverID  int64  `json:"driver_id"`
-	RideID    *int64 `json:"ride_id,omitempty"`
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
 }
@@ -214,7 +215,6 @@ func (a *api) createRideDraftHandler(w http.ResponseWriter, r *http.Request) {
 			RequestID: prop.RequestID,
 			Status:    prop.Status,
 			DriverID:  prop.DriverID,
-			RideID:    prop.RideID,
 			CreatedAt: prop.CreatedAt,
 			UpdatedAt: prop.UpdatedAt,
 		}
@@ -225,3 +225,90 @@ func (a *api) createRideDraftHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+type ConfirmRideProposalRequest struct {
+	ProposalID int64  `json:"proposal_id" validate:"required"`
+	Confirm    string `json:"confirm" validate:"required,oneof=accept reject"`
+}
+
+type ConfirmRideProposalResponse struct {
+	ID             int64  `json:"id"`
+	RequestID      int64  `json:"request_id"`
+	ProposalStatus string `json:"proposal_status"`
+	RideStatus     string `json:"ride_status"`
+	DriverID       int64  `json:"driver_id"`
+	RideID         int64  `json:"ride_id,omitempty"`
+	CreatedAt      string `json:"created_at"`
+	UpdatedAt      string `json:"updated_at"`
+}
+
+func (a *api) confirmRideProposalHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	var req ConfirmRideProposalRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := a.validateRequest(req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
+	if err != nil {
+		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
+		return
+	}
+	if account.Type != "passenger" {
+		a.errorResponse(w, r, http.StatusForbidden, fmt.Errorf("only passengers can respond to ride proposals"))
+		return
+	}
+
+	proposal, err := a.ridesRepo.GetProposalByID(ctx, req.ProposalID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	if proposal.Status != "pending" {
+		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("proposal is not in pending state"))
+		return
+	}
+
+	request, err := a.ridesRepo.GetRequestByID(ctx, proposal.RequestID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	if account.ID != request.PassengerID {
+		a.errorResponse(w, r, http.StatusForbidden, fmt.Errorf("you are not authorized to respond to this proposal"))
+		return
+	}
+
+	proposal, err = a.ridesRepo.ConfirmRideProposal(ctx, proposal, req.Confirm)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	ride, err := a.ridesRepo.GetRideByID(ctx, proposal.RideID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	response := ConfirmRideProposalResponse{
+		ID:             proposal.ID,
+		ProposalStatus: proposal.Status,
+		RideStatus:     ride.Status,
+		DriverID:       proposal.DriverID,
+		RideID:         ride.ID,
+		CreatedAt:      proposal.CreatedAt,
+		UpdatedAt:      proposal.UpdatedAt,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
