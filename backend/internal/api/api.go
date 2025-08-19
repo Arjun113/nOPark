@@ -23,7 +23,8 @@ type api struct {
 
 	accountsRepo domain.AccountsRepository
 	// mapsRepo          domain.MapsRepository
-	ridesRepo domain.RidesRepository
+	ridesRepo     domain.RidesRepository
+	ratelimitRepo domain.RatelimitRepository
 }
 
 func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
@@ -31,6 +32,7 @@ func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 	accountsRepo := repository.NewPostgresAccounts(pool)
 	// mapsRepo := repository.NewPostgresMaps(pool)
 	ridesRepo := repository.NewPostgresRides(pool)
+	ratelimitRepo := repository.NewPostgresRatelimit(pool)
 
 	client := &http.Client{}
 	emailService := email.NewService()
@@ -45,7 +47,8 @@ func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 
 		accountsRepo: accountsRepo,
 		// mapsRepo:  mapsRepo,
-		ridesRepo: ridesRepo,
+		ridesRepo:     ridesRepo,
+		ratelimitRepo: ratelimitRepo,
 	}
 }
 
@@ -62,6 +65,7 @@ func (a *api) Routes() *mux.Router {
 	// Apply global middleware
 	r.Use(repository.NewLoggingMiddleware(a.logger))
 	r.Use(repository.RequestIdMiddleware)
+	r.Use(repository.RateLimitMiddleware(a.ratelimitRepo, a.logger))
 
 	// Public routes
 	r.HandleFunc("/v1/health", a.healthCheckHandler).Methods("GET")
@@ -91,6 +95,10 @@ func (a *api) Routes() *mux.Router {
 	// p.HandleFunc("/rides/{rideID}", a.getRideHandler).Methods("GET")
 	// p.HandleFunc("/rides/{rideID}", a.updateRideHandler).Methods("PUT")
 	// p.HandleFunc("/rides/{rideID}", a.deleteRideHandler).Methods("DELETE")
+
+	// Admin IP management routes (protected by admin check within handlers)
+	p.HandleFunc("/v1/admin/ip/block", a.blockIPHandler).Methods("POST")
+	p.HandleFunc("/v1/admin/ip/unblock", a.unblockIPHandler).Methods("GET")
 
 	// Protected map routes (commented out for now)
 	// p.HandleFunc("/maps", a.listMapsHandler).Methods("GET")

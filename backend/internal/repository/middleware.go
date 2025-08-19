@@ -2,6 +2,9 @@ package repository
 
 import (
 	"context"
+	"fmt"
+	"math"
+	"math/rand"
 	"net"
 	"net/http"
 	"strings"
@@ -137,4 +140,130 @@ func AuthMiddleware(accountsRepo domain.AccountsRepository) func(http.Handler) h
 func GetSessionFromContext(ctx context.Context) (*domain.SessionDBModel, bool) {
 	session, ok := ctx.Value(sessionContextKey).(*domain.SessionDBModel)
 	return session, ok
+}
+
+// RateLimitMiddleware implements token bucket algorithm for rate limiting API requests (incls IP blocking)
+func RateLimitMiddleware(repo domain.RatelimitRepository, logger *zap.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			if r.URL.Path == "/v1/health" {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			ip := getClientIP(r)
+			print(ip)
+
+			blocked, expiresAt, err := repo.IsIPBlocked(r.Context(), ip)
+			if err != nil {
+				logger.Error("Failed to check IP block status", zap.Error(err))
+			} else if blocked {
+				w.Header().Set("Retry-After", fmt.Sprintf("%d", int(time.Until(expiresAt).Seconds())))
+				http.Error(w, "IP is blocked.", http.StatusTooManyRequests)
+				return
+			}
+
+			// Occasionally clean up expired IP blocks (0.1% chance per request)
+			if rand.Float64() < 0.001 {
+				go func() {
+					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+					defer cancel()
+					count, err := repo.CleanupExpiredBlocks(ctx)
+					if err != nil {
+						logger.Error("Failed to clean up expired IP blocks", zap.Error(err))
+					} else if count > 0 {
+						logger.Info("Cleaned up expired IP blocks", zap.Int("count", count))
+					}
+				}()
+			}
+
+			// Get or create rate limit record for this IP
+			record, err := repo.GetRateLimit(r.Context(), ip)
+			if err != nil {
+				logger.Error("Failed to get rate limit record", zap.Error(err))
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// Apply token bucket algorithm
+			now := time.Now()
+			timePassed := now.Sub(record.LastRequest).Seconds()
+			tokensToAdd := timePassed * domain.DefaultRateLimitConfig.TokensPerSec
+
+			// Add tokens based on time passed, up to the maximum
+			newTokens := record.Tokens + tokensToAdd
+			if newTokens > domain.DefaultRateLimitConfig.MaxTokens {
+				newTokens = domain.DefaultRateLimitConfig.MaxTokens
+			}
+
+			// Check if enough tokens are available
+			if newTokens < 1.0 {
+				// Not enough tokens, reject the request
+				// If severely abusing limits, block the IP
+				if newTokens < -5.0 {
+					err = repo.BlockIP(r.Context(), ip, "Rate limit exceeded", domain.DefaultRateLimitConfig.BlockDuration)
+					if err != nil {
+						logger.Error("Failed to block IP", zap.Error(err))
+					} else {
+						logger.Warn("IP blocked for excessive requests",
+							zap.String("ip", ip),
+							zap.Duration("duration", domain.DefaultRateLimitConfig.BlockDuration))
+					}
+				}
+
+				// Calculate time needed to get 1 token
+				retryAfter := int(math.Ceil((1.0 - newTokens) / domain.DefaultRateLimitConfig.TokensPerSec))
+
+				// Set rate limit headers
+				w.Header().Set("Retry-After", fmt.Sprintf("%d", retryAfter))
+				w.Header().Set("X-RateLimit-Limit", fmt.Sprintf("%d", int(domain.DefaultRateLimitConfig.MaxTokens)))
+				w.Header().Set("X-RateLimit-Remaining", "0")
+
+				// Return 429 Too Many Requests
+				http.Error(w, "Rate limit exceeded. Please slow down your requests.", http.StatusTooManyRequests)
+
+				// Update the record with negative tokens to track abuse
+				record.Tokens = newTokens
+				record.LastRequest = now
+				if err := repo.UpdateRateLimit(r.Context(), record); err != nil {
+					logger.Error("Failed to update rate limit", zap.Error(err))
+				}
+
+				return
+			}
+
+			// Consume one token and update the record
+			record.Tokens = newTokens - 1.0
+			record.LastRequest = now
+			if err := repo.UpdateRateLimit(r.Context(), record); err != nil {
+				logger.Error("Failed to update rate limit", zap.Error(err))
+			}
+
+			// Set rate limit headers
+			w.Header().Set("X-RateLimit-Limit", fmt.Sprintf("%d", int(domain.DefaultRateLimitConfig.MaxTokens)))
+			w.Header().Set("X-RateLimit-Remaining", fmt.Sprintf("%d", int(math.Floor(record.Tokens))))
+
+			// Process the request
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// getClientIP extracts the client's real IP address
+func getClientIP(r *http.Request) string {
+	// Check for X-Forwarded-For header first (for proxies)
+	ip := r.Header.Get("X-Forwarded-For")
+	if ip != "" {
+		// X-Forwarded-For can contain multiple IPs; use the first one
+		ips := strings.Split(ip, ",")
+		return strings.TrimSpace(ips[0])
+	}
+
+	// Fallback to RemoteAddr
+	if ip, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+		return ip
+	}
+
+	return r.RemoteAddr
 }

@@ -13,7 +13,7 @@ import (
 )
 
 type CreateUserRequest struct {
-	Type       string `json:"type" validate:"required,oneof=passenger driver"`
+	Type       string `json:"type" validate:"required,oneof=passenger driver admin"`
 	Email      string `json:"email" validate:"required,email,monash_email"`
 	Password   string `json:"password" validate:"required,min=8"`
 	FirstName  string `json:"first_name" validate:"required"`
