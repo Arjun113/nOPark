@@ -41,3 +41,7 @@ migrate-status:
 
 migrate-version:
 	go run cmd/nOPark/main.go migrate version
+
+# Other commands
+scheduler:
+	go run cmd/nOPark/main.go scheduler

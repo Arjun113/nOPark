@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"math/rand"
 	"net"
 	"net/http"
 	"strings"
@@ -162,20 +161,6 @@ func RateLimitMiddleware(repo domain.RatelimitRepository, logger *zap.Logger) fu
 				w.Header().Set("Retry-After", fmt.Sprintf("%d", int(time.Until(expiresAt).Seconds())))
 				http.Error(w, "IP is blocked.", http.StatusTooManyRequests)
 				return
-			}
-
-			// Occasionally clean up expired IP blocks (0.1% chance per request)
-			if rand.Float64() < 0.001 {
-				go func() {
-					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-					defer cancel()
-					count, err := repo.CleanupExpiredBlocks(ctx)
-					if err != nil {
-						logger.Error("Failed to clean up expired IP blocks", zap.Error(err))
-					} else if count > 0 {
-						logger.Info("Cleaned up expired IP blocks", zap.Int("count", count))
-					}
-				}()
 			}
 
 			// Get or create rate limit record for this IP
