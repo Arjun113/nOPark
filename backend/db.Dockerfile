@@ -15,6 +15,7 @@ ENV POSTGRES_DB=nOPark
 # Create initialization script to enable extensions
 RUN echo "CREATE EXTENSION IF NOT EXISTS postgis;" > /docker-entrypoint-initdb.d/init.sql && \
     echo "CREATE EXTENSION IF NOT EXISTS pgrouting;" >> /docker-entrypoint-initdb.d/init.sql && \
+    echo "CREATE EXTENSION IF NOT EXISTS hstore;" >> /docker-entrypoint-initdb.d/init.sql && \
     chown postgres:postgres /docker-entrypoint-initdb.d/init.sql
 
 CMD ["/usr/local/bin/docker-entrypoint.sh","postgres"]

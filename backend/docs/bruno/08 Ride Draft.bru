@@ -1,0 +1,25 @@
+meta {
+  name: 08 Ride Draft
+  type: http
+  seq: 10
+}
+
+post {
+  url: http://localhost:4000/v1/rides/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: aubnhbue3nmpntwi7f75aeb2.5wkzgtmwhvcpcasejhtrt44a
+}
+
+body:json {
+  {
+    "ids": [1,2]
+  }
+}
+
+settings {
+  encodeUrl: true
+}

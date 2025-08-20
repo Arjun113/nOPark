@@ -6,7 +6,7 @@ To reset everything, copy paste all of these commands and hit enter:
 
 ```sh
 docker compose down --volumes
-docker compose up --detach
+docker compose up --detach --build --force-recreate
 sleep 5
 make migrate-up
 make api

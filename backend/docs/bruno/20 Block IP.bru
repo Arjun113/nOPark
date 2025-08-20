@@ -1,0 +1,29 @@
+meta {
+  name: 20 Block IP
+  type: http
+  seq: 12
+}
+
+post {
+  url: http://localhost:4000/v1/admin/ip/block
+  body: json
+  auth: bearer
+}
+
+headers {
+  ~X-Forwarded-For: 191.123.141.250
+}
+
+auth:bearer {
+  token: sirrvq6a46t85s5fe44hk78m.3xhgkby25bwvkwui2r5nqm35
+}
+
+body:json {
+  {
+    "ip_address": "191.123.141.250"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

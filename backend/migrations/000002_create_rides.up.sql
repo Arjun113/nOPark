@@ -2,7 +2,7 @@
 
 CREATE TABLE rides (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    status VARCHAR(50) NOT NULL DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'completed')),
+    status VARCHAR(50) NOT NULL DEFAULT 'awaiting_confirmation' CHECK (status IN ('awaiting_confirmation', 'in_progress', 'completed', 'rejected')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
@@ -23,9 +23,10 @@ CREATE TABLE proposals (
     request_id BIGINT NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
     status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
     driver_id BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-    ride_id BIGINT REFERENCES rides(id) ON DELETE CASCADE,
+    ride_id BIGINT NOT NULL REFERENCES rides(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE (request_id, ride_id)
 );
 
 -- Indices -------------------------------------------------------

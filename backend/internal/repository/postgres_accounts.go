@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"crypto/subtle"
+	"fmt"
 	"strings"
 	"time"
 
@@ -37,13 +38,13 @@ func (p *postgresAccountsRepository) CreateAccount(ctx context.Context, acc *dom
 
 func (p *postgresAccountsRepository) GetAccountByEmail(ctx context.Context, email string) (*domain.AccountDBModel, error) {
 	row := p.conn.QueryRow(ctx,
-		`SELECT id, type, email, firstname, middlename, lastname, email_verified,
+		`SELECT id, type, email, password_hash, firstname, middlename, lastname, email_verified,
 		        current_latitude, current_longitude, created_at, updated_at 
 		 FROM accounts WHERE email = $1`,
 		email)
 
 	var account domain.AccountDBModel
-	err := row.Scan(&account.ID, &account.Type, &account.Email, &account.FirstName, &account.MiddleName, 
+	err := row.Scan(&account.ID, &account.Type, &account.Email, &account.PasswordHash, &account.FirstName, &account.MiddleName,
 		&account.LastName, &account.EmailVerified, &account.CurrentLatitude, &account.CurrentLongitude,
 		&account.CreatedAt, &account.UpdatedAt)
 	if err != nil {
@@ -58,13 +59,13 @@ func (p *postgresAccountsRepository) GetAccountByEmail(ctx context.Context, emai
 
 func (p *postgresAccountsRepository) GetAccountByID(ctx context.Context, accountID int64) (*domain.AccountDBModel, error) {
 	row := p.conn.QueryRow(ctx,
-		`SELECT id, type, email, firstname, middlename, lastname, email_verified,
+		`SELECT id, type, email, password_hash, firstname, middlename, lastname, email_verified,
 		        current_latitude, current_longitude, created_at, updated_at 
 		 FROM accounts WHERE id = $1`,
 		accountID)
 
 	var account domain.AccountDBModel
-	err := row.Scan(&account.ID, &account.Type, &account.Email, &account.FirstName, &account.MiddleName, 
+	err := row.Scan(&account.ID, &account.Type, &account.Email, &account.PasswordHash, &account.FirstName, &account.MiddleName,
 		&account.LastName, &account.EmailVerified, &account.CurrentLatitude, &account.CurrentLongitude,
 		&account.CreatedAt, &account.UpdatedAt)
 	if err != nil {
@@ -90,7 +91,7 @@ func (p *postgresAccountsRepository) GetAccountsByType(ctx context.Context, acco
 	var accounts []*domain.AccountDBModel
 	for rows.Next() {
 		var account domain.AccountDBModel
-		err := rows.Scan(&account.ID, &account.Type, &account.Email, &account.FirstName, &account.MiddleName, 
+		err := rows.Scan(&account.ID, &account.Type, &account.Email, &account.FirstName, &account.MiddleName,
 			&account.LastName, &account.EmailVerified, &account.CurrentLatitude, &account.CurrentLongitude,
 			&account.CreatedAt, &account.UpdatedAt)
 		if err != nil {
@@ -159,8 +160,8 @@ func (p *postgresAccountsRepository) UpdateAccount(ctx context.Context, acc *dom
 		acc.ID)
 
 	var account domain.AccountDBModel
-	err := row.Scan(&account.ID, &account.Type, &account.Email, &account.FirstName, &account.MiddleName, &account.LastName, 
-		&account.EmailVerified, &account.CurrentLatitude, &account.CurrentLongitude, 
+	err := row.Scan(&account.ID, &account.Type, &account.Email, &account.FirstName, &account.MiddleName, &account.LastName,
+		&account.EmailVerified, &account.CurrentLatitude, &account.CurrentLongitude,
 		&account.CreatedAt, &account.UpdatedAt)
 	if err != nil {
 		return nil, err
@@ -174,7 +175,7 @@ func (p *postgresAccountsRepository) SetEmailVerificationToken(ctx context.Conte
 	if err != nil {
 		return err
 	}
-	
+
 	_, err = p.conn.Exec(ctx,
 		"UPDATE accounts SET email_verification_token = $1, email_verification_expires_at = $2 WHERE id = $3",
 		token, expiresAtTime, accountID)
@@ -202,7 +203,7 @@ func (p *postgresAccountsRepository) SetPasswordResetToken(ctx context.Context, 
 	if err != nil {
 		return err
 	}
-	
+
 	_, err = p.conn.Exec(ctx,
 		"UPDATE accounts SET password_reset_token = $1, password_reset_expires_at = $2 WHERE email = $3",
 		token, expiresAtTime, email)
@@ -226,9 +227,27 @@ func (p *postgresAccountsRepository) ResetPassword(ctx context.Context, token, n
 }
 
 func (p *postgresAccountsRepository) ChangePassword(ctx context.Context, accountID int64, newPasswordHash string) error {
-	_, err := p.conn.Exec(ctx, "UPDATE accounts SET password_hash = $1 WHERE id = $2", 
+	_, err := p.conn.Exec(ctx, "UPDATE accounts SET password_hash = $1 WHERE id = $2",
 		newPasswordHash, accountID)
 	return err
+}
+
+// GetAccountFromSession retrieves the account using the session stored in context
+func (p *postgresAccountsRepository) GetAccountFromSession(ctx context.Context) (*domain.AccountDBModel, error) {
+	session, ok := GetSessionFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("no session found in context")
+	}
+
+	account, err := p.GetAccountByID(ctx, session.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	if account == nil {
+		return nil, fmt.Errorf("account not found")
+	}
+
+	return account, nil
 }
 
 func (p *postgresAccountsRepository) ValidateSessionToken(ctx context.Context, token string) (*domain.SessionDBModel, error) {
@@ -238,28 +257,28 @@ func (p *postgresAccountsRepository) ValidateSessionToken(ctx context.Context, t
 	if len(parts) != 2 {
 		return nil, nil // Invalid token format
 	}
-	
+
 	sessionID := parts[0]
 	secret := parts[1]
-	
+
 	// Get session from database
 	session, err := p.GetSession(ctx, sessionID)
 	if err != nil || session == nil {
 		return nil, err
 	}
-	
+
 	// Verify the secret hash
 	secretHash := sha256.Sum256([]byte(secret))
 	if subtle.ConstantTimeCompare(session.SecretHash, secretHash[:]) != 1 {
 		return nil, nil // Invalid token
 	}
-	
+
 	return session, nil
 }
 
 func (p *postgresAccountsRepository) CleanupExpiredSessions(ctx context.Context) error {
 	// Delete sessions older than 7 days
-	_, err := p.conn.Exec(ctx, 
+	_, err := p.conn.Exec(ctx,
 		"DELETE FROM sessions WHERE created_at < NOW() - INTERVAL '7 days'")
 	return err
 }

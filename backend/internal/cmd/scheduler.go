@@ -31,6 +31,7 @@ func SchedulerCmd(ctx context.Context) *cobra.Command {
 
 			accountRepo := repository.NewPostgresAccounts(db)
 			notificationRepo := repository.NewPostgresNotifications(db)
+			ratelimitRepo := repository.NewPostgresRatelimit(db)
 
 			s := gocron.NewScheduler(time.UTC)
 			s.SetMaxConcurrentJobs(2, gocron.WaitMode)
@@ -40,6 +41,21 @@ func SchedulerCmd(ctx context.Context) *cobra.Command {
 			})
 			if err != nil {
 				return fmt.Errorf("failed to schedule notification job: %w", err)
+			}
+
+			// Schedule cleanup of expired IP blocks every 5 minutes
+			_, err = s.Every(5).Seconds().Do(func() {
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				count, err := ratelimitRepo.CleanupExpiredBlocks(ctx)
+				if err != nil {
+					logger.Error("Failed to clean up expired IP blocks", zap.Error(err))
+				} else if count > 0 {
+					logger.Info("Cleaned up expired IP blocks", zap.Int("count", count))
+				}
+			})
+			if err != nil {
+				return fmt.Errorf("failed to schedule IP block cleanup job: %w", err)
 			}
 
 			logger.Info("scheduler started - checking for new ride requests every 5 seconds")
@@ -123,7 +139,7 @@ func createNotificationsForNewRideRequests(ctx context.Context, logger *zap.Logg
 		}
 	}
 
-	logger.Info("notifications created", 
+	logger.Info("notifications created",
 		zap.Int("total_created", notificationsCreated),
 		zap.Int("requests_processed", len(newRequests)))
 }

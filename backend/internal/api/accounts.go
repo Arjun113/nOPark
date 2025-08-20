@@ -5,16 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/Arjun113/nOPark/internal/domain"
+	"github.com/Arjun113/nOPark/internal/repository"
 	"go.uber.org/zap"
 )
 
 type CreateUserRequest struct {
-	Type       string `json:"type" validate:"required,oneof=passenger driver"`
-	Email      string `json:"email" validate:"required,email"`
+	Type       string `json:"type" validate:"required,oneof=passenger driver admin"`
+	Email      string `json:"email" validate:"required,email,monash_email"`
 	Password   string `json:"password" validate:"required,min=8"`
 	FirstName  string `json:"first_name" validate:"required"`
 	MiddleName string `json:"middle_name"`
@@ -22,12 +22,11 @@ type CreateUserRequest struct {
 }
 
 type CreateUserResponse struct {
-	Type      string          `json:"type"`
-	Email     string          `json:"email"`
-	FirstName string          `json:"first_name"`
-	MiddleName string         `json:"middle_name"`
-	LastName  string          `json:"last_name"`
-	Token   string          `json:"token"`
+	Type       string `json:"type"`
+	Email      string `json:"email"`
+	FirstName  string `json:"first_name"`
+	MiddleName string `json:"middle_name"`
+	LastName   string `json:"last_name"`
 }
 
 func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -76,20 +75,33 @@ func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, token, secretHash := domain.GenerateSession()
-	_, err = a.accountsRepo.CreateSession(ctx, id, secretHash, createdAccount.ID)
+	token, err := domain.GenerateSecureToken()
 	if err != nil {
-		a.errorResponse(w, r, http.StatusInternalServerError, err)
-		return
+		a.logger.Error("Failed to generate email verification token", zap.Error(err))
+	} else {
+		expiresAt := domain.GetCurrentTimeRFC3339()
+		expiresAt, err = domain.AddTimeToRFC3339(expiresAt, 24*time.Hour)
+		if err != nil {
+			a.logger.Error("Failed to set email verification expiration", zap.Error(err))
+		} else {
+			err = a.accountsRepo.SetEmailVerificationToken(ctx, fmt.Sprintf("%d", createdAccount.ID), token, expiresAt)
+			if err != nil {
+				a.logger.Error("Failed to set email verification token", zap.Error(err))
+			} else {
+				err = a.emailService.SendEmailVerification(createdAccount.Email, token)
+				if err != nil {
+					a.logger.Error("Failed to send email verification", zap.Error(err))
+				}
+			}
+		}
 	}
 
 	response := CreateUserResponse{
-		Type:      createdAccount.Type,
-		Email:     createdAccount.Email,
-		FirstName: createdAccount.FirstName,
+		Type:       createdAccount.Type,
+		Email:      createdAccount.Email,
+		FirstName:  createdAccount.FirstName,
 		MiddleName: createdAccount.MiddleName,
-		LastName:  createdAccount.LastName,
-		Token: token,
+		LastName:   createdAccount.LastName,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -97,19 +109,19 @@ func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-
 type LoginRequest struct {
-	Email    string `json:"email" validate:"required,email"`
+	Email    string `json:"email" validate:"required,email,monash_email"`
 	Password string `json:"password" validate:"required"`
 }
 
 type LoginResponse struct {
-	Type      string          `json:"type"`
-	Email     string          `json:"email"`
-	FirstName string          `json:"first_name"`
-	MiddleName string         `json:"middle_name"`
-	LastName  string          `json:"last_name"`
-	Token   string          `json:"token"`
+	ID         int64  `json:"id"`
+	Type       string `json:"type"`
+	Email      string `json:"email"`
+	FirstName  string `json:"first_name"`
+	MiddleName string `json:"middle_name"`
+	LastName   string `json:"last_name"`
+	Token      string `json:"token"`
 }
 
 func (a *api) loginUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -136,9 +148,12 @@ func (a *api) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("incorrect email or password"))
 		return
 	}
-
 	if !domain.CheckPasswordHash(req.Password, account.PasswordHash) {
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("incorrect email or password"))
+		return
+	}
+	if !account.EmailVerified {
+		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("email not verified"))
 		return
 	}
 
@@ -150,12 +165,13 @@ func (a *api) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := LoginResponse{
-		Type:      account.Type,
-		Email:     account.Email,
-		FirstName: account.FirstName,
+		ID:         account.ID,
+		Type:       account.Type,
+		Email:      account.Email,
+		FirstName:  account.FirstName,
 		MiddleName: account.MiddleName,
-		LastName:  account.LastName,
-		Token: token,
+		LastName:   account.LastName,
+		Token:      token,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -164,31 +180,19 @@ func (a *api) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *api) logoutUserHandler(w http.ResponseWriter, r *http.Request) {
-	var sessionToken string
-
-	authHeader := r.Header.Get("Authorization")
-	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
-		sessionToken = strings.TrimPrefix(authHeader, "Bearer ")
-	} else {
-		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("auth token is required"))
+	session, ok := repository.GetSessionFromContext(r.Context())
+	if !ok {
+		a.errorResponse(w, r, http.StatusInternalServerError, fmt.Errorf("failed to get session from context"))
 		return
 	}
 
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	session, err := a.accountsRepo.ValidateSessionToken(ctx, sessionToken)
+	err := a.accountsRepo.DeleteSession(ctx, session.ID)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return
-	}
-
-	if session != nil {
-		err = a.accountsRepo.DeleteSession(ctx, session.ID)
-		if err != nil {
-			a.errorResponse(w, r, http.StatusInternalServerError, err)
-			return
-		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -208,7 +212,7 @@ type GetUserResponse struct {
 }
 
 func (a *api) getUserHandler(w http.ResponseWriter, r *http.Request) {
-	account, err := a.getUserFromAuthHeader(r)
+	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
 	if err != nil {
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 		return
@@ -224,14 +228,21 @@ func (a *api) getUserHandler(w http.ResponseWriter, r *http.Request) {
 		CurrentLatitude:  account.CurrentLatitude,
 		CurrentLongitude: account.CurrentLongitude,
 	}
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
 
 type VerifyEmailRequest struct {
+	Email string `json:"email" validate:"required,email,monash_email"`
 	Token string `json:"token" validate:"required"`
+}
+
+type VerifyEmailResponse struct {
+	Message string `json:"message"`
+	Email   string `json:"email"`
+	Token   string `json:"token"`
 }
 
 func (a *api) verifyEmailHandler(w http.ResponseWriter, r *http.Request) {
@@ -248,18 +259,32 @@ func (a *api) verifyEmailHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := a.accountsRepo.VerifyEmail(ctx, req.Token)
+	account, err := a.accountsRepo.VerifyEmail(ctx, req.Token)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("invalid or expired verification token"))
 		return
 	}
 
+	id, token, secretHash := domain.GenerateSession()
+	_, err = a.accountsRepo.CreateSession(ctx, id, secretHash, account.ID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	response := &VerifyEmailResponse{
+		Message: "email verified successfully",
+		Email:   account.Email,
+		Token:   token,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "email verified successfully"})
+	json.NewEncoder(w).Encode(response)
 }
 
 type RequestPasswordResetRequest struct {
-	Email string `json:"email" validate:"required,email"`
+	Email string `json:"email" validate:"required,email,monash_email"`
 }
 
 func (a *api) requestPasswordResetHandler(w http.ResponseWriter, r *http.Request) {
@@ -370,7 +395,7 @@ func (a *api) changePasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account, err := a.getUserFromAuthHeader(r)
+	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
 	if err != nil {
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 		return
@@ -421,7 +446,7 @@ func (a *api) changePasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 type UpdateUserRequest struct {
 	Type             string   `json:"type" validate:"omitempty,oneof=passenger driver"`
-	Email            string   `json:"email" validate:"email"`
+	Email            string   `json:"email" validate:"email,monash_email"`
 	FirstName        string   `json:"first_name"`
 	MiddleName       string   `json:"middle_name"`
 	LastName         string   `json:"last_name"`
@@ -445,7 +470,7 @@ func (a *api) updateUserHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	account, err := a.getUserFromAuthHeader(r)
+	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
 	if err != nil {
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 		return
@@ -564,34 +589,4 @@ func (a *api) updateUserHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
-}
-
-func (a *api) getUserFromAuthHeader(r *http.Request) (*domain.AccountDBModel, error) {
-	ctx := r.Context()
-	var sessionToken string
-
-	authHeader := r.Header.Get("Authorization")
-	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
-		sessionToken = strings.TrimPrefix(authHeader, "Bearer ")
-	} else {
-		return nil, fmt.Errorf("no session token provided")
-	}
-
-	session, err := a.accountsRepo.ValidateSessionToken(ctx, sessionToken)
-	if err != nil {
-		return nil, err
-	}
-	if session == nil {
-		return nil, fmt.Errorf("invalid session")
-	}
-
-	account, err := a.accountsRepo.GetAccountByID(ctx, session.AccountID)
-	if err != nil {
-		return nil, err
-	}
-	if account == nil {
-		return nil, fmt.Errorf("account not found")
-	}
-
-	return account, nil
 }
