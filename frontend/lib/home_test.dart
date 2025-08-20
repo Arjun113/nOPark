@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:nopark/features/feeds/presentation/screens/test_home.dart';
 
 import 'features/trip/entities/user.dart';
@@ -26,6 +27,7 @@ class MyApp extends StatelessWidget {
       title: 'Disclaimer Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        appBarTheme: AppBarTheme(systemOverlayStyle: SystemUiOverlayStyle.light)
       ),
       home: HomePage(
           user: test_user,

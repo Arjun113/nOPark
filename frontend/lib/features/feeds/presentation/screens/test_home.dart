@@ -1,22 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart';
-import 'package:nopark/features/feeds/presentation/widgets/where_next_location_picker.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_scroller.dart';
 import 'package:nopark/features/trip/entities/user.dart';
+import 'package:nopark/features/feeds/presentation/widgets/where_next_location_picker.dart';
 
-class HomePage extends StatelessWidget {
+import '../widgets/base_where_next.dart';
+
+class HomePage extends StatefulWidget {
   final User user;
   final List<Map<String, dynamic>> addresses;
 
   const HomePage({
     super.key,
     required this.user,
-    required this.addresses
+    required this.addresses,
   });
 
-  List<AddressCardData> convertListToAddressCard() {
-    return addresses.map((elem) => AddressCardData(name: elem['name'], line1: elem['line1'], line2: elem['line2'], editing: false)).toList();
+  @override
+  State<HomePage> createState() => _HomePageState();
 }
+
+class _HomePageState extends State<HomePage> {
+  bool isExpanded = false;
+  OverlayEntry? whereNextOverlay;
+  final GlobalKey<WhereNextState> whereNextKey = GlobalKey<WhereNextState>();
+
+  get collapse => null;
+
+  List<AddressCardData> convertListToAddressCard() {
+    return widget.addresses
+        .map((elem) => AddressCardData(
+      name: elem['name'],
+      line1: elem['line1'],
+      line2: elem['line2'],
+      editing: false,
+    ))
+        .toList();
+  }
+
+  void toggleExpansion() {
+    setState(() {
+      isExpanded = !isExpanded;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,28 +52,15 @@ class HomePage extends StatelessWidget {
           // Background map
           FullScreenMap(),
 
-          // Greeting + profile picture
-          Positioned(
-            top: 60,
-            left: 20,
-            child: Text(
-              "Hello ${user.firstName}",
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+          // Detect taps outside when expanded
+          if (isExpanded)
+            GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: collapse,
+              child: Container(color: Colors.transparent),
             ),
-          ),
-          Positioned(
-            top: 50,
-            right: 20,
-            child: CircleAvatar(
-              radius: 24,
-              backgroundImage: AssetImage(user.imageUrl),
-            ),
-          ),
 
-          // Bottom card with buttons
+          // Bottom card with View Past Rides
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
@@ -59,49 +72,64 @@ class HomePage extends StatelessWidget {
                 elevation: 8,
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Existing Where to next button
-                      WhereToNextWidget(
-                          userName: user.firstName,
-                          profileURL: user.imageUrl,
-                          addresses: convertListToAddressCard(),
-                          onAddressSelected: ((String x) => "x")
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // View past rides button
-                      GestureDetector(
-                        onTap: null,
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: const [
-                              Icon(Icons.directions_car),
-                              SizedBox(width: 8),
-                              Text(
-                                "View Past Rides",
-                                style: TextStyle(fontSize: 16),
-                              ),
-                              Spacer(),
-                              Icon(Icons.arrow_forward_ios, size: 16),
-                            ],
-                          ),
+                  child: Column (
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    WhereNext(user: widget.user, addresses: [], state: true),
+                    GestureDetector(
+                      onTap: null,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: const [
+                            Icon(Icons.directions_car),
+                            SizedBox(width: 8),
+                            Text(
+                              "View Past Rides",
+                              style: TextStyle(fontSize: 20),
+                            ),
+                            Spacer(),
+                            Icon(Icons.arrow_forward_ios, size: 16),
+                          ],
                         ),
                       ),
+                    )
                     ],
-                  ),
+                  )
                 ),
               ),
             ),
           ),
+
+
+          // Greeting + profile picture (hidden when expanded to avoid overlap)
+          if (!isExpanded) ...[
+            Positioned(
+              top: 60,
+              left: 30,
+              child: Text(
+                "Hello ${widget.user.firstName}",
+                style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Roboto'),
+              ),
+            ),
+            Positioned(
+              top: 55,
+              right: 30,
+              child: CircleAvatar(
+                radius: 24,
+                backgroundImage: NetworkImage(widget.user.imageUrl),
+              ),
+            ),
+          ]
         ],
       ),
     );

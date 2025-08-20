@@ -27,7 +27,7 @@ class FullScreenMap extends StatelessWidget {
       body: FlutterMap(
         options: MapOptions(
           initialCenter: LatLng(-37.907803, 145.133957),
-          initialZoom: 5
+          initialZoom: 15
         ),
         children: [
           TileLayer(
