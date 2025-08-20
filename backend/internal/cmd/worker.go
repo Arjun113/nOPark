@@ -12,6 +12,7 @@ import (
 	"github.com/Arjun113/nOPark/internal/cmdutil"
 	"github.com/Arjun113/nOPark/internal/domain"
 	"github.com/Arjun113/nOPark/internal/repository"
+	"github.com/Arjun113/nOPark/internal/services"
 )
 
 func WorkerCmd(ctx context.Context) *cobra.Command {
@@ -55,6 +56,14 @@ func runNotificationWorker(ctx context.Context, logger *zap.Logger, db *pgxpool.
 
 	notificationRepo := repository.NewPostgresNotifications(db)
 
+	fcmService, err := services.NewFCMService(ctx, logger)
+	if err != nil {
+		logger.Error("failed to initialise FCM service", zap.Error(err))
+		fcmService = nil
+	} else {
+		logger.Info("FCM service initialised successfully")
+	}
+
 	ticker := time.NewTicker(3 * time.Second)
 	defer ticker.Stop()
 
@@ -64,7 +73,7 @@ func runNotificationWorker(ctx context.Context, logger *zap.Logger, db *pgxpool.
 			logger.Info("notification worker stopped")
 			return nil
 		case <-ticker.C:
-			err := processNotifications(ctx, logger, notificationRepo)
+			err := processNotifications(ctx, logger, notificationRepo, fcmService)
 			if err != nil {
 				logger.Error("error processing notifications", zap.Error(err))
 			}
@@ -72,7 +81,7 @@ func runNotificationWorker(ctx context.Context, logger *zap.Logger, db *pgxpool.
 	}
 }
 
-func processNotifications(ctx context.Context, logger *zap.Logger, notificationRepo domain.NotificationsRepository) error {
+func processNotifications(ctx context.Context, logger *zap.Logger, notificationRepo domain.NotificationsRepository, fcmService *services.FCMService) error {
 	pendingNotifications, err := notificationRepo.GetPendingNotifications(ctx, 20)
 	if err != nil {
 		return fmt.Errorf("failed to fetch pending notifications: %w", err)
@@ -89,18 +98,19 @@ func processNotifications(ctx context.Context, logger *zap.Logger, notificationR
 	failureCount := 0
 
 	for _, notification := range pendingNotifications {
-		// Mock sending notification (replace with actual notification service)
-		err := sendNotification(ctx, logger, notification)
+		err := fcmService.SendNotification(ctx, notification)
 		if err != nil {
 			logger.Error("failed to send notification",
 				zap.Error(err),
 				zap.Int64("notification_id", notification.ID),
-				zap.String("recipient_email", notification.AccountEmail))
+				zap.String("recipient_account_email", notification.AccountEmail),
+				zap.String("fcm_token", notification.AccountFCMToken),
+			)
+
 			failureCount++
 			continue
 		}
 
-		// Mark notification as sent
 		err = notificationRepo.MarkNotificationAsSent(ctx, notification.ID)
 		if err != nil {
 			logger.Error("failed to mark notification as sent",
@@ -116,27 +126,6 @@ func processNotifications(ctx context.Context, logger *zap.Logger, notificationR
 	logger.Info("notification processing completed",
 		zap.Int("success_count", successCount),
 		zap.Int("failure_count", failureCount))
-
-	return nil
-}
-
-func sendNotification(ctx context.Context, logger *zap.Logger, notification *domain.NotificationWithAccountDBModel) error {
-	// Mock notification sending - in a real implementation, this would:
-	// 1. Send push notifications
-	// 2. Send emails
-	// 3. Send SMS
-	// 4. Integrate with notification services like Firebase, AWS SNS, etc.
-
-	logger.Info("📱 MOCK NOTIFICATION SENT",
-		zap.Int64("notification_id", notification.ID),
-		zap.String("type", notification.NotificationType),
-		zap.String("recipient", notification.AccountEmail),
-		zap.String("recipient_name", fmt.Sprintf("%s %s", notification.AccountFirstName, notification.AccountLastName)),
-		zap.String("message", notification.NotificationMessage),
-		zap.String("created_at", notification.CreatedAt))
-
-	// Simulate some processing time
-	time.Sleep(100 * time.Millisecond)
 
 	return nil
 }

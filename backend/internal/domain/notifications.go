@@ -19,7 +19,7 @@ type NotificationDBModel struct {
 	NotificationType    string
 	NotificationMessage string
 	AccountID           int64
-	IsSent                bool
+	IsSent              bool
 	CreatedAt           string
 }
 
@@ -30,9 +30,10 @@ type NotificationWithAccountDBModel struct {
 	AccountID           int64
 	Sent                bool
 	CreatedAt           string
-	AccountEmail     string
-	AccountFirstName string
-	AccountLastName  string
+	AccountEmail        string
+	AccountFirstName    string
+	AccountLastName     string
+	AccountFCMToken     string
 }
 
 const (
