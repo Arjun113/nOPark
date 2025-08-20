@@ -8,6 +8,7 @@ CREATE TABLE accounts (
     middlename VARCHAR(50),
     lastname VARCHAR(50) NOT NULL,
     email_verified BOOLEAN DEFAULT FALSE NOT NULL,
+    fcm_token TEXT,
     email_verification_token TEXT,
     email_verification_expires_at TIMESTAMP WITH TIME ZONE,
     password_reset_token TEXT,
@@ -34,6 +35,8 @@ CREATE TABLE sessions (
 );
 
 -- Indices -------------------------------------------------------
+CREATE INDEX idx_accounts_email ON accounts(email);
+CREATE INDEX idx_accounts_fcm_token ON accounts(fcm_token) WHERE fcm_token IS NOT NULL;
 
 -- Triggers ------------------------------------------------------
 
