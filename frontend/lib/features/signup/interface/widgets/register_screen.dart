@@ -19,7 +19,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
 
   // IMPORTANT: Use 10.0.2.2 for Android Emulator to connect to localhost
-  final String _apiUrl = 'http://10.0.2.2:8080/v1/accounts';
+  final String _apiUrl = 'http://10.0.2.2:4000/v1/accounts';
 
   Future<void> _register() async {
     if (_firstNameController.text.isEmpty ||
@@ -53,6 +53,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           'email': _emailController.text.trim(),
           'password': _passwordController.text.trim(),
           'type': _userType,
+          "fcm_token": "test-token",
         }),
       );
 

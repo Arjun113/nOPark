@@ -53,6 +53,7 @@ type AccountDBModel struct {
 	PasswordResetExpiresAt     string
 	CurrentLatitude            *float64 // can be nil
 	CurrentLongitude           *float64 // can be nil
+	FCMToken                   string
 	CreatedAt                  string
 	UpdatedAt                  string
 }

@@ -14,6 +14,7 @@ import (
 
 type CreateUserRequest struct {
 	Type       string `json:"type" validate:"required,oneof=passenger driver admin"`
+	FCMToken   string `json:"fcm_token" validate:"required"`
 	Email      string `json:"email" validate:"required,email,monash_email"`
 	Password   string `json:"password" validate:"required,min=8"`
 	FirstName  string `json:"first_name" validate:"required"`
@@ -62,6 +63,7 @@ func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	account := &domain.AccountDBModel{
 		Type:         req.Type,
+		FCMToken:     req.FCMToken,
 		Email:        req.Email,
 		PasswordHash: hashedPassword,
 		FirstName:    req.FirstName,
