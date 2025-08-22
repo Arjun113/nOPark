@@ -1,52 +1,69 @@
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:intl/intl.dart';
-
 import '../entities/trip_stops.dart';
 
-class TripScroller extends StatefulWidget {
+class PastRidesOverlay extends StatefulWidget {
   final List<Trip> trips;
+  final VoidCallback? onBack;
 
-  const TripScroller({super.key, required this.trips});
+  const PastRidesOverlay({super.key, required this.trips, this.onBack});
 
   @override
-  State<TripScroller> createState() => _TripScrollerState();
+  State<PastRidesOverlay> createState() => _PastRidesOverlayState();
 }
 
-class _TripScrollerState extends State<TripScroller> {
+class _PastRidesOverlayState extends State<PastRidesOverlay> {
   final PageController _pageController = PageController();
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // PageView with horizontally scrollable trip cards
-        SizedBox(
-          height: 600, // Adjust based on your layout
-          child: PageView.builder(
-            controller: _pageController,
-            itemCount: widget.trips.length,
-            itemBuilder: (context, index) {
-              return TripCard(trip: widget.trips[index]);
-            },
-          ),
-        ),
+    return Scaffold(
+      backgroundColor: Colors.transparent, // semi-transparent overlay
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Optional back button
+            Align(
+              alignment: Alignment.topLeft,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: widget.onBack ?? () => Navigator.of(context).pop(),
+              ),
+            ),
 
-        const SizedBox(height: 12),
+            const SizedBox(height: 12),
 
-        // SmoothPageIndicator with purple active dot
-        SmoothPageIndicator(
-          controller: _pageController,
-          count: widget.trips.length,
-          effect: WormEffect(
-            dotHeight: 8,
-            dotWidth: 8,
-            spacing: 8,
-            activeDotColor: Colors.deepPurple.shade800,
-            dotColor: Colors.deepPurple.shade200,
-          ),
+            // PageView with trip cards
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: widget.trips.length,
+                itemBuilder: (context, index) {
+                  return TripCard(trip: widget.trips[index]);
+                },
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // SmoothPageIndicator
+            SmoothPageIndicator(
+              controller: _pageController,
+              count: widget.trips.length,
+              effect: WormEffect(
+                dotHeight: 8,
+                dotWidth: 8,
+                spacing: 8,
+                activeDotColor: Colors.deepPurple.shade800,
+                dotColor: Colors.deepPurple.shade200,
+              ),
+            ),
+
+            const SizedBox(height: 16),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -113,7 +130,7 @@ class TripCard extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // Scrollable Stop List in white box
+            // Scrollable Stop List
             Expanded(
               child: Container(
                 padding: const EdgeInsets.all(16),
@@ -123,10 +140,9 @@ class TripCard extends StatelessWidget {
                 ),
                 child: SingleChildScrollView(
                   child: Column(
-                    children:
-                        trip.stops
-                            .map((stop) => StopWidget(stop: stop))
-                            .toList(),
+                    children: trip.stops
+                        .map((stop) => StopWidget(stop: stop))
+                        .toList(),
                   ),
                 ),
               ),

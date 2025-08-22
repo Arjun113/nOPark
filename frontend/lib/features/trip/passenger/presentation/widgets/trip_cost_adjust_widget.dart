@@ -1,31 +1,39 @@
-// Purpose: Adjust bid amount and check trip details
-
 import 'package:flutter/material.dart';
 import 'package:nopark/constants/monash_campus_locs.dart';
 
-class TripCostAdjust extends StatefulWidget {
+class PricingOverlay extends StatefulWidget {
   final String fromAddressName;
   final MonashCampusCodes? fromCampusCode;
   final String toAddressName;
   final MonashCampusCodes? toCampusCode;
   final double recommendedBidAUD;
+  final Offset initialPosition;
+  final Size initialSize;
 
-  const TripCostAdjust({
+  /// Called when the user submits the bid
+  final void Function(double modifiedBid)? onSubmit;
+
+  /// Optional callback to go back in the overlay
+  final VoidCallback? onBack;
+
+  const PricingOverlay({
     super.key,
     required this.fromAddressName,
-    required this.fromCampusCode,
+    this.fromCampusCode,
     required this.toAddressName,
-    required this.toCampusCode,
+    this.toCampusCode,
     required this.recommendedBidAUD,
+    this.onSubmit,
+    this.onBack,
+    required this.initialPosition,
+    required this.initialSize
   });
 
   @override
-  State<StatefulWidget> createState() {
-    return TripCostAdjustState();
-  }
+  State<PricingOverlay> createState() => _PricingOverlayState();
 }
 
-class TripCostAdjustState extends State<TripCostAdjust> {
+class _PricingOverlayState extends State<PricingOverlay> {
   late double modifiedTripCost;
   late TextEditingController controller;
 
@@ -33,88 +41,137 @@ class TripCostAdjustState extends State<TripCostAdjust> {
   void initState() {
     super.initState();
     modifiedTripCost = widget.recommendedBidAUD;
-    controller = TextEditingController(
-      text: widget.recommendedBidAUD.toString(),
-    );
+    controller =
+        TextEditingController(text: widget.recommendedBidAUD.toString());
   }
 
   @override
   void dispose() {
+    controller.dispose();
     super.dispose();
   }
 
   void adjustBidAmount(bool up) {
-    if (up == true) {
-      modifiedTripCost = modifiedTripCost + 0.5;
-      controller.text = modifiedTripCost.toString();
-    } else {
-      modifiedTripCost = modifiedTripCost - 0.5;
-      controller.text = modifiedTripCost.toString();
+    setState(() {
+      if (up) {
+        modifiedTripCost += 0.5;
+      } else {
+        modifiedTripCost -= 0.5;
+      }
+      controller.text = modifiedTripCost.toStringAsFixed(2);
+    });
+  }
+
+  void submitBid() {
+    if (widget.onSubmit != null) {
+      widget.onSubmit!(modifiedTripCost);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        widget.fromCampusCode == null
-            ? Center(child: Text(widget.fromAddressName))
-            : Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(widget.fromCampusCode.toString()),
-                Text(widget.fromAddressName),
-              ],
-            ),
+    return SafeArea(
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Card(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)
+              ),
+              elevation: 8,
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // From address
+                    widget.fromCampusCode == null
+                        ? Center(child: Text(widget.fromAddressName, style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),))
+                        : Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(widget.fromCampusCode.toString()),
+                        const SizedBox(width: 8),
+                        Text(widget.fromAddressName),
+                      ],
+                    ),
 
-        Center(child: const Icon(Icons.arrow_circle_down_outlined)),
+                    const SizedBox(height: 8,),
 
-        widget.toCampusCode == null
-            ? Center(child: Text(widget.toAddressName))
-            : Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(widget.toCampusCode.toString()),
-                Text(widget.toAddressName),
-              ],
-            ),
+                    const Center(child: Icon(Icons.arrow_downward_rounded)),
 
-        Center(
-          child: Text(
-            "Recommended Bid",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                adjustBidAmount(false);
-              },
-              child: const Center(
-                child: Icon(Icons.remove, color: Colors.black),
+                    const SizedBox(height: 8,),
+
+                    // To address
+                    widget.toCampusCode == null
+                        ? Center(child: Text(widget.toAddressName, style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)))
+                        : Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(widget.toCampusCode.toString()),
+                        const SizedBox(width: 8),
+                        Text(widget.toAddressName),
+                      ],
+                    ),
+
+                    const SizedBox(height: 15,),
+
+                    Center(
+                      child: Text(
+                        "Recommended Bid",
+                        style: Theme
+                            .of(context)
+                            .textTheme
+                            .titleMedium,
+                      ),
+                    ),
+
+                    // Bid adjust buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () => adjustBidAmount(false),
+                          child: const Icon(Icons.remove, color: Colors.black),
+                        ),
+                        const SizedBox(width: 16),
+                        Text("${controller.text} AUD", style: const TextStyle(fontSize: 18)),
+                        const SizedBox(width: 16),
+                        ElevatedButton(
+                          onPressed: () => adjustBidAmount(true),
+                          child: const Icon(Icons.add, color: Colors.black),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 15,),
+
+                    // Submit button
+                    GestureDetector(
+                      onTap: submitBid,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          color: Colors.blue, // button color
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            "Submit Bid",
+                            style: TextStyle(fontSize: 18, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            Text(controller.text),
-            ElevatedButton(
-              onPressed: () {
-                adjustBidAmount(true);
-              },
-              child: const Center(child: Icon(Icons.add, color: Colors.black)),
-            ),
-          ],
-        ),
-
-        GestureDetector(
-          onTap: () => Navigator.pop(context, modifiedTripCost),
-          child: const Padding(
-            padding: EdgeInsets.only(left: 15, right: 15, top: 5, bottom: 5),
-            child: Text("Submit Bid"),
           ),
-        ),
-      ],
+        )
     );
   }
 }

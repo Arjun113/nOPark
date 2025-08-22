@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_scroller.dart';
 import 'package:nopark/features/trip/entities/user.dart';
+import 'package:nopark/features/trip/passenger/presentation/widgets/trip_cost_adjust_widget.dart';
+import 'package:nopark/features/trip/unified/trip_scroller.dart';
 
 import '../widgets/base_where_next.dart';
+import '../widgets/where_next_overlay.dart';
+import 'overlay_flow.dart';
 
 class HomePage extends StatefulWidget {
   final User user;
@@ -23,6 +27,7 @@ class _HomePageState extends State<HomePage> {
   bool isExpanded = false;
   OverlayEntry? whereNextOverlay;
   final GlobalKey<WhereNextState> whereNextKey = GlobalKey<WhereNextState>();
+  final GlobalKey whereNextButtonKey = GlobalKey(); // Key for the button
 
   get collapse => null;
 
@@ -41,6 +46,79 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       isExpanded = !isExpanded;
     });
+  }
+
+  // Method to get the position and size of the WhereNext button
+  (Offset, Size)? _getWhereNextPosition() {
+    final renderBox = whereNextButtonKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return null;
+
+    final position = renderBox.localToGlobal(Offset.zero);
+    final size = renderBox.size;
+    return (position, size);
+  }
+
+  void _onWhereNextTap() {
+    final positionData = _getWhereNextPosition();
+    if (positionData == null) return;
+
+    final (position, size) = positionData;
+
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.transparent,
+        pageBuilder: (_, __, ___) => OverlayFlow(
+          onClose: () => Navigator.of(context).pop(),
+          stepsBuilder: (controller) => [
+            WhereNextOverlay(
+              user: widget.user,
+              addresses: widget.addresses,
+              onLocationSelected: (lat, lng) {
+                _updateMap(lat, lng);
+                controller.next();
+              },
+              onBack: Navigator.of(context).pop,
+              initialPosition: position,
+              initialSize: size,
+            ),
+            PricingOverlay(
+              onBack: controller.back,
+              fromAddressName: "Arjun's House",
+              fromCampusCode: null,
+              toAddressName: "Woodside",
+              toCampusCode: null,
+              recommendedBidAUD: 15,
+              initialSize: size,
+              initialPosition: position,
+            ),
+
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onPastRidesTap() {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black.withOpacity(0.3),
+        pageBuilder: (_, __, ___) => OverlayFlow(
+          onClose: () => Navigator.of(context).pop(),
+          stepsBuilder: (controller) => [
+            PastRidesOverlay(
+              onBack: () => Navigator.of(context).pop(),
+              trips: [],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _updateMap(double lat, double lng) {
+    // TODO: implement map update logic in FullScreenMap
   }
 
   @override
@@ -70,43 +148,60 @@ class _HomePageState extends State<HomePage> {
                 ),
                 elevation: 8,
                 child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column (
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    WhereNext(user: widget.user, addresses: [], state: true),
-                    const SizedBox(height: 5,),
-                    GestureDetector(
-                      onTap: null,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: const [
-                            Icon(Icons.directions_car),
-                            SizedBox(width: 8),
-                            Text(
-                              "View Past Rides",
-                              style: TextStyle(fontSize: 20),
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column (
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          key: whereNextButtonKey, // Add the key here
+                          onTap: _onWhereNextTap,
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            Spacer(),
-                            Icon(Icons.arrow_forward_ios, size: 16),
-                          ],
+                            child: Row(
+                              children: const [
+                                Icon(Icons.location_on_outlined),
+                                SizedBox(width: 8),
+                                Text("Where to next?", style: TextStyle(fontSize: 20)),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 5,),
+                        GestureDetector(
+                          onTap: _onPastRidesTap,
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: const [
+                                Icon(Icons.directions_car),
+                                SizedBox(width: 8),
+                                Text(
+                                  "View Past Rides",
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                                Spacer(),
+                                Icon(Icons.arrow_forward_ios, size: 16),
+                              ],
+                            ),
+                          ),
+                        )
+                      ],
                     )
-                    ],
-                  )
                 ),
               ),
             ),
           ),
-
 
           // Greeting + profile picture (hidden when expanded to avoid overlap)
           if (!isExpanded) ...[
