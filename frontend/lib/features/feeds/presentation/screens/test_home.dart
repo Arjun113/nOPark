@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_scroller.dart';
 import 'package:nopark/features/trip/entities/user.dart';
-import 'package:nopark/features/feeds/presentation/widgets/where_next_location_picker.dart';
 
 import '../widgets/base_where_next.dart';
 
@@ -77,6 +76,7 @@ class _HomePageState extends State<HomePage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     WhereNext(user: widget.user, addresses: [], state: true),
+                    const SizedBox(height: 5,),
                     GestureDetector(
                       onTap: null,
                       child: Container(

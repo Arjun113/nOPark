@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nopark/features/feeds/presentation/widgets/top_fold.dart';
 import '../../../trip/entities/user.dart';
 
 class WhereNext extends StatefulWidget {
@@ -19,6 +20,8 @@ class WhereNextState extends State<WhereNext> with TickerProviderStateMixin {
   late AnimationController moveAnimationController;
   late AnimationController drawerAnimationController;
   late Animation<double> moveAnimation;
+  late FocusNode focusNode;
+  late TextEditingController locText;
 
   @override
   void initState() {
@@ -26,6 +29,8 @@ class WhereNextState extends State<WhereNext> with TickerProviderStateMixin {
     moveAnimationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
     drawerAnimationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
     moveAnimation = CurvedAnimation(parent: moveAnimationController, curve: Curves.easeInCubic);
+    focusNode = FocusNode();
+    locText = TextEditingController();
   }
 
   void showOverlay() {
@@ -70,30 +75,53 @@ class WhereNextState extends State<WhereNext> with TickerProviderStateMixin {
                           child: Container(
                             height: 65,
                             decoration: BoxDecoration(
-                              color: Colors.grey.shade300,
-                              borderRadius: BorderRadius.circular(24),
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
                             ),
+                            child: TopFoldWhereNext(user: widget.user),
                           ),
                         ),
 
                         // Lifted widget (middle)
                         Material(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.zero,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade200,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: const [
-                                Icon(Icons.location_on_outlined),
-                                SizedBox(width: 8),
-                                Text("Where to next?", style: TextStyle(fontSize: 20)),
+                            height: 56,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Stack(
+                              alignment: Alignment.centerLeft,
+                              children: [
+                                // Placeholder (icon + "Where to next?")
+                                if (locText.text.isEmpty)
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Icon(Icons.location_on_outlined, color: Colors.grey),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        "Where to next?",
+                                        style: TextStyle(color: Colors.grey, fontSize: 18),
+                                      ),
+                                    ],
+                                  ),
+
+                                // Actual TextField
+                                TextField(
+                                  controller: locText,
+                                  focusNode: focusNode,
+                                  textAlign: TextAlign.left,
+                                  style: const TextStyle(color: Colors.black, fontSize: 18),
+                                  decoration: const InputDecoration(
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.all(5),
+                                  ),
+                                  onChanged: (_) => setState(() {}),
+                                ),
                               ],
                             ),
+                          )
                           ),
-                        ),
 
                         // Bottom fold
                         SizeTransition(
@@ -105,8 +133,8 @@ class WhereNextState extends State<WhereNext> with TickerProviderStateMixin {
                           child: Container(
                             height: 100,
                             decoration: BoxDecoration(
-                              color: Colors.grey.shade300,
-                              borderRadius: BorderRadius.circular(24),
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.only(bottomLeft: Radius.circular(12), bottomRight: Radius.circular(12)),
                             ),
                           ),
                         ),
@@ -149,8 +177,10 @@ class WhereNextState extends State<WhereNext> with TickerProviderStateMixin {
   void dispose() {
     moveAnimationController.dispose();
     drawerAnimationController.dispose();
+    locText.dispose();
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +193,7 @@ class WhereNextState extends State<WhereNext> with TickerProviderStateMixin {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
           decoration: BoxDecoration(
-            color: Colors.grey.shade200,
+            color: Colors.grey.shade50,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
