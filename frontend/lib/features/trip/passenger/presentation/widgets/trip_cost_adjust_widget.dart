@@ -42,7 +42,7 @@ class _PricingOverlayState extends State<PricingOverlay> {
     super.initState();
     modifiedTripCost = widget.recommendedBidAUD;
     controller =
-        TextEditingController(text: widget.recommendedBidAUD.toString());
+        TextEditingController(text: widget.recommendedBidAUD.toStringAsFixed(2));
   }
 
   @override
@@ -71,107 +71,232 @@ class _PricingOverlayState extends State<PricingOverlay> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Card(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)
-              ),
-              elevation: 8,
-              child: Padding(
-                padding: EdgeInsets.all(12),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // From address
-                    widget.fromCampusCode == null
-                        ? Center(child: Text(widget.fromAddressName, style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),))
-                        : Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(widget.fromCampusCode.toString()),
-                        const SizedBox(width: 8),
-                        Text(widget.fromAddressName),
-                      ],
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Container(
+            constraints: const BoxConstraints(
+              maxWidth: 400,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // From address
+                  widget.fromCampusCode == null
+                      ? Text(
+                    widget.fromAddressName,
+                    style: const TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                      fontFamily: 'B612'
                     ),
-
-                    const SizedBox(height: 8,),
-
-                    const Center(child: Icon(Icons.arrow_downward_rounded)),
-
-                    const SizedBox(height: 8,),
-
-                    // To address
-                    widget.toCampusCode == null
-                        ? Center(child: Text(widget.toAddressName, style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)))
-                        : Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(widget.toCampusCode.toString()),
-                        const SizedBox(width: 8),
-                        Text(widget.toAddressName),
-                      ],
-                    ),
-
-                    const SizedBox(height: 15,),
-
-                    Center(
-                      child: Text(
-                        "Recommended Bid",
-                        style: Theme
-                            .of(context)
-                            .textTheme
-                            .titleMedium,
+                    textAlign: TextAlign.center,
+                  )
+                      : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        widget.fromCampusCode.toString().split('.').last.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                          letterSpacing: 2,
+                          fontFamily: 'B612'
+                        ),
                       ),
-                    ),
-
-                    // Bid adjust buttons
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () => adjustBidAmount(false),
-                          child: const Icon(Icons.remove, color: Colors.black),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          widget.fromAddressName,
+                          style: const TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                            fontFamily: 'B612'
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(width: 16),
-                        Text("${controller.text} AUD", style: const TextStyle(fontSize: 18)),
-                        const SizedBox(width: 16),
-                        ElevatedButton(
-                          onPressed: () => adjustBidAmount(true),
-                          child: const Icon(Icons.add, color: Colors.black),
-                        ),
-                      ],
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  const Icon(
+                    Icons.arrow_downward_rounded,
+                    size: 24,
+                    color: Colors.black54,
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // To address
+                  widget.toCampusCode == null
+                      ? Text(
+                    widget.toAddressName,
+                    style: const TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                      fontFamily: 'B612'
                     ),
+                    textAlign: TextAlign.center,
+                  )
+                      : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        widget.toCampusCode.toString().split('.').last.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                          letterSpacing: 2,
+                          fontFamily: 'B612'
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          widget.toAddressName,
+                          style: const TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                            fontFamily: 'B612'
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
 
-                    const SizedBox(height: 15,),
+                  const SizedBox(height: 15),
 
-                    // Submit button
-                    GestureDetector(
-                      onTap: submitBid,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(15),
+                  // Recommended Bid text
+                  const Text(
+                    "Recommended Bid",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black54,
+                      fontFamily: 'GoogleSans'
+                    ),
+                  ),
+
+                  // Bid adjust buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
                         decoration: BoxDecoration(
-                          color: Colors.blue, // button color
-                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(
+                            color: Colors.grey[300]!,
+                            width: 1,
+                          ),
                         ),
-                        child: const Center(
-                          child: Text(
-                            "Submit Bid",
-                            style: TextStyle(fontSize: 18, color: Colors.white),
+                        child: IconButton(
+                          onPressed: modifiedTripCost > 0.5 ? () => adjustBidAmount(false) : null,
+                          icon: const Icon(
+                            Icons.remove,
+                            color: Colors.black54,
+                            size: 20,
+                          ),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
+
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          "AUD${controller.text}",
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black87,
+                            fontFamily: 'GoogleSans'
+                          ),
+                        ),
+                      ),
+
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(
+                            color: Colors.grey[300]!,
+                            width: 1,
+                          ),
+                        ),
+                        child: IconButton(
+                          onPressed: () => adjustBidAmount(true),
+                          icon: const Icon(
+                            Icons.add,
+                            color: Colors.black54,
+                            size: 20,
+                          ),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  // Submit button
+                  GestureDetector(
+                    onTap: submitBid,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          "Bid",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                            fontFamily: 'GoogleSans'
                           ),
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
-        )
+        ),
+      ),
     );
   }
 }

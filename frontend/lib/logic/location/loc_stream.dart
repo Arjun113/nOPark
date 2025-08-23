@@ -11,8 +11,5 @@ final LocationSettings settings = LocationSettings(
   timeLimit: Duration(milliseconds: timeLimit),
 );
 
-StreamSubscription<Position> locationStream = Geolocator.getPositionStream(
-  locationSettings: settings,
-).listen((Position pos) {
-  // Fill the return statement
-});
+Stream<Position> locationStream = Geolocator.getPositionStream(
+  locationSettings: settings,);
