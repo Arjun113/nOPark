@@ -30,10 +30,10 @@ class PricingOverlay extends StatefulWidget {
   });
 
   @override
-  State<PricingOverlay> createState() => _PricingOverlayState();
+  State<PricingOverlay> createState() => PricingOverlayState();
 }
 
-class _PricingOverlayState extends State<PricingOverlay> {
+class PricingOverlayState extends State<PricingOverlay> {
   late double modifiedTripCost;
   late TextEditingController controller;
 
