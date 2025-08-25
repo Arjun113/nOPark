@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_scroller.dart';
+import 'package:nopark/features/profiles/presentation/widgets/profile_modal.dart';
 import 'package:nopark/features/trip/entities/user.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_cost_adjust_widget.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_search_animation.dart';
@@ -232,10 +233,24 @@ class _HomePageState extends State<HomePage> {
             Positioned(
               top: 55,
               right: 30,
-              child: CircleAvatar(
-                radius: 24,
-                backgroundImage: NetworkImage(widget.user.imageUrl),
-              ),
+              child: GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.white,
+                      builder: (context) => ProfileBottomSheet(
+                          user: widget.user,
+                          userRole: 'Passenger',
+                          phoneController: TextEditingController(text: widget.user.phoneNumber),
+                          emailController: TextEditingController(text: widget.user.monashEmail))
+                  );
+                },
+                child: CircleAvatar(
+                  radius: 24,
+                  backgroundImage: NetworkImage(widget.user.imageUrl),
+                ),
+              )
             ),
           ]
         ],
