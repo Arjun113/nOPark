@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_scroller.dart';
 import 'package:nopark/features/profiles/presentation/widgets/profile_modal.dart';
@@ -6,6 +7,7 @@ import 'package:nopark/features/trip/entities/user.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_cost_adjust_widget.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_search_animation.dart';
 import 'package:nopark/features/trip/unified/trip_scroller.dart';
+import 'package:nopark/logic/routing/basic_two_router.dart';
 
 import '../widgets/base_where_next.dart';
 import '../widgets/where_next_overlay.dart';
@@ -31,6 +33,7 @@ class _HomePageState extends State<HomePage> {
   final GlobalKey<WhereNextState> whereNextKey = GlobalKey<WhereNextState>();
   final GlobalKey whereNextButtonKey = GlobalKey(); // Key for the button
   final GlobalKey<PricingOverlayState> pricingOverlayKey = GlobalKey<PricingOverlayState>();
+  final GlobalKey<FullScreenMapState> mapKey = GlobalKey<FullScreenMapState>();
 
   get collapse => null;
 
@@ -77,8 +80,10 @@ class _HomePageState extends State<HomePage> {
             WhereNextOverlay(
               user: widget.user,
               addresses: widget.addresses,
-              onLocationSelected: (lat, lng) {
-                _updateMap(lat, lng);
+              onLocationSelected: (lat, lng) async {
+                final List<MapMarker> destinationMarker = [MapMarker(position: LatLng(lat, lng))];
+                final List<LatLng>? route = await RoutingService.getRoute(mapKey.currentState?.currentLocation, LatLng(lat, lng));
+                _updateMap(destinationMarker, route!);
                 controller.next();
               },
               onBack: Navigator.of(context).pop,
@@ -131,8 +136,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _updateMap(double lat, double lng) {
-    // TODO: implement map update logic in FullScreenMap
+  void _updateMap(List<MapMarker> mapMarkers, List<LatLng> routePoints) {
+    mapMarkers.map((marker) {
+      mapKey.currentState?.addDestinationMarker(marker);
+    });
+    mapKey.currentState?.setRoutePoints(routePoints);
+    mapKey.currentState?.fitBoundsToShowAllMarkers();
+    print("Added all objects");
   }
 
   @override
@@ -141,7 +151,7 @@ class _HomePageState extends State<HomePage> {
       body: Stack(
         children: [
           // Background map
-          FullScreenMap(),
+          FullScreenMap(key: mapKey,),
 
           // Detect taps outside when expanded
           if (isExpanded)

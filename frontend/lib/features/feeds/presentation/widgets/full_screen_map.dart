@@ -1,4 +1,4 @@
-// Purpose: fullscreen map
+// Purpose: fullscreen map with multiple markers and route support
 
 import 'dart:async';
 
@@ -10,8 +10,22 @@ import 'package:nopark/constants/api_uris.dart';
 import 'package:nopark/logic/location/loc_perms.dart';
 import 'package:nopark/logic/location/loc_stream.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+// Custom marker class to hold marker data
+class MapMarker {
+  final LatLng position;
+  final String? label;
+  final double width;
+  final double height;
+
+  const MapMarker({
+    required this.position,
+    this.label,
+    this.width = 30.0,
+    this.height = 30.0,
+  });
+}
 
 class FullScreenMap extends StatefulWidget {
   final LatLng? initialCenter;
@@ -26,15 +40,21 @@ class FullScreenMap extends StatefulWidget {
   });
 
   @override
-  State<FullScreenMap> createState() => _FullScreenMapState();
+  State<FullScreenMap> createState() => FullScreenMapState();
 }
 
-class _FullScreenMapState extends State<FullScreenMap> {
+class FullScreenMapState extends State<FullScreenMap> {
   StreamSubscription<Position>? _locationSubscription;
   final MapController _mapController = MapController();
+  List<MapMarker> destinationMarker =
+      []; // New parameter for destination markers
+  List<LatLng> routePoints = []; // New parameter for route points
 
-  LatLng? _currentLocation;
-  LatLng _mapCenter = const LatLng(-37.907803, 145.133957); // Default Melbourne location
+  LatLng? currentLocation;
+  LatLng _mapCenter = const LatLng(
+    -37.907803,
+    145.133957,
+  ); // Default Melbourne location
 
   @override
   void initState() {
@@ -54,18 +74,15 @@ class _FullScreenMapState extends State<FullScreenMap> {
   }
 
   void _startLocationTracking() {
-
-
-
     _locationSubscription = locationStream.listen(
-          (Position position) {
+      (Position position) {
         if (mounted) {
           setState(() {
-            _currentLocation = LatLng(position.latitude, position.longitude);
+            currentLocation = LatLng(position.latitude, position.longitude);
           });
 
           // Optional: Auto-center map on user location
-          _mapController.move(_currentLocation!, _mapController.camera.zoom);
+          _mapController.move(currentLocation!, _mapController.camera.zoom);
         }
       },
       onError: (error) {
@@ -76,9 +93,54 @@ class _FullScreenMapState extends State<FullScreenMap> {
   }
 
   void _centerOnUserLocation() {
-    if (_currentLocation != null) {
-      _mapController.move(_currentLocation!, 16.0);
+    if (currentLocation != null) {
+      _mapController.move(currentLocation!, 16.0);
     }
+  }
+
+  // Method to fit bounds to show both user location and destination
+  void fitBoundsToShowAllMarkers() {
+    if (currentLocation == null && destinationMarker.isEmpty) return;
+
+    List<LatLng> points = [];
+
+    if (currentLocation != null) {
+      points.add(currentLocation!);
+    }
+
+    for (var marker in routePoints) {
+      points.add(marker);
+    }
+
+    if (points.isEmpty) return;
+
+    // Calculate bounds
+    double minLat = points
+        .map((p) => p.latitude)
+        .reduce((a, b) => a < b ? a : b);
+    double maxLat = points
+        .map((p) => p.latitude)
+        .reduce((a, b) => a > b ? a : b);
+    double minLng = points
+        .map((p) => p.longitude)
+        .reduce((a, b) => a < b ? a : b);
+    double maxLng = points
+        .map((p) => p.longitude)
+        .reduce((a, b) => a > b ? a : b);
+
+    // Add some padding
+    double latPadding = (maxLat - minLat) * 0.4;
+    double lngPadding = (maxLng - minLng) * 0.4;
+
+    _mapController.fitCamera(
+      CameraFit.bounds(
+        bounds: LatLngBounds(
+          LatLng(minLat - latPadding, minLng - lngPadding),
+          LatLng(maxLat + latPadding, maxLng + lngPadding),
+        ),
+        padding: const EdgeInsets.all(50),
+      ),
+    );
   }
 
   // Public method to update map center (can be called from parent widgets)
@@ -88,6 +150,91 @@ class _FullScreenMapState extends State<FullScreenMap> {
       _mapCenter = newLocation;
     });
     _mapController.move(newLocation, 15.0);
+  }
+
+  // Public method to add destination markers
+  void addDestinationMarker(MapMarker marker) {
+    setState(() {
+      destinationMarker.add(marker);
+    });
+  }
+
+  // Public method to clear destination markers
+  void clearDestinationMarkers() {
+    setState(() {
+      destinationMarker.clear();
+    });
+  }
+
+  // Public method to set route points
+  void setRoutePoints(List<LatLng> points) {
+    setState(() {
+      routePoints = points;
+    });
+  }
+
+  // Public method to clear route points
+  void clearRoute() {
+    setState(() {
+      routePoints.clear();
+    });
+  }
+
+  // Helper method to build all markers
+  List<Marker> _buildMarkers() {
+    List<Marker> markers = [];
+
+    // User location marker
+    if (currentLocation != null && widget.showUserLocation) {
+      markers.add(
+        Marker(
+          point: currentLocation!,
+          width: 20.0,
+          height: 20.0,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Destination markers
+    for (var marker in destinationMarker) {
+      markers.add(
+        Marker(
+          point: marker.position,
+          width: marker.width,
+          height: marker.height,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return markers;
   }
 
   @override
@@ -123,56 +270,69 @@ class _FullScreenMapState extends State<FullScreenMap> {
                 userAgentPackageName: openStreetMapUserAgent,
               ),
 
-              // User location marker
-              if (_currentLocation != null && widget.showUserLocation)
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: _currentLocation!,
-                      width: 20.0,
-                      height: 20.0,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.blue,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                      ),
+              // Route polyline layer
+              if (routePoints.isNotEmpty)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: routePoints,
+                      strokeWidth: 4.0,
+                      color: Colors.blue,
+                      pattern: StrokePattern.solid(),
                     ),
                   ],
                 ),
+
+              // All markers layer
+              MarkerLayer(markers: _buildMarkers()),
 
               RichAttributionWidget(
                 attributions: [
                   TextSourceAttribution(
                     'OpenStreetMap contributors',
-                    onTap: () => launchUrl(Uri.parse('https://openstreetmap.org/copyright')),
+                    onTap:
+                        () => launchUrl(
+                          Uri.parse('https://openstreetmap.org/copyright'),
+                        ),
                   ),
                 ],
               ),
             ],
           ),
 
-          // Floating action button to center on user location
-          if (widget.showUserLocation && _currentLocation != null)
-            Positioned(
-              right: 16,
-              bottom: 16,
-              child: FloatingActionButton(
-                mini: true,
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.blue,
-                onPressed: _centerOnUserLocation,
-                child: const Icon(Icons.my_location),
-              ),
+          // Floating action buttons
+          Positioned(
+            right: 16,
+            bottom: 16,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Fit bounds button (show both markers)
+                if (destinationMarker.isNotEmpty && currentLocation != null)
+                  FloatingActionButton(
+                    mini: true,
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.green,
+                    onPressed: fitBoundsToShowAllMarkers,
+                    heroTag: "fit_bounds",
+                    child: const Icon(Icons.fit_screen),
+                  ),
+
+                const SizedBox(height: 8),
+
+                // Center on user location button
+                if (widget.showUserLocation && currentLocation != null)
+                  FloatingActionButton(
+                    mini: true,
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.blue,
+                    onPressed: _centerOnUserLocation,
+                    heroTag: "center_location",
+                    child: const Icon(Icons.my_location),
+                  ),
+              ],
             ),
+          ),
         ],
       ),
     );

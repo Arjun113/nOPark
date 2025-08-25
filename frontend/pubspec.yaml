@@ -25,7 +25,8 @@ dependencies:
   intl:
   flutter_map:
   latlong2:
-  permission_handler: 
+  permission_handler:
+  http:
 
 dev_dependencies:
   flutter_test:
