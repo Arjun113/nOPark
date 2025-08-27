@@ -335,6 +335,49 @@ func (a *api) confirmRideProposalHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	if ride.Status == "in_progress" {
+		_, proposals, err := a.ridesRepo.GetRideAndProposals(ctx, ride.ID)
+		if err != nil {
+			a.logger.Error("Failed to get ride proposals for notifications",
+				zap.Error(err),
+				zap.Int64("ride_id", ride.ID))
+		} else {
+			driver, err := a.accountsRepo.GetAccountByID(ctx, proposal.DriverID)
+			if err != nil {
+				a.logger.Error("Failed to get driver for ride confirmation notification",
+					zap.Error(err),
+					zap.Int64("driver_id", proposal.DriverID))
+			} else {
+				for _, prop := range proposals {
+					if prop.Status == "accepted" {
+						request, err := a.ridesRepo.GetRequestByID(ctx, prop.RequestID)
+						if err != nil {
+							a.logger.Error("Failed to get request for ride confirmation notification",
+								zap.Error(err),
+								zap.Int64("request_id", prop.RequestID))
+							continue
+						}
+
+						notification := &domain.NotificationDBModel{
+							NotificationType: domain.NotificationTypeRideRequest,
+							NotificationMessage: fmt.Sprintf("Your ride has been confirmed! Driver %s %s will pick you up at %s",
+								driver.FirstName, driver.LastName, request.PickupLocation),
+							AccountID: request.PassengerID,
+						}
+
+						_, err = a.notificationsRepo.CreateNotification(ctx, notification)
+						if err != nil {
+							a.logger.Error("Failed to create ride confirmation notification for passenger",
+								zap.Error(err),
+								zap.Int64("passenger_id", request.PassengerID),
+								zap.Int64("ride_id", ride.ID))
+						}
+					}
+				}
+			}
+		}
+	}
+
 	response := ConfirmRideProposalResponse{
 		ID:             proposal.ID,
 		ProposalStatus: proposal.Status,
