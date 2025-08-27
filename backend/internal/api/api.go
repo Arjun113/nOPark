@@ -23,8 +23,9 @@ type api struct {
 
 	accountsRepo domain.AccountsRepository
 	// mapsRepo          domain.MapsRepository
-	ridesRepo     domain.RidesRepository
-	ratelimitRepo domain.RatelimitRepository
+	ridesRepo         domain.RidesRepository
+	ratelimitRepo     domain.RatelimitRepository
+	notificationsRepo domain.NotificationsRepository
 }
 
 func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
@@ -33,6 +34,7 @@ func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 	// mapsRepo := repository.NewPostgresMaps(pool)
 	ridesRepo := repository.NewPostgresRides(pool)
 	ratelimitRepo := repository.NewPostgresRatelimit(pool)
+	notificationsRepo := repository.NewPostgresNotifications(pool)
 
 	client := &http.Client{}
 	emailService := email.NewService()
@@ -47,8 +49,9 @@ func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 
 		accountsRepo: accountsRepo,
 		// mapsRepo:  mapsRepo,
-		ridesRepo:     ridesRepo,
-		ratelimitRepo: ratelimitRepo,
+		ridesRepo:         ridesRepo,
+		ratelimitRepo:     ratelimitRepo,
+		notificationsRepo: notificationsRepo,
 	}
 }
 
@@ -91,6 +94,7 @@ func (a *api) Routes() *mux.Router {
 	p.HandleFunc("/v1/rides/", a.createRideDraftHandler).Methods("POST")
 	p.HandleFunc("/v1/rides/confirm", a.confirmRideProposalHandler).Methods("POST")
 	p.HandleFunc("/v1/rides/summary", a.getRideSummaryHandler).Methods("GET")
+	p.HandleFunc("/v1/rides/compensation", a.compensationEstimateHandler).Methods("GET")
 	// p.HandleFunc("/rides", a.listRidesHandler).Methods("GET")
 	// p.HandleFunc("/rides/{rideID}", a.getRideHandler).Methods("GET")
 	// p.HandleFunc("/rides/{rideID}", a.updateRideHandler).Methods("PUT")

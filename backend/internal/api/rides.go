@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 
 	"github.com/Arjun113/nOPark/internal/domain"
 	"github.com/Arjun113/nOPark/internal/repository"
+	"go.uber.org/zap"
 )
 
 type CreateRideRequestRequest struct {
@@ -202,6 +204,40 @@ func (a *api) createRideDraftHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return
+	}
+
+	for _, proposal := range newProposals {
+		request, err := a.ridesRepo.GetRequestByID(ctx, proposal.RequestID)
+		if err != nil {
+			a.logger.Error("Failed to get request for notification",
+				zap.Error(err),
+				zap.Int64("request_id", proposal.RequestID))
+			continue
+		}
+
+		driver, err := a.accountsRepo.GetAccountByID(ctx, proposal.DriverID)
+		if err != nil {
+			a.logger.Error("Failed to get driver for notification",
+				zap.Error(err),
+				zap.Int64("driver_id", proposal.DriverID))
+			continue
+		}
+
+		notification := &domain.NotificationDBModel{
+			NotificationType: domain.NotificationTypeRideRequest,
+			NotificationMessage: fmt.Sprintf("New ride proposal from %s %s for your request: %s to %s",
+				driver.FirstName, driver.LastName,
+				request.PickupLocation, request.DropoffLocation),
+			AccountID: request.PassengerID,
+		}
+
+		_, err = a.notificationsRepo.CreateNotification(ctx, notification)
+		if err != nil {
+			a.logger.Error("Failed to create notification for passenger",
+				zap.Error(err),
+				zap.Int64("passenger_id", request.PassengerID),
+				zap.Int64("proposal_id", proposal.ID))
+		}
 	}
 
 	response := CreateRideDraftResponse{
@@ -411,6 +447,45 @@ func (a *api) getRideSummaryHandler(w http.ResponseWriter, r *http.Request) {
 	if !isAllowed {
 		a.errorResponse(w, r, http.StatusForbidden, fmt.Errorf("you do not have permission to view this ride summary"))
 		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+type CompensationEstimateRequest struct {
+	StartLatitude  float64 `json:"start_latitude" validate:"required,number"`
+	StartLongitude float64 `json:"start_longitude" validate:"required,number"`
+	EndLatitude    float64 `json:"end_latitude" validate:"required,number"`
+	EndLongitude   float64 `json:"end_longitude" validate:"required,number"`
+}
+
+type CompensationEstimateResponse struct {
+	DistanceKm    float64 `json:"distance_km"`
+	EstimatedComp float64 `json:"estimated_comp"`
+}
+
+func (a *api) compensationEstimateHandler(w http.ResponseWriter, r *http.Request) {
+
+	var req CompensationEstimateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := a.validateRequest(req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	distance := domain.CalculateHaversineDistance(req.StartLatitude, req.StartLongitude, req.EndLatitude, req.EndLongitude)
+
+	estimatedPrice := domain.BaseFare + (distance * domain.PricePerKm)
+
+	response := CompensationEstimateResponse{
+		DistanceKm:    math.Round(distance*100) / 100,
+		EstimatedComp: math.Round(estimatedPrice*100) / 100,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
