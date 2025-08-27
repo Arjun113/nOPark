@@ -15,7 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   // IMPORTANT: Use 10.0.2.2 for Android Emulator to connect to localhost
-  final String _apiUrl = 'http://10.0.2.2:8080/v1/accounts/login';
+  final String _apiUrl = 'http://10.0.2.2:4000/v1/accounts/login';
 
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
