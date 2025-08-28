@@ -28,6 +28,7 @@ dependencies:
   permission_handler:
   http:
   firebase_core:
+  firebase_messaging:
 
 dev_dependencies:
   flutter_test:
