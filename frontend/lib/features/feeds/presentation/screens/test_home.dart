@@ -7,6 +7,7 @@ import 'package:nopark/features/trip/entities/user.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_cost_adjust_widget.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_search_animation.dart';
 import 'package:nopark/features/trip/unified/trip_scroller.dart';
+import 'package:nopark/home_test.dart';
 import 'package:nopark/logic/routing/basic_two_router.dart';
 
 import '../widgets/base_where_next.dart';
@@ -128,7 +129,7 @@ class _HomePageState extends State<HomePage> {
           stepsBuilder: (controller) => [
             PastRidesOverlay(
               onBack: () => Navigator.of(context).pop(),
-              trips: [],
+              trips: [demoTrip],
             ),
           ],
         ),

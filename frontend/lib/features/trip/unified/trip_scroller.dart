@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:intl/intl.dart';
 import '../entities/trip_stops.dart';
 
@@ -14,16 +13,14 @@ class PastRidesOverlay extends StatefulWidget {
 }
 
 class _PastRidesOverlayState extends State<PastRidesOverlay> {
-  final PageController _pageController = PageController();
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent, // semi-transparent overlay
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           children: [
-            // Optional back button
+            // Optional back button at top
             Align(
               alignment: Alignment.topLeft,
               child: IconButton(
@@ -32,35 +29,27 @@ class _PastRidesOverlayState extends State<PastRidesOverlay> {
               ),
             ),
 
-            const SizedBox(height: 12),
+            // Spacer to push cards to bottom
+            const Spacer(),
 
-            // PageView with trip cards
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                itemCount: widget.trips.length,
-                itemBuilder: (context, index) {
-                  return TripCard(trip: widget.trips[index]);
-                },
+            // Horizontal scrollable trip cards at bottom
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: SizedBox(
+                height: 700, // Constrained height
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: widget.trips.length,
+                  padding: const EdgeInsets.all(16),
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: TripCard(trip: widget.trips[index]),
+                    );
+                  },
+                ),
               ),
             ),
-
-            const SizedBox(height: 12),
-
-            // SmoothPageIndicator
-            SmoothPageIndicator(
-              controller: _pageController,
-              count: widget.trips.length,
-              effect: WormEffect(
-                dotHeight: 8,
-                dotWidth: 8,
-                spacing: 8,
-                activeDotColor: Colors.deepPurple.shade800,
-                dotColor: Colors.deepPurple.shade200,
-              ),
-            ),
-
-            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -75,110 +64,212 @@ class TripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          children: [
-            // Origin → Destination Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Column(
-                  children: [
-                    Text(
-                      trip.fromCode,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 28,
-                      ),
-                    ),
-                    Text(trip.from, style: const TextStyle(fontSize: 18)),
-                  ],
-                ),
-                const SizedBox(width: 16),
-                const Icon(Icons.arrow_downward),
-                const SizedBox(width: 16),
-                Column(
-                  children: [
-                    Text(
-                      trip.toCode,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 28,
-                      ),
-                    ),
-                    Text(trip.to, style: const TextStyle(fontSize: 18)),
-                  ],
+    return SafeArea(
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: Container(
+            constraints: const BoxConstraints(
+              maxWidth: 400
+            ),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Origin and Destination with arrow
+                Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          trip.fromCode ?? "",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 48,
+                            color: Colors.black,
+                            height: 1.0,
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                        Text(
+                          trip.from,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
 
-            const SizedBox(height: 12),
+                    const SizedBox(height: 8),
 
-            // Trip Date and Time
-            Text(
-              DateFormat('d MMMM yyyy\nhh:mm a zzz').format(trip.startTime),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16),
-            ),
+                    const Icon(
+                      Icons.keyboard_arrow_down,
+                      color: Colors.black54,
+                      size: 28,
+                    ),
 
-            const SizedBox(height: 16),
+                    const SizedBox(height: 8),
 
-            // Scrollable Stop List
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          trip.toCode ?? "",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 48,
+                            color: Colors.black,
+                            height: 1.0,
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                        Text(
+                          trip.to,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: trip.stops
-                        .map((stop) => StopWidget(stop: stop))
-                        .toList(),
+
+                const SizedBox(height: 20),
+
+                // Trip date and time
+                Text(
+                  DateFormat('d MMMM yyyy').format(trip.startTime),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
                   ),
                 ),
-              ),
+                const SizedBox(height: 4),
+                Text(
+                  DateFormat('hh:mm a zzz').format(trip.startTime),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Scrollable stops list
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: trip.stops.asMap().entries.map((entry) {
+                          int index = entry.key;
+                          Stop stop = entry.value;
+                          bool isLast = index == trip.stops.length - 1;
+
+                          return StopWidget(
+                            stop: stop,
+                            isLast: isLast,
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        )
     );
   }
 }
 
 class StopWidget extends StatelessWidget {
   final Stop stop;
+  final bool isLast;
 
-  const StopWidget({super.key, required this.stop});
+  const StopWidget({
+    super.key,
+    required this.stop,
+    this.isLast = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
+        // Stop name
         Text(
           stop.label,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: Colors.black,
+          ),
+          textAlign: TextAlign.center,
         ),
+
+        const SizedBox(height: 4),
+
+        // Stop time
         Text(
           DateFormat('hh:mm a zzz').format(stop.time),
-          style: const TextStyle(fontSize: 14),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Text(
-            '${stop.distanceKm}km, ${stop.duration.inMinutes}min',
-            style: const TextStyle(fontSize: 14),
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.black54,
+            fontWeight: FontWeight.w400,
           ),
         ),
-        const Icon(Icons.arrow_downward),
+
+        if (!isLast) ...[
+          const SizedBox(height: 12),
+
+          // Arrow and distance/duration info
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.keyboard_arrow_down,
+                color: Colors.black54,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '${stop.distanceKm}km, ${stop.duration.inMinutes}min',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+        ],
       ],
     );
   }
