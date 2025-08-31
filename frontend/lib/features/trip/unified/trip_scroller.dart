@@ -69,7 +69,7 @@ class TripCard extends StatelessWidget {
           alignment: Alignment.bottomCenter,
           child: Container(
             constraints: const BoxConstraints(
-              maxWidth: 400
+              maxWidth: 410
             ),
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
@@ -96,19 +96,21 @@ class TripCard extends StatelessWidget {
                         Text(
                           trip.fromCode ?? "",
                           style: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 48,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 50,
                             color: Colors.black,
                             height: 1.0,
+                            fontFamily: 'B612'
                           ),
                         ),
                         const SizedBox(width: 24),
                         Text(
                           trip.from,
                           style: const TextStyle(
-                            fontSize: 18,
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w400,
+                            fontSize: 40,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'B612'
                           ),
                         ),
                       ],
@@ -117,9 +119,9 @@ class TripCard extends StatelessWidget {
                     const SizedBox(height: 8),
 
                     const Icon(
-                      Icons.keyboard_arrow_down,
-                      color: Colors.black54,
-                      size: 28,
+                      Icons.arrow_downward_rounded,
+                      color: Colors.black,
+                      size: 40,
                     ),
 
                     const SizedBox(height: 8),
@@ -131,19 +133,21 @@ class TripCard extends StatelessWidget {
                         Text(
                           trip.toCode ?? "",
                           style: const TextStyle(
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w700,
                             fontSize: 48,
                             color: Colors.black,
                             height: 1.0,
+                            fontFamily: 'B612'
                           ),
                         ),
                         const SizedBox(width: 24),
                         Text(
                           trip.to,
                           style: const TextStyle(
-                            fontSize: 18,
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w400,
+                            fontSize: 40,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'B612'
                           ),
                         ),
                       ],
@@ -157,18 +161,20 @@ class TripCard extends StatelessWidget {
                 Text(
                   DateFormat('d MMMM yyyy').format(trip.startTime),
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 25,
                     fontWeight: FontWeight.w500,
-                    color: Colors.black87,
+                    color: Colors.black,
+                    fontFamily: 'GoogleSans'
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   DateFormat('hh:mm a zzz').format(trip.startTime),
                   style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.black87,
+                    fontSize: 25,
+                    color: Colors.black,
                     fontWeight: FontWeight.w500,
+                    fontFamily: 'GoogleSans'
                   ),
                 ),
 
@@ -225,9 +231,10 @@ class StopWidget extends StatelessWidget {
         Text(
           stop.label,
           style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
+            fontSize: 25,
+            fontWeight: FontWeight.w700,
             color: Colors.black,
+            fontFamily: 'GoogleSans'
           ),
           textAlign: TextAlign.center,
         ),
@@ -238,9 +245,10 @@ class StopWidget extends StatelessWidget {
         Text(
           DateFormat('hh:mm a zzz').format(stop.time),
           style: const TextStyle(
-            fontSize: 14,
-            color: Colors.black54,
-            fontWeight: FontWeight.w400,
+            fontSize: 15,
+            color: Colors.black,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'GoogleSans'
           ),
         ),
 
@@ -252,17 +260,18 @@ class StopWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(
-                Icons.keyboard_arrow_down,
-                color: Colors.black54,
+                Icons.arrow_downward_rounded,
+                color: Colors.black,
                 size: 24,
               ),
               const SizedBox(width: 12),
               Text(
                 '${stop.distanceKm}km, ${stop.duration.inMinutes}min',
                 style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black54,
+                  fontSize: 18,
+                  color: Colors.black,
                   fontWeight: FontWeight.w400,
+                  fontFamily: 'GoogleSans'
                 ),
               ),
             ],
