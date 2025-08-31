@@ -4,6 +4,7 @@ import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart'
 import 'package:nopark/features/profiles/presentation/widgets/address_scroller.dart';
 import 'package:nopark/features/profiles/presentation/widgets/profile_modal.dart';
 import 'package:nopark/features/trip/entities/user.dart';
+import 'package:nopark/features/trip/passenger/presentation/widgets/driver_contact_card.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_cost_adjust_widget.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_search_animation.dart';
 import 'package:nopark/features/trip/unified/trip_scroller.dart';
@@ -109,10 +110,14 @@ class _HomePageState extends State<HomePage> {
                 // For now, just engage the dismissal manually
                 Future.delayed(Duration(seconds: 3), () {
                   DriverSearchOverlay.updateDriverFound("Woo Jun Jian", null);
+                  controller.next();
                 });
               }),
             ),
-            
+            DriverInfoCard(
+                driverName: "Woo Jun Jian",
+                profileImageUrl: "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.vecteezy.com%2Ffree-vector%2Fprofile-icon&psig=AOvVaw3jdm_m4NfZ0qKHYFgzApd5&ust=1756697553023000&source=images&cd=vfe&opi=89978449&ved=0CBYQjRxqFwoTCJCZv7-OtI8DFQAAAAAdAAAAABAE"
+            )
           ],
         ),
       ),
