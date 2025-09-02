@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nopark/features/profiles/presentation/widgets/address_add_input.dart';
 
 import '../../../trip/entities/user.dart';
 
@@ -341,19 +342,28 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                 const SizedBox(height: 12),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.grey[200]!),
                   ),
-                  child: const Center(
-                    child: Text(
-                      'Add',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black54,
+                  child: GestureDetector(
+                    onTap: (() async {
+                      final result = await showAddressPopup(context);
+
+                      // TODO: Send to server
+                    }),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: const Center(
+                        child: Text(
+                          'Add',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black54,
+                          ),
+                        ),
                       ),
                     ),
                   ),
