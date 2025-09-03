@@ -1,20 +1,38 @@
 import 'package:flutter/material.dart';
 
-class DriverInfoCard extends StatelessWidget {
+class DriverInfoCard extends StatefulWidget {
   final String driverName;
   final String profileImageUrl;
   final VoidCallback? onCancelRide;
   final VoidCallback? onSendMessage;
   final VoidCallback? onCall;
+  final VoidCallback? lookForCompletion;
 
   const DriverInfoCard({
-    Key? key,
+    super.key,
     required this.driverName,
     required this.profileImageUrl,
     this.onCancelRide,
     this.onSendMessage,
     this.onCall,
-  }) : super(key: key);
+    required this.lookForCompletion
+  });
+
+  @override
+  State<DriverInfoCard> createState() => _DriverInfoCardState();
+}
+
+class _DriverInfoCardState extends State<DriverInfoCard> {
+
+  @override
+  void initState() {
+    super.initState();
+    // TODO: Actually wait for firebase notif
+    if (mounted) {
+      widget.lookForCompletion?.call();
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +70,7 @@ class DriverInfoCard extends StatelessWidget {
                         ),
                         child: ClipOval(
                           child: Image.network(
-                            profileImageUrl,
+                            widget.profileImageUrl,
                             width: 80,
                             height: 80,
                             fit: BoxFit.cover,
@@ -71,12 +89,12 @@ class DriverInfoCard extends StatelessWidget {
 
                       // Driver name
                       Text(
-                        driverName,
+                        widget.driverName,
                         style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                          fontFamily: "GoogleSans"
+                            fontSize: 28,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                            fontFamily: "GoogleSans"
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -85,10 +103,10 @@ class DriverInfoCard extends StatelessWidget {
                       const Text(
                         'Student',
                         style: TextStyle(
-                          fontSize: 20,
-                          color: Colors.grey,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: "GoogleSans"
+                            fontSize: 20,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: "GoogleSans"
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -101,14 +119,14 @@ class DriverInfoCard extends StatelessWidget {
                           _ActionButton(
                             icon: Icons.message_outlined,
                             label: 'Send a message',
-                            onTap: onSendMessage,
+                            onTap: widget.onSendMessage,
                           ),
 
                           // Call button
                           _ActionButton(
                             icon: Icons.phone_outlined,
                             label: 'Call',
-                            onTap: onCall,
+                            onTap: widget.onCall,
                           ),
                         ],
                       ),
@@ -121,7 +139,7 @@ class DriverInfoCard extends StatelessWidget {
                   width: double.infinity,
                   margin: const EdgeInsets.fromLTRB(20, 20, 20, 20),
                   child: ElevatedButton(
-                    onPressed: onCancelRide,
+                    onPressed: widget.onCancelRide,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red.shade300, // Light pink/coral
                       foregroundColor: Colors.black87,
@@ -134,10 +152,10 @@ class DriverInfoCard extends StatelessWidget {
                     child: const Text(
                       'Cancel Ride',
                       style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.redAccent,
-                        fontFamily: "GoogleSans"
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.redAccent,
+                          fontFamily: "GoogleSans"
                       ),
                     ),
                   ),
@@ -183,10 +201,10 @@ class _ActionButton extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey.shade700,
-                fontWeight: FontWeight.w500,
-                fontFamily: "GoogleSans"
+                  fontSize: 18,
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: "GoogleSans"
               ),
             ),
           ],
