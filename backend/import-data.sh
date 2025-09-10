@@ -16,7 +16,7 @@ export PGPASSWORD=postgres
 # --slim uses database for temporary storage, good for large imports.
 # --hstore adds hstore column for all OSM tags.
 # --host points to the 'db' service in the docker-compose network
-osm2pgsql --create --slim --host db --port 5432 --database nOPark --user postgres --hstore --style /usr/share/osm2pgsql/default.style /data/melbourne-latest.osm.pbf
+osm2pgsql --create --slim --host db --port 5432 --database nOPark --user postgres --hstore --style /data/osm2pgsql_custom.style /data/melbourne-latest.osm.pbf
 
 echo "Data import complete."
 
