@@ -202,7 +202,7 @@ func (a *api) logoutUserHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "logged out successfully"})
 }
 
-type GetUserResponse struct {
+type GetCurrentUserResponse struct {
 	Type             string   `json:"type"`
 	Email            string   `json:"email"`
 	FirstName        string   `json:"first_name"`
@@ -213,14 +213,14 @@ type GetUserResponse struct {
 	CurrentLongitude *float64 `json:"current_longitude"`
 }
 
-func (a *api) getUserHandler(w http.ResponseWriter, r *http.Request) {
+func (a *api) getCurrentUserHandler(w http.ResponseWriter, r *http.Request) {
 	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
 	if err != nil {
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 		return
 	}
 
-	response := GetUserResponse{
+	response := GetCurrentUserResponse{
 		Type:             account.Type,
 		Email:            account.Email,
 		FirstName:        account.FirstName,
@@ -586,6 +586,85 @@ func (a *api) updateUserHandler(w http.ResponseWriter, r *http.Request) {
 		response.Message = "Profile updated successfully. A verification email has been sent to your new email address."
 	} else {
 		response.Message = "Profile updated successfully."
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+type GetSpecificUserRequest struct {
+	ID int64 `json:"id" validate:"required"`
+}
+
+type GetSpecificUserResponse struct {
+	FirstName        string   `json:"first_name"`
+	MiddleName       string   `json:"middle_name"`
+	LastName         string   `json:"last_name"`
+	CurrentLatitude  *float64 `json:"current_latitude"`
+	CurrentLongitude *float64 `json:"current_longitude"`
+	Rating           *float64 `json:"rating"`
+	NumberOfRatings  int64    `json:"number_of_ratings"`
+	Reviews          []string `json:"reviews"`
+}
+
+func (a *api) getSpecificUserHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	idParam := r.URL.Query().Get("id")
+	if idParam == "" {
+		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("missing user ID"))
+		return
+	}
+
+	var req GetSpecificUserRequest
+	_, err := fmt.Sscanf(idParam, "%d", &req.ID)
+	if err != nil || req.ID <= 0 {
+		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("invalid user ID"))
+		return
+	}
+
+	if err := a.validateRequest(req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	account, err := a.accountsRepo.GetAccountByID(ctx, req.ID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	if account == nil {
+		a.errorResponse(w, r, http.StatusNotFound, fmt.Errorf("user not found"))
+		return
+	}
+
+	// Fetch reviews, rating, and number of ratings from reviews repository
+	rating, numRatings, err := a.reviewsRepo.GetUserRating(ctx, account.ID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, fmt.Errorf("failed to fetch user rating: %w", err))
+		return
+	}
+	reviewModels, err := a.reviewsRepo.GetReviewsForUser(ctx, account.ID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, fmt.Errorf("failed to fetch user reviews: %w", err))
+		return
+	}
+	reviews := make([]string, 0, len(reviewModels))
+	for _, rev := range reviewModels {
+		reviews = append(reviews, rev.Comment)
+	}
+
+	response := GetSpecificUserResponse{
+		FirstName:        account.FirstName,
+		MiddleName:       account.MiddleName,
+		LastName:         account.LastName,
+		CurrentLatitude:  account.CurrentLatitude,
+		CurrentLongitude: account.CurrentLongitude,
+		Rating:           rating,
+		NumberOfRatings:  numRatings,
+		Reviews:          reviews,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

@@ -26,6 +26,7 @@ type api struct {
 	ridesRepo         domain.RidesRepository
 	ratelimitRepo     domain.RatelimitRepository
 	notificationsRepo domain.NotificationsRepository
+	reviewsRepo       domain.ReviewsRepository
 }
 
 func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
@@ -35,6 +36,7 @@ func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 	ridesRepo := repository.NewPostgresRides(pool)
 	ratelimitRepo := repository.NewPostgresRatelimit(pool)
 	notificationsRepo := repository.NewPostgresNotifications(pool)
+	reviewsRepo := repository.NewPostgresReviews(pool)
 
 	client := &http.Client{}
 	emailService := email.NewService()
@@ -52,6 +54,7 @@ func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 		ridesRepo:         ridesRepo,
 		ratelimitRepo:     ratelimitRepo,
 		notificationsRepo: notificationsRepo,
+		reviewsRepo:       reviewsRepo,
 	}
 }
 
@@ -84,9 +87,10 @@ func (a *api) Routes() *mux.Router {
 
 	// Protected account routes
 	p.HandleFunc("/v1/accounts", a.updateUserHandler).Methods("PUT")
-	p.HandleFunc("/v1/accounts", a.getUserHandler).Methods("GET")
+	p.HandleFunc("/v1/accounts", a.getCurrentUserHandler).Methods("GET")
 	p.HandleFunc("/v1/accounts/logout", a.logoutUserHandler).Methods("POST")
 	p.HandleFunc("/v1/accounts/change-password", a.changePasswordHandler).Methods("POST")
+	p.HandleFunc("/v1/accounts/:id", a.getSpecificUserHandler).Methods("GET")
 
 	// Protected ride routes
 	p.HandleFunc("/v1/rides/requests", a.getRideRequestsHandler).Methods("GET")
