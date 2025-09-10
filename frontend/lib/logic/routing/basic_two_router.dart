@@ -19,7 +19,7 @@ class RoutingService {
   /// [destination] - Destination point coordinates
   /// [profile] - Travel profile: 'driving-car', 'walking', 'cycling-regular', etc.
   ///
-  /// Returns a List<LatLng> representing the route points, or null if failed
+  /// Returns a List`<LatLng>` representing the route points, or null if failed
   static Future<List<LatLng>?> getRoute(
     LatLng? start,
     LatLng? destination, {
