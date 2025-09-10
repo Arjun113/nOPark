@@ -20,11 +20,7 @@ class HomePage extends StatefulWidget {
   final User user;
   final List<Map<String, dynamic>> addresses;
 
-  const HomePage({
-    super.key,
-    required this.user,
-    required this.addresses,
-  });
+  const HomePage({super.key, required this.user, required this.addresses});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -35,19 +31,22 @@ class _HomePageState extends State<HomePage> {
   OverlayEntry? whereNextOverlay;
   final GlobalKey<WhereNextState> whereNextKey = GlobalKey<WhereNextState>();
   final GlobalKey whereNextButtonKey = GlobalKey(); // Key for the button
-  final GlobalKey<PricingOverlayState> pricingOverlayKey = GlobalKey<PricingOverlayState>();
+  final GlobalKey<PricingOverlayState> pricingOverlayKey =
+      GlobalKey<PricingOverlayState>();
   final GlobalKey<FullScreenMapState> mapKey = GlobalKey<FullScreenMapState>();
 
   get collapse => null;
 
   List<AddressCardData> convertListToAddressCard() {
     return widget.addresses
-        .map((elem) => AddressCardData(
-      name: elem['name'],
-      line1: elem['line1'],
-      line2: elem['line2'],
-      editing: false,
-    ))
+        .map(
+          (elem) => AddressCardData(
+            name: elem['name'],
+            line1: elem['line1'],
+            line2: elem['line2'],
+            editing: false,
+          ),
+        )
         .toList();
   }
 
@@ -59,7 +58,8 @@ class _HomePageState extends State<HomePage> {
 
   // Method to get the position and size of the WhereNext button
   (Offset, Size)? _getWhereNextPosition() {
-    final renderBox = whereNextButtonKey.currentContext?.findRenderObject() as RenderBox?;
+    final renderBox =
+        whereNextButtonKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return null;
 
     final position = renderBox.localToGlobal(Offset.zero);
@@ -77,62 +77,74 @@ class _HomePageState extends State<HomePage> {
       PageRouteBuilder(
         opaque: false,
         barrierColor: Colors.transparent,
-        pageBuilder: (_, __, ___) => OverlayFlow(
-          onClose: () => Navigator.of(context).pop(),
-          stepsBuilder: (controller) => [
-            WhereNextOverlay(
-              user: widget.user,
-              addresses: widget.addresses,
-              onLocationSelected: (lat, lng) async {
-                final List<MapMarker> destinationMarker = [MapMarker(position: LatLng(lat, lng))];
-                final List<LatLng>? route = await RoutingService.getRoute(mapKey.currentState?.currentLocation, LatLng(lat, lng));
-                _updateMap(destinationMarker, route!);
-                controller.next();
-              },
-              onBack: Navigator.of(context).pop,
-              initialPosition: position,
-              initialSize: size,
-            ),
-            PricingOverlay(
-              onBack: controller.back,
-              fromAddressName: "Arjun's House",
-              fromCampusCode: null,
-              toAddressName: "Woodside",
-              toCampusCode: null,
-              recommendedBidAUD: 15,
-              initialSize: size,
-              initialPosition: position,
-              onSubmit: ((_) {
-                // Engage popup
-                DriverSearchOverlay.show(context);
+        pageBuilder:
+            (_, __, ___) => OverlayFlow(
+              onClose: () => Navigator.of(context).pop(),
+              stepsBuilder:
+                  (controller) => [
+                    WhereNextOverlay(
+                      user: widget.user,
+                      addresses: widget.addresses,
+                      onLocationSelected: (lat, lng) async {
+                        final List<MapMarker> destinationMarker = [
+                          MapMarker(position: LatLng(lat, lng)),
+                        ];
+                        final List<LatLng>? route =
+                            await RoutingService.getRoute(
+                              mapKey.currentState?.currentLocation,
+                              LatLng(lat, lng),
+                            );
+                        _updateMap(destinationMarker, route!);
+                        controller.next();
+                      },
+                      onBack: Navigator.of(context).pop,
+                      initialPosition: position,
+                      initialSize: size,
+                    ),
+                    PricingOverlay(
+                      onBack: controller.back,
+                      fromAddressName: "Arjun's House",
+                      fromCampusCode: null,
+                      toAddressName: "Woodside",
+                      toCampusCode: null,
+                      recommendedBidAUD: 15,
+                      initialSize: size,
+                      initialPosition: position,
+                      onSubmit: ((_) {
+                        // Engage popup
+                        DriverSearchOverlay.show(context);
 
-                // TODO: Send out an API call and wait for a response
+                        // TODO: Send out an API call and wait for a response
 
-                // For now, just engage the dismissal manually
-                Future.delayed(Duration(seconds: 3), () {
-                  DriverSearchOverlay.updateDriverFound("Woo Jun Jian", null);
-                  controller.next();
-                });
-              }),
+                        // For now, just engage the dismissal manually
+                        Future.delayed(Duration(seconds: 3), () {
+                          DriverSearchOverlay.updateDriverFound(
+                            "Woo Jun Jian",
+                            null,
+                          );
+                          controller.next();
+                        });
+                      }),
+                    ),
+                    DriverInfoCard(
+                      driverName: "Woo Jun Jian",
+                      profileImageUrl:
+                          "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.vecteezy.com%2Ffree-vector%2Fprofile-icon&psig=AOvVaw3jdm_m4NfZ0qKHYFgzApd5&ust=1756697553023000&source=images&cd=vfe&opi=89978449&ved=0CBYQjRxqFwoTCJCZv7-OtI8DFQAAAAAdAAAAABAE",
+                      lookForCompletion: (() {
+                        Future.delayed(Duration(seconds: 10), () {
+                          controller.next();
+                        });
+                      }),
+                    ),
+                    RideCompletionWidget(
+                      riderName: "Jun Woo Jian",
+                      price: "14.85",
+                      moveToZero: (() {
+                        controller.jumpTo(0);
+                      }),
+                    ),
+                  ],
             ),
-            DriverInfoCard(
-                driverName: "Woo Jun Jian",
-                profileImageUrl: "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.vecteezy.com%2Ffree-vector%2Fprofile-icon&psig=AOvVaw3jdm_m4NfZ0qKHYFgzApd5&ust=1756697553023000&source=images&cd=vfe&opi=89978449&ved=0CBYQjRxqFwoTCJCZv7-OtI8DFQAAAAAdAAAAABAE",
-              lookForCompletion: (() {
-                Future.delayed(Duration(seconds: 10), () {
-                  controller.next();
-                });
-              }),
-            ),
-            RideCompletionWidget(
-                riderName: "Jun Woo Jian",
-                price: "14.85",
-                moveToZero: (() {
-                  controller.jumpTo(0);
-                }),
-            )
-          ],
-        ),
       ),
     );
   }
@@ -141,16 +153,18 @@ class _HomePageState extends State<HomePage> {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false,
-        barrierColor: Colors.black.withOpacity(0.3),
-        pageBuilder: (_, __, ___) => OverlayFlow(
-          onClose: () => Navigator.of(context).pop(),
-          stepsBuilder: (controller) => [
-            PastRidesOverlay(
-              onBack: () => Navigator.of(context).pop(),
-              trips: [demoTrip],
+        barrierColor: Colors.black.withAlpha(30),
+        pageBuilder:
+            (_, __, ___) => OverlayFlow(
+              onClose: () => Navigator.of(context).pop(),
+              stepsBuilder:
+                  (controller) => [
+                    PastRidesOverlay(
+                      onBack: () => Navigator.of(context).pop(),
+                      trips: [demoTrip],
+                    ),
+                  ],
             ),
-          ],
-        ),
       ),
     );
   }
@@ -161,7 +175,6 @@ class _HomePageState extends State<HomePage> {
     });
     mapKey.currentState?.setRoutePoints(routePoints);
     mapKey.currentState?.fitBoundsToShowAllMarkers();
-    print("Added all objects");
   }
 
   @override
@@ -170,7 +183,7 @@ class _HomePageState extends State<HomePage> {
       body: Stack(
         children: [
           // Background map
-          FullScreenMap(key: mapKey,),
+          FullScreenMap(key: mapKey),
 
           // Detect taps outside when expanded
           if (isExpanded)
@@ -191,56 +204,65 @@ class _HomePageState extends State<HomePage> {
                 ),
                 elevation: 8,
                 child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column (
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        GestureDetector(
-                          key: whereNextButtonKey, // Add the key here
-                          onTap: _onWhereNextTap,
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade50,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: const [
-                                Icon(Icons.location_on_outlined),
-                                SizedBox(width: 8),
-                                Text("Where to next?", style: TextStyle(fontSize: 20)),
-                              ],
-                            ),
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        key: whereNextButtonKey, // Add the key here
+                        onTap: _onWhereNextTap,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 18,
+                            horizontal: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: const [
+                              Icon(Icons.location_on_outlined),
+                              SizedBox(width: 8),
+                              Text(
+                                "Where to next?",
+                                style: TextStyle(fontSize: 20),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 5,),
-                        GestureDetector(
-                          onTap: _onPastRidesTap,
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: const [
-                                Icon(Icons.directions_car),
-                                SizedBox(width: 8),
-                                Text(
-                                  "View Past Rides",
-                                  style: TextStyle(fontSize: 20),
-                                ),
-                                Spacer(),
-                                Icon(Icons.arrow_forward_ios, size: 16),
-                              ],
-                            ),
+                      ),
+                      const SizedBox(height: 5),
+                      GestureDetector(
+                        onTap: _onPastRidesTap,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 18,
+                            horizontal: 12,
                           ),
-                        )
-                      ],
-                    )
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: const [
+                              Icon(Icons.directions_car),
+                              SizedBox(width: 8),
+                              Text(
+                                "View Past Rides",
+                                style: TextStyle(fontSize: 20),
+                              ),
+                              Spacer(),
+                              Icon(Icons.arrow_forward_ios, size: 16),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -254,9 +276,10 @@ class _HomePageState extends State<HomePage> {
               child: Text(
                 "Hello ${widget.user.firstName}",
                 style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Roboto'),
+                  fontSize: 22,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Roboto',
+                ),
               ),
             ),
             Positioned(
@@ -265,23 +288,29 @@ class _HomePageState extends State<HomePage> {
               child: GestureDetector(
                 onTap: () {
                   showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.white,
-                      builder: (context) => ProfileBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.white,
+                    builder:
+                        (context) => ProfileBottomSheet(
                           user: widget.user,
                           userRole: 'Passenger',
-                          phoneController: TextEditingController(text: widget.user.phoneNumber),
-                          emailController: TextEditingController(text: widget.user.monashEmail))
+                          phoneController: TextEditingController(
+                            text: widget.user.phoneNumber,
+                          ),
+                          emailController: TextEditingController(
+                            text: widget.user.monashEmail,
+                          ),
+                        ),
                   );
                 },
                 child: CircleAvatar(
                   radius: 24,
                   backgroundImage: NetworkImage(widget.user.imageUrl),
                 ),
-              )
+              ),
             ),
-          ]
+          ],
         ],
       ),
     );

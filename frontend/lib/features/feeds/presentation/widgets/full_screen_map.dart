@@ -198,7 +198,7 @@ class FullScreenMapState extends State<FullScreenMap> {
               border: Border.all(color: Colors.white, width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withAlpha(30),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -223,7 +223,7 @@ class FullScreenMapState extends State<FullScreenMap> {
               border: Border.all(color: Colors.white, width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withAlpha(30),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),

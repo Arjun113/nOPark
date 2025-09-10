@@ -198,8 +198,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ['passenger', 'driver']
                         .map(
                           (label) => DropdownMenuItem(
-                            child: Text(label),
                             value: label,
+                            child: Text(label),
                           ),
                         )
                         .toList(),

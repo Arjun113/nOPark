@@ -26,7 +26,7 @@ class PricingOverlay extends StatefulWidget {
     this.onSubmit,
     this.onBack,
     required this.initialPosition,
-    required this.initialSize
+    required this.initialSize,
   });
 
   @override
@@ -41,8 +41,9 @@ class PricingOverlayState extends State<PricingOverlay> {
   void initState() {
     super.initState();
     modifiedTripCost = widget.recommendedBidAUD;
-    controller =
-        TextEditingController(text: widget.recommendedBidAUD.toStringAsFixed(2));
+    controller = TextEditingController(
+      text: widget.recommendedBidAUD.toStringAsFixed(2),
+    );
   }
 
   @override
@@ -76,15 +77,13 @@ class PricingOverlayState extends State<PricingOverlay> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Container(
-            constraints: const BoxConstraints(
-              maxWidth: 400,
-            ),
+            constraints: const BoxConstraints(maxWidth: 400),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withAlpha(10),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -99,44 +98,48 @@ class PricingOverlayState extends State<PricingOverlay> {
                   // From address
                   widget.fromCampusCode == null
                       ? Text(
-                    widget.fromAddressName,
-                    style: const TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black,
-                      fontFamily: 'B612'
-                    ),
-                    textAlign: TextAlign.center,
-                  )
-                      : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        widget.fromCampusCode.toString().split('.').last.toUpperCase(),
+                        widget.fromAddressName,
                         style: const TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 30,
+                          fontWeight: FontWeight.w500,
                           color: Colors.black,
-                          letterSpacing: 2,
-                          fontFamily: 'B612'
+                          fontFamily: 'B612',
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          widget.fromAddressName,
-                          style: const TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
-                            fontFamily: 'B612'
+                        textAlign: TextAlign.center,
+                      )
+                      : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            widget.fromCampusCode
+                                .toString()
+                                .split('.')
+                                .last
+                                .toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 40,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
+                              letterSpacing: 2,
+                              fontFamily: 'B612',
+                            ),
                           ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              widget.fromAddressName,
+                              style: const TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black,
+                                fontFamily: 'B612',
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
 
                   const SizedBox(height: 8),
 
@@ -151,44 +154,48 @@ class PricingOverlayState extends State<PricingOverlay> {
                   // To address
                   widget.toCampusCode == null
                       ? Text(
-                    widget.toAddressName,
-                    style: const TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black,
-                      fontFamily: 'B612'
-                    ),
-                    textAlign: TextAlign.center,
-                  )
-                      : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        widget.toCampusCode.toString().split('.').last.toUpperCase(),
+                        widget.toAddressName,
                         style: const TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 30,
+                          fontWeight: FontWeight.w500,
                           color: Colors.black,
-                          letterSpacing: 2,
-                          fontFamily: 'B612'
+                          fontFamily: 'B612',
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          widget.toAddressName,
-                          style: const TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
-                            fontFamily: 'B612'
+                        textAlign: TextAlign.center,
+                      )
+                      : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            widget.toCampusCode
+                                .toString()
+                                .split('.')
+                                .last
+                                .toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 40,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
+                              letterSpacing: 2,
+                              fontFamily: 'B612',
+                            ),
                           ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              widget.toAddressName,
+                              style: const TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black,
+                                fontFamily: 'B612',
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
 
                   const SizedBox(height: 15),
 
@@ -199,7 +206,7 @@ class PricingOverlayState extends State<PricingOverlay> {
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: Colors.black54,
-                      fontFamily: 'GoogleSans'
+                      fontFamily: 'GoogleSans',
                     ),
                   ),
 
@@ -219,7 +226,10 @@ class PricingOverlayState extends State<PricingOverlay> {
                           ),
                         ),
                         child: IconButton(
-                          onPressed: modifiedTripCost > 0.5 ? () => adjustBidAmount(false) : null,
+                          onPressed:
+                              modifiedTripCost > 0.5
+                                  ? () => adjustBidAmount(false)
+                                  : null,
                           icon: const Icon(
                             Icons.remove,
                             color: Colors.black54,
@@ -237,7 +247,7 @@ class PricingOverlayState extends State<PricingOverlay> {
                             fontSize: 18,
                             fontWeight: FontWeight.w500,
                             color: Colors.black87,
-                            fontFamily: 'GoogleSans'
+                            fontFamily: 'GoogleSans',
                           ),
                         ),
                       ),
@@ -285,7 +295,7 @@ class PricingOverlayState extends State<PricingOverlay> {
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: Colors.black87,
-                            fontFamily: 'GoogleSans'
+                            fontFamily: 'GoogleSans',
                           ),
                         ),
                       ),

@@ -6,7 +6,8 @@ import 'package:nopark/logic/error/failures.dart';
 
 class RoutingService {
   // OpenRouteService API - free tier allows 2000 requests/day
-  static const String _baseUrl = 'https://api.openrouteservice.org/v2/directions';
+  static const String _baseUrl =
+      'https://api.openrouteservice.org/v2/directions';
 
   // You need to get a free API key from: https://openrouteservice.org/dev/#/signup
   // Replace this with your actual API key
@@ -20,12 +21,11 @@ class RoutingService {
   ///
   /// Returns a List<LatLng> representing the route points, or null if failed
   static Future<List<LatLng>?> getRoute(
-      LatLng? start,
-      LatLng? destination, {
-        String profile = 'driving-car',
-      }) async {
+    LatLng? start,
+    LatLng? destination, {
+    String profile = 'driving-car',
+  }) async {
     try {
-
       if (start == null || destination == null) {
         throw InputFailure("Both start and destination must be non-null");
       }
@@ -36,12 +36,12 @@ class RoutingService {
       // Prepare the request body
       final requestBody = {
         'coordinates': [
-          [start.longitude, start.latitude],    // Start point [lng, lat]
-          [destination.longitude, destination.latitude]  // End point [lng, lat]
+          [start.longitude, start.latitude], // Start point [lng, lat]
+          [destination.longitude, destination.latitude], // End point [lng, lat]
         ],
         'format': 'json',
         'geometry': 'true',
-        'instructions': 'false',  // We don't need turn-by-turn instructions
+        'instructions': 'false', // We don't need turn-by-turn instructions
       };
 
       // Make the POST request
@@ -61,7 +61,6 @@ class RoutingService {
         // Extract the route geometry
         final routes = data['routes'] as List;
         if (routes.isEmpty) {
-          print('No routes found');
           return null;
         }
 
@@ -71,18 +70,13 @@ class RoutingService {
         final coordinates = _decodePolyline(geometry);
 
         return coordinates.map((coord) => LatLng(coord[1], coord[0])).toList();
-
       } else {
-        print('Routing API error: ${response.statusCode} - ${response.body}');
         return null;
       }
-
     } catch (e) {
-      print('Error getting route: $e');
       return null;
     }
   }
-
 
   /// Decodes a polyline string into a list of coordinates
   /// This is used when the API returns encoded polyline geometry
@@ -92,10 +86,14 @@ class RoutingService {
       return _decodePolylineString(geometry);
     } else if (geometry is List) {
       // If geometry is already a list of coordinates, convert to List<List<double>>
-      return geometry.map<List<double>>((coord) => [
-        (coord[0] as num).toDouble(),
-        (coord[1] as num).toDouble()
-      ]).toList();
+      return geometry
+          .map<List<double>>(
+            (coord) => [
+              (coord[0] as num).toDouble(),
+              (coord[1] as num).toDouble(),
+            ],
+          )
+          .toList();
     } else {
       throw Exception('Unknown geometry format');
     }
@@ -137,17 +135,17 @@ class RoutingService {
 
   /// Gets route with additional information (distance, duration)
   static Future<RouteInfo?> getDetailedRoute(
-      LatLng start,
-      LatLng destination, {
-        String profile = 'driving-car',
-      }) async {
+    LatLng start,
+    LatLng destination, {
+    String profile = 'driving-car',
+  }) async {
     try {
       final url = Uri.parse('$_baseUrl/$profile');
 
       final requestBody = {
         'coordinates': [
           [start.longitude, start.latitude],
-          [destination.longitude, destination.latitude]
+          [destination.longitude, destination.latitude],
         ],
         'format': 'json',
         'geometry': 'true',
@@ -156,10 +154,7 @@ class RoutingService {
 
       final response = await http.post(
         url,
-        headers: {
-          'Authorization': _apiKey,
-          'Content-Type': 'application/json',
-        },
+        headers: {'Authorization': _apiKey, 'Content-Type': 'application/json'},
         body: json.encode(requestBody),
       );
 
@@ -174,21 +169,18 @@ class RoutingService {
         final geometry = route['geometry'];
 
         final coordinates = _decodePolyline(geometry);
-        final points = coordinates.map((coord) => LatLng(coord[1], coord[0])).toList();
+        final points =
+            coordinates.map((coord) => LatLng(coord[1], coord[0])).toList();
 
         return RouteInfo(
           points: points,
           distance: summary['distance'].toDouble(), // meters
           duration: summary['duration'].toDouble(), // seconds
         );
-
       } else {
-        print('Routing API error: ${response.statusCode}');
         return null;
       }
-
     } catch (e) {
-      print('Error getting detailed route: $e');
       return null;
     }
   }

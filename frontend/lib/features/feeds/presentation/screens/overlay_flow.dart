@@ -76,21 +76,20 @@ class _OverlayFlowState extends State<OverlayFlow> {
     );
   }
 
-  Future<bool> _onWillPop() async {
+  void _onWillPop(bool didPop, dynamic result) {
     if (_currentPage != 0) {
       _back();
-      return false;
+    } else {
+      widget.onClose();
     }
-    widget.onClose();
-    return true;
   }
 
   @override
   Widget build(BuildContext context) {
     final steps = widget.stepsBuilder(_controller);
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      onPopInvokedWithResult: _onWillPop,
       child: Material(
         color: Colors.transparent,
         child: PageView(

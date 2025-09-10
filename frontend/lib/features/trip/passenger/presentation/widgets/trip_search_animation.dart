@@ -10,13 +10,13 @@ class DriverSearchPopup extends StatefulWidget {
   final VoidCallback? onDriverFound;
 
   const DriverSearchPopup({
-    Key? key,
+    super.key,
     required this.state,
     this.driverName,
     this.driverImage,
     this.onCancel,
     this.onDriverFound,
-  }) : super(key: key);
+  });
 
   @override
   State<DriverSearchPopup> createState() => _DriverSearchPopupState();
@@ -139,9 +139,9 @@ class _DriverSearchPopupState extends State<DriverSearchPopup>
                       height: 80,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.blue.withOpacity(0.1),
+                        color: Colors.blue.withAlpha(10),
                         border: Border.all(
-                          color: Colors.blue.withOpacity(0.3),
+                          color: Colors.blue.withAlpha(30),
                           width: 2,
                         ),
                       ),
@@ -181,7 +181,7 @@ class _DriverSearchPopupState extends State<DriverSearchPopup>
                               height: 8,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.blue.withOpacity(0.6),
+                                color: Colors.blue.withAlpha(60),
                               ),
                             ),
                           ),
@@ -193,7 +193,7 @@ class _DriverSearchPopupState extends State<DriverSearchPopup>
                               height: 6,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.blue.withOpacity(0.4),
+                                color: Colors.blue.withAlpha(40),
                               ),
                             ),
                           ),
@@ -205,7 +205,7 @@ class _DriverSearchPopupState extends State<DriverSearchPopup>
                               height: 8,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.blue.withOpacity(0.7),
+                                color: Colors.blue.withAlpha(70),
                               ),
                             ),
                           ),
@@ -217,11 +217,7 @@ class _DriverSearchPopupState extends State<DriverSearchPopup>
               ),
 
               // Car icon in center
-              const Icon(
-                Icons.directions_car,
-                size: 24,
-                color: Colors.blue,
-              ),
+              const Icon(Icons.directions_car, size: 24, color: Colors.blue),
             ],
           ),
         ),
@@ -250,9 +246,8 @@ class _DriverSearchPopupState extends State<DriverSearchPopup>
               children: List.generate(3, (index) {
                 double delay = index * 0.3;
                 double animValue = (_dotsAnimation.value + delay) % 1.0;
-                double opacity = animValue < 0.5
-                    ? (animValue * 2)
-                    : (2 - animValue * 2);
+                double opacity =
+                    animValue < 0.5 ? (animValue * 2) : (2 - animValue * 2);
 
                 return Container(
                   margin: const EdgeInsets.symmetric(horizontal: 2),
@@ -261,10 +256,7 @@ class _DriverSearchPopupState extends State<DriverSearchPopup>
                     duration: const Duration(milliseconds: 100),
                     child: const Text(
                       '•',
-                      style: TextStyle(
-                        fontSize: 24,
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(fontSize: 24, color: Colors.grey),
                     ),
                   ),
                 );
@@ -280,17 +272,11 @@ class _DriverSearchPopupState extends State<DriverSearchPopup>
           TextButton(
             onPressed: widget.onCancel,
             style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
             child: const Text(
               'Cancel',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: Colors.grey, fontSize: 16),
             ),
           ),
       ],
@@ -317,31 +303,41 @@ class _DriverSearchPopupState extends State<DriverSearchPopup>
                     color: Colors.blue,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.blue.withOpacity(0.3),
+                        color: Colors.blue.withAlpha(30),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                  child: widget.driverImage != null
-                      ? ClipOval(
-                    child: widget.driverImage!.startsWith('http')
-                        ? Image.network(
-                      widget.driverImage!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return _buildDefaultAvatar();
-                      },
-                    )
-                        : Image.asset(
-                      widget.driverImage!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return _buildDefaultAvatar();
-                      },
-                    ),
-                  )
-                      : _buildDefaultAvatar(),
+                  child:
+                      widget.driverImage != null
+                          ? ClipOval(
+                            child:
+                                widget.driverImage!.startsWith('http')
+                                    ? Image.network(
+                                      widget.driverImage!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (
+                                        context,
+                                        error,
+                                        stackTrace,
+                                      ) {
+                                        return _buildDefaultAvatar();
+                                      },
+                                    )
+                                    : Image.asset(
+                                      widget.driverImage!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (
+                                        context,
+                                        error,
+                                        stackTrace,
+                                      ) {
+                                        return _buildDefaultAvatar();
+                                      },
+                                    ),
+                          )
+                          : _buildDefaultAvatar(),
                 ),
 
                 const SizedBox(height: 20),
@@ -396,50 +392,44 @@ class _DriverSearchPopupState extends State<DriverSearchPopup>
         shape: BoxShape.circle,
         color: Colors.blue,
       ),
-      child: const Icon(
-        Icons.person,
-        size: 40,
-        color: Colors.white,
-      ),
+      child: const Icon(Icons.person, size: 40, color: Colors.white),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Material(
-        color: Colors.transparent,
-        child: Container(
+      color: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment.center,
+            radius: 1.0,
+            colors: [Colors.black.withAlpha(30), Colors.black.withAlpha(60)],
+          ),
+        ),
+        child: Center(
+          child: Container(
+            margin: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.center,
-                radius: 1.0,
-                colors: [
-                  Colors.black.withOpacity(0.3),
-                  Colors.black.withOpacity(0.6),
-                ],
-              ),
-            ),
-            child: Center(
-              child: Container(
-                margin: const EdgeInsets.all(32),
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(10),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
-                child: widget.state == DriverSearchState.loading
+              ],
+            ),
+            child:
+                widget.state == DriverSearchState.loading
                     ? _buildLoadingContent()
-                    : _buildSuccessContent(        ),
-              ),
-            )
-        )
+                    : _buildSuccessContent(),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -461,23 +451,25 @@ class DriverSearchOverlay {
     _driverImage = null;
 
     _overlayEntry = OverlayEntry(
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => DriverSearchPopup(
-          state: _currentState,
-          driverName: _driverName,
-          driverImage: _driverImage,
-          onCancel: () {
-            hide();
-            onCancel?.call();
-          },
-          onDriverFound: () {
-            // Optional: Auto-hide after a few seconds
-            Future.delayed(const Duration(seconds: 3), () {
-              hide();
-            });
-          },
-        ),
-      ),
+      builder:
+          (context) => StatefulBuilder(
+            builder:
+                (context, setState) => DriverSearchPopup(
+                  state: _currentState,
+                  driverName: _driverName,
+                  driverImage: _driverImage,
+                  onCancel: () {
+                    hide();
+                    onCancel?.call();
+                  },
+                  onDriverFound: () {
+                    // Optional: Auto-hide after a few seconds
+                    Future.delayed(const Duration(seconds: 3), () {
+                      hide();
+                    });
+                  },
+                ),
+          ),
     );
 
     Overlay.of(context).insert(_overlayEntry!);

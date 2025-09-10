@@ -11,7 +11,7 @@ class RideCompletionWidget extends StatefulWidget {
     required this.riderName,
     required this.price,
     this.initialRating = 0.0,
-    required this.moveToZero
+    required this.moveToZero,
   });
 
   @override
@@ -25,7 +25,6 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
   void initState() {
     super.initState();
     _currentRating = widget.initialRating;
-
   }
 
   void _updateRating(double rating) {
@@ -85,11 +84,7 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const Icon(
-                        Icons.star,
-                        color: Colors.amber,
-                        size: 18,
-                      ),
+                      const Icon(Icons.star, color: Colors.amber, size: 18),
                     ],
                   ),
                 ],
@@ -98,20 +93,14 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
               // Price
               Text(
                 widget.price,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black54,
-                ),
+                style: const TextStyle(fontSize: 16, color: Colors.black54),
               ),
               const SizedBox(height: 16),
 
               // "How was the ride?" text
               const Text(
                 'How was the ride?',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black54,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.black54),
               ),
               const SizedBox(height: 12),
 
@@ -137,10 +126,7 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
                   ),
                   child: const Text(
                     'OK',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -158,11 +144,11 @@ class StarRating extends StatefulWidget {
   final int maxRating;
 
   const StarRating({
-    Key? key,
+    super.key,
     required this.rating,
     required this.onRatingChanged,
     this.maxRating = 5,
-  }) : super(key: key);
+  });
 
   @override
   State<StarRating> createState() => _StarRatingState();
@@ -210,37 +196,21 @@ class _StarRatingState extends State<StarRating> {
 
     if (difference >= 1.0) {
       // Full star
-      return const Icon(
-        Icons.star,
-        color: Colors.amber,
-        size: 32,
-      );
+      return const Icon(Icons.star, color: Colors.amber, size: 32);
     } else if (difference >= 0.5) {
       // Half star
       return Stack(
         children: [
-          const Icon(
-            Icons.star_border,
-            color: Colors.amber,
-            size: 32,
-          ),
+          const Icon(Icons.star_border, color: Colors.amber, size: 32),
           ClipRect(
             clipper: HalfStarClipper(),
-            child: const Icon(
-              Icons.star,
-              color: Colors.amber,
-              size: 32,
-            ),
+            child: const Icon(Icons.star, color: Colors.amber, size: 32),
           ),
         ],
       );
     } else {
       // Empty star
-      return const Icon(
-        Icons.star_border,
-        color: Colors.amber,
-        size: 32,
-      );
+      return const Icon(Icons.star_border, color: Colors.amber, size: 32);
     }
   }
 }

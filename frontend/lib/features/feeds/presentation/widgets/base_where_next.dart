@@ -38,11 +38,17 @@ class WhereNextState extends State<WhereNext> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     moveAnimationController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 500));
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
     drawerAnimationController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 300));
-    moveAnimation =
-        CurvedAnimation(parent: moveAnimationController, curve: Curves.easeInCubic);
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    moveAnimation = CurvedAnimation(
+      parent: moveAnimationController,
+      curve: Curves.easeInCubic,
+    );
     focusNode = FocusNode();
     locText = TextEditingController();
   }
@@ -69,7 +75,8 @@ class WhereNextState extends State<WhereNext> with TickerProviderStateMixin {
               AnimatedBuilder(
                 animation: moveAnimation,
                 builder: (context, child) {
-                  final top = offset.dy -
+                  final top =
+                      offset.dy -
                       (offset.dy - MediaQuery.of(context).padding.top - 10) *
                           moveAnimation.value;
                   return Positioned(
@@ -91,8 +98,9 @@ class WhereNextState extends State<WhereNext> with TickerProviderStateMixin {
                             decoration: BoxDecoration(
                               color: Colors.grey.shade50,
                               borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(12),
-                                  topRight: Radius.circular(12)),
+                                topLeft: Radius.circular(12),
+                                topRight: Radius.circular(12),
+                              ),
                             ),
                             child: TopFoldWhereNext(user: widget.user),
                           ),
@@ -111,13 +119,17 @@ class WhereNextState extends State<WhereNext> with TickerProviderStateMixin {
                                   Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: const [
-                                      Icon(Icons.location_on_outlined,
-                                          color: Colors.grey),
+                                      Icon(
+                                        Icons.location_on_outlined,
+                                        color: Colors.grey,
+                                      ),
                                       SizedBox(width: 8),
                                       Text(
                                         "Where to next?",
                                         style: TextStyle(
-                                            color: Colors.grey, fontSize: 18),
+                                          color: Colors.grey,
+                                          fontSize: 18,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -126,7 +138,9 @@ class WhereNextState extends State<WhereNext> with TickerProviderStateMixin {
                                   focusNode: focusNode,
                                   textAlign: TextAlign.left,
                                   style: const TextStyle(
-                                      color: Colors.black, fontSize: 18),
+                                    color: Colors.black,
+                                    fontSize: 18,
+                                  ),
                                   decoration: const InputDecoration(
                                     border: InputBorder.none,
                                     isDense: true,
@@ -151,8 +165,9 @@ class WhereNextState extends State<WhereNext> with TickerProviderStateMixin {
                             decoration: BoxDecoration(
                               color: Colors.grey.shade50,
                               borderRadius: const BorderRadius.only(
-                                  bottomLeft: Radius.circular(12),
-                                  bottomRight: Radius.circular(12)),
+                                bottomLeft: Radius.circular(12),
+                                bottomRight: Radius.circular(12),
+                              ),
                             ),
                             child: Center(
                               child: ElevatedButton(
@@ -160,7 +175,9 @@ class WhereNextState extends State<WhereNext> with TickerProviderStateMixin {
                                   // Trigger callback
                                   if (widget.onLocationSelected != null) {
                                     widget.onLocationSelected!(
-                                        37.4219999, -122.0840575); // example lat/lng
+                                      37.4219999,
+                                      -122.0840575,
+                                    ); // example lat/lng
                                   }
                                   removeOverlay();
                                 },
@@ -180,7 +197,7 @@ class WhereNextState extends State<WhereNext> with TickerProviderStateMixin {
       },
     );
 
-    Overlay.of(context)?.insert(overlayEntry!);
+    Overlay.of(context).insert(overlayEntry!);
 
     setState(() {
       isLifted = true;

@@ -52,11 +52,10 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
 
     _heightAnimation = Tween<double>(
       begin: 0.5, // Collapsed height (50% of screen)
-      end: 0.9,   // Expanded height (90% of screen)
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+      end: 0.9, // Expanded height (90% of screen)
+    ).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
   }
 
   void _toggleSheet() {
@@ -87,23 +86,24 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
         border: Border.all(color: Colors.white, width: 3),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha(10),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: widget.profileImageUrl != null
-          ? ClipOval(
-        child: Image.network(
-          widget.profileImageUrl!,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return _buildDefaultAvatar();
-          },
-        ),
-      )
-          : _buildDefaultAvatar(),
+      child:
+          widget.profileImageUrl != null
+              ? ClipOval(
+                child: Image.network(
+                  widget.profileImageUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return _buildDefaultAvatar();
+                  },
+                ),
+              )
+              : _buildDefaultAvatar(),
     );
   }
 
@@ -117,11 +117,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
           end: Alignment.bottomRight,
         ),
       ),
-      child: const Icon(
-        Icons.person,
-        size: 40,
-        color: Colors.white,
-      ),
+      child: const Icon(Icons.person, size: 40, color: Colors.white),
     );
   }
 
@@ -134,7 +130,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
         const SizedBox(height: 16),
 
         Text(
-          widget.user.firstName + ' ' + widget.user.lastName,
+          '${widget.user.firstName} ${widget.user.lastName}',
           style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -195,10 +191,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
             ),
             child: const Text(
               'Update Profile',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ),
         ),
@@ -222,10 +215,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
             ),
             child: const Text(
               'Log Out',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ),
         ),
@@ -243,7 +233,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
         _buildProfileImage(),
 
         Text(
-          widget.user.firstName + ' ' + widget.user.lastName,
+          '${widget.user.firstName} ${widget.user.lastName}',
           style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -270,17 +260,27 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildContactRow(Icons.phone, widget.phoneController, _isPhoneEditing, () {
-                setState(() {
-                  _isPhoneEditing = !_isPhoneEditing;
-                });
-              }),
+              _buildContactRow(
+                Icons.phone,
+                widget.phoneController,
+                _isPhoneEditing,
+                () {
+                  setState(() {
+                    _isPhoneEditing = !_isPhoneEditing;
+                  });
+                },
+              ),
               const SizedBox(height: 12),
-              _buildContactRow(Icons.email, widget.emailController, _isEmailEditing, () {
-                setState(() {
-                  _isEmailEditing = !_isEmailEditing;
-                });
-              }),
+              _buildContactRow(
+                Icons.email,
+                widget.emailController,
+                _isEmailEditing,
+                () {
+                  setState(() {
+                    _isEmailEditing = !_isEmailEditing;
+                  });
+                },
+              ),
             ],
           ),
         ),
@@ -331,10 +331,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                       const SizedBox(height: 4),
                       Text(
                         '1341 Dandenong Road\nClayton VIC 3168',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -349,7 +346,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                   ),
                   child: GestureDetector(
                     onTap: (() async {
-                      final result = await showAddressPopup(context);
+                      final _ = await showAddressPopup(context);
 
                       // TODO: Send to server
                     }),
@@ -408,7 +405,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
         const SizedBox(height: 16),
 
         // Become a Driver button
-        Container(
+        SizedBox(
           width: double.infinity,
           child: ElevatedButton(
             onPressed: widget.onBecomeDriver,
@@ -423,10 +420,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
             ),
             child: const Text(
               'Become a Driver',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ),
         ),
@@ -434,7 +428,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
         const Spacer(),
 
         // Log Out button
-        Container(
+        SizedBox(
           width: double.infinity,
           child: ElevatedButton(
             onPressed: widget.onLogOut,
@@ -449,10 +443,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
             ),
             child: const Text(
               'Log Out',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ),
         ),
@@ -463,10 +454,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
         const Center(
           child: Text(
             'Made with ❤️ in Australia',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey),
           ),
         ),
 
@@ -475,52 +463,47 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
     );
   }
 
-
-  Widget _buildContactRow(IconData icon, TextEditingController controller, bool isEditing, VoidCallback onEditToggle) {
+  Widget _buildContactRow(
+    IconData icon,
+    TextEditingController controller,
+    bool isEditing,
+    VoidCallback onEditToggle,
+  ) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 20,
-          color: Colors.grey[600],
-        ),
+        Icon(icon, size: 20, color: Colors.grey[600]),
         const SizedBox(width: 12),
         Expanded(
-          child: isEditing
-              ? TextField(
-            controller: controller,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.black87,
-            ),
-            decoration: InputDecoration(
-              border: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.blue[300]!),
-              ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.blue[500]!),
-              ),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(vertical: 4),
-            ),
-            autofocus: true,
-            onEditingComplete: () {
-              setState(() {
-                if (controller == widget.phoneController) {
-                  _isPhoneEditing = false;
-                } else {
-                  _isEmailEditing = false;
-                }
-              });
-            },
-          )
-              : Text(
-            controller.text,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.black87,
-            ),
-          ),
+          child:
+              isEditing
+                  ? TextField(
+                    controller: controller,
+                    style: const TextStyle(fontSize: 16, color: Colors.black87),
+                    decoration: InputDecoration(
+                      border: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.blue[300]!),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.blue[500]!),
+                      ),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                    ),
+                    autofocus: true,
+                    onEditingComplete: () {
+                      setState(() {
+                        if (controller == widget.phoneController) {
+                          _isPhoneEditing = false;
+                        } else {
+                          _isEmailEditing = false;
+                        }
+                      });
+                    },
+                  )
+                  : Text(
+                    controller.text,
+                    style: const TextStyle(fontSize: 16, color: Colors.black87),
+                  ),
         ),
         const SizedBox(width: 8),
         GestureDetector(
@@ -544,9 +527,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
           height: MediaQuery.of(context).size.height * _heightAnimation.value,
           decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(20),
-            ),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
             children: [
@@ -579,9 +560,10 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: _currentState == ProfileSheetState.collapsed
-                      ? _buildCollapsedContent()
-                      : _buildExpandedContent(),
+                  child:
+                      _currentState == ProfileSheetState.collapsed
+                          ? _buildCollapsedContent()
+                          : _buildExpandedContent(),
                 ),
               ),
             ],

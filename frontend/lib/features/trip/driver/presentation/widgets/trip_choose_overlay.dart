@@ -19,10 +19,7 @@ class BidData {
 class BidItem extends StatelessWidget {
   final BidData bidData;
 
-  const BidItem({
-    super.key,
-    required this.bidData,
-  });
+  const BidItem({super.key, required this.bidData});
 
   @override
   Widget build(BuildContext context) {
@@ -60,28 +57,18 @@ class BidItem extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 4.0),
-                    const Icon(
-                      Icons.star,
-                      color: Colors.amber,
-                      size: 16.0,
-                    ),
+                    const Icon(Icons.star, color: Colors.amber, size: 16.0),
                   ],
                 ),
                 const SizedBox(height: 8.0),
                 Text(
                   bidData.address,
-                  style: const TextStyle(
-                    fontSize: 14.0,
-                    color: Colors.black54,
-                  ),
+                  style: const TextStyle(fontSize: 14.0, color: Colors.black54),
                 ),
                 const SizedBox(height: 2.0),
                 Text(
                   bidData.distance,
-                  style: const TextStyle(
-                    fontSize: 12.0,
-                    color: Colors.black45,
-                  ),
+                  style: const TextStyle(fontSize: 12.0, color: Colors.black45),
                 ),
               ],
             ),
@@ -107,12 +94,12 @@ class TripChooseWidget extends StatelessWidget {
   final double height;
 
   const TripChooseWidget({
-    Key? key,
+    super.key,
     this.toCampusCode,
     required this.campusName,
     required this.bids,
     this.height = 400.0,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -127,38 +114,39 @@ class TripChooseWidget extends StatelessWidget {
           // Header
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: toCampusCode != null
-                ? Row(
-              children: [
-                Text(
-                  toCampusCode!,
-                  style: const TextStyle(
-                    fontSize: 24.0,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(width: 12.0),
-                Text(
-                  campusName,
-                  style: const TextStyle(
-                    fontSize: 24.0,
-                    fontWeight: FontWeight.normal,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
-            )
-                : Center(
-              child: Text(
-                campusName,
-                style: const TextStyle(
-                  fontSize: 24.0,
-                  fontWeight: FontWeight.normal,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
+            child:
+                toCampusCode != null
+                    ? Row(
+                      children: [
+                        Text(
+                          toCampusCode!,
+                          style: const TextStyle(
+                            fontSize: 24.0,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(width: 12.0),
+                        Text(
+                          campusName,
+                          style: const TextStyle(
+                            fontSize: 24.0,
+                            fontWeight: FontWeight.normal,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    )
+                    : Center(
+                      child: Text(
+                        campusName,
+                        style: const TextStyle(
+                          fontSize: 24.0,
+                          fontWeight: FontWeight.normal,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
           ),
           // Scrollable list
           Expanded(
