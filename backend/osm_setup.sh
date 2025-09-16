@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -e
+
+IMPORT_MODE=${OSM_IMPORT_MODE:-raw}
+
 # Download if does not exist
 if [ ! -f /data/Melbourne.osm ]; then
     echo "Downloading Melbourne.osm.gz...";
@@ -22,15 +26,29 @@ export PGPASSWORD=postgres
 
 echo "PostgreSQL is ready. Starting data import..."
 
-osm2pgrouting --f /data/Melbourne.osm \
-            --conf /data/osm2pgrouting_custom.xml \
-            --dbname nOPark \
-            --username postgres \
-            --host db \
-            --port 5432 \
-            --password postgres \
-            --addnodes \
-            --clean
+if [ "$IMPORT_MODE" = "raw" ]; then
+  echo "IMPORT_MODE=raw: Importing OSM data using osm2pgrouting..."
+  osm2pgrouting --f /data/Melbourne.osm \
+              --conf /data/osm2pgrouting_custom.xml \
+              --dbname nOPark \
+              --username postgres \
+              --host db \
+              --port 5432 \
+              --password postgres \
+              --addnodes \
+              --clean
 
-echo "pgRouting topology creation complete."
+  echo "pgRouting topology creation complete."
+else
+  echo "IMPORT_MODE is not 'raw': Importing OSM data using pre-processed SQL dump."
+  if [ ! -f /data/nOPark.sql.gz ]; then
+      echo "Pre-processed SQL dump not found, please upload nOPark.sql.gz to the ./data directory and restart the container";
+  else
+      echo "Extracting...";
+      gzip -d /data/nOPark.sql.gz;
+      psql -h db -U postgres -d nOPark -f /data/nOPark.sql;
+      rm -f /data/nOPark.sql;
+      echo "Pre-processed SQL import complete.";
+  fi
+fi
 

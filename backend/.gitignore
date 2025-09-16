@@ -2,3 +2,4 @@
 .vscode
 data/*.pbf
 data/*.osm
+data/*.gz
