@@ -1,0 +1,24 @@
+meta {
+  name: 31 Route
+  type: http
+  seq: 14
+}
+
+post {
+  url: http://localhost:4000/v1/maps/route
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "start_lat": -37.90993797506078,
+    "start_lng": 145.12365164981418,
+    "end_lat": -37.92176873238315,
+    "end_lng": 145.13999169015517
+  }
+}
+
+settings {
+  encodeUrl: true
+}

@@ -13,7 +13,7 @@ RETURNS TABLE(
     cost_s double precision,
     agg_cost double precision,
     agg_cost_s double precision,
-    geom geometry
+    geom text
 ) AS $$
 DECLARE
     start_edge record;
@@ -132,7 +132,7 @@ BEGIN
         all_segments.cost_s,
         SUM(all_segments.cost) OVER (ORDER BY all_segments.seq) AS agg_cost,
         SUM(all_segments.cost_s) OVER (ORDER BY all_segments.seq) AS agg_cost_s,
-        all_segments.geom
+        ST_AsGeoJSON(all_segments.geom) AS geom
     FROM all_segments
     ORDER BY all_segments.seq;
 

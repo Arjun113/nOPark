@@ -21,8 +21,8 @@ type api struct {
 	emailService *email.Service
 	validator    *validator.Validate
 
-	accountsRepo domain.AccountsRepository
-	// mapsRepo          domain.MapsRepository
+	accountsRepo      domain.AccountsRepository
+	mapsRepo          domain.MapsRepository
 	ridesRepo         domain.RidesRepository
 	ratelimitRepo     domain.RatelimitRepository
 	notificationsRepo domain.NotificationsRepository
@@ -32,7 +32,7 @@ type api struct {
 func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 
 	accountsRepo := repository.NewPostgresAccounts(pool)
-	// mapsRepo := repository.NewPostgresMaps(pool)
+	mapsRepo := repository.NewPostgresMaps(pool)
 	ridesRepo := repository.NewPostgresRides(pool)
 	ratelimitRepo := repository.NewPostgresRatelimit(pool)
 	notificationsRepo := repository.NewPostgresNotifications(pool)
@@ -49,8 +49,8 @@ func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 		emailService: emailService,
 		validator:    validate,
 
-		accountsRepo: accountsRepo,
-		// mapsRepo:  mapsRepo,
+		accountsRepo:      accountsRepo,
+		mapsRepo:          mapsRepo,
 		ridesRepo:         ridesRepo,
 		ratelimitRepo:     ratelimitRepo,
 		notificationsRepo: notificationsRepo,
@@ -109,6 +109,7 @@ func (a *api) Routes() *mux.Router {
 	p.HandleFunc("/v1/admin/ip/unblock", a.unblockIPHandler).Methods("GET")
 
 	// Protected map routes (commented out for now)
+	p.HandleFunc("/v1/maps/route", a.getRouteHandler).Methods("POST")
 	// p.HandleFunc("/maps", a.listMapsHandler).Methods("GET")
 	// p.HandleFunc("/maps", a.createMapHandler).Methods("POST")
 	// p.HandleFunc("/maps/{mapID}", a.getMapHandler).Methods("GET")
