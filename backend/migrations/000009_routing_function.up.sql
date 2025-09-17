@@ -1,4 +1,4 @@
--- Routing function using pgRouting with distance and time (fully qualified, no ambiguity)
+
 CREATE OR REPLACE FUNCTION get_route_between(
     start_lon double precision,
     start_lat double precision,
@@ -67,63 +67,123 @@ BEGIN
 
     -- build and return full route table at once
     RETURN QUERY
-    WITH start_hops AS (
-        SELECT 1 AS s_seq,
-               NULL::bigint AS s_node,
-               start_edge.gid AS s_edge,
-               ST_Distance(start_point, start_proj) AS s_cost,
-               (ST_Distance(start_point, start_proj)/NULLIF(start_edge.w_cost,0)) * start_edge.w_cost_s AS s_cost_s,
-               ST_MakeLine(start_point, start_proj) AS s_geom
+    WITH
+    -- start_hops: off-road then road-following
+    start_hops AS (
+        SELECT
+            1 AS sh_seq,
+            NULL::bigint AS sh_node,
+            start_edge.gid AS sh_edge,
+            ST_Distance(start_point, start_proj) AS sh_cost,
+            (ST_Distance(start_point, start_proj) / NULLIF(start_edge.w_cost, 0)) * start_edge.w_cost_s AS sh_cost_s,
+            ST_MakeLine(start_point, start_proj) AS sh_geom
         UNION ALL
-        SELECT 2 AS s_seq,
-               start_node AS s_node,
-               start_edge.gid AS s_edge,
-               ST_Distance(start_proj, v.the_geom) AS s_cost,
-               (ST_Distance(start_proj, v.the_geom)/NULLIF(start_edge.w_cost,0)) * start_edge.w_cost_s AS s_cost_s,
-               ST_MakeLine(start_proj, v.the_geom) AS s_geom
+        SELECT
+            2 AS sh_seq,
+            start_node AS sh_node,
+            start_edge.gid AS sh_edge,
+            ST_Length(
+                ST_LineSubstring(
+                    start_edge.the_geom,
+                    LEAST(ST_LineLocatePoint(start_edge.the_geom, start_proj),
+                        ST_LineLocatePoint(start_edge.the_geom, v.the_geom)),
+                    GREATEST(ST_LineLocatePoint(start_edge.the_geom, start_proj),
+                            ST_LineLocatePoint(start_edge.the_geom, v.the_geom))
+                )::geography
+            ) AS sh_cost,
+            (
+                ST_Length(
+                    ST_LineSubstring(
+                        start_edge.the_geom,
+                        LEAST(ST_LineLocatePoint(start_edge.the_geom, start_proj),
+                            ST_LineLocatePoint(start_edge.the_geom, v.the_geom)),
+                        GREATEST(ST_LineLocatePoint(start_edge.the_geom, start_proj),
+                                ST_LineLocatePoint(start_edge.the_geom, v.the_geom))
+                    )::geography
+                ) / NULLIF(start_edge.w_cost, 0)
+            ) * start_edge.w_cost_s AS sh_cost_s,
+            ST_LineSubstring(
+                start_edge.the_geom,
+                LEAST(ST_LineLocatePoint(start_edge.the_geom, start_proj),
+                    ST_LineLocatePoint(start_edge.the_geom, v.the_geom)),
+                GREATEST(ST_LineLocatePoint(start_edge.the_geom, start_proj),
+                        ST_LineLocatePoint(start_edge.the_geom, v.the_geom))
+            ) AS sh_geom
         FROM ways_vertices_pgr v
         WHERE v.id = start_node
     ),
+
+    -- main_route
     main_route AS (
-        SELECT (r.seq + 2) AS m_seq,
-               r.node AS m_node,
-               r.edge AS m_edge,
-               w.cost AS m_cost,
-               w.cost_s AS m_cost_s,
-               w.the_geom AS m_geom
+        SELECT
+            r.seq + 2 AS mr_seq,
+            r.node AS mr_node,
+            r.edge AS mr_edge,
+            w.cost AS mr_cost,
+            w.cost_s AS mr_cost_s,
+            w.the_geom AS mr_geom
         FROM pgr_dijkstra(
             'SELECT gid AS id, source, target, cost, reverse_cost FROM ways',
             start_node, end_node, true
         ) AS r
         JOIN ways w ON r.edge = w.gid
     ),
+
+    -- end_hops
     end_hops AS (
-        SELECT (dijkstra_count + 3) AS e_seq,
-               end_node AS e_node,
-               end_edge.gid AS e_edge,
-               ST_Distance(v.the_geom, end_proj) AS e_cost,
-               (ST_Distance(v.the_geom, end_proj)/NULLIF(end_edge.w_cost,0)) * end_edge.w_cost_s AS e_cost_s,
-               ST_MakeLine(v.the_geom, end_proj) AS e_geom
+        SELECT
+            dijkstra_count + 2 AS eh_seq,
+            end_node AS eh_node,
+            end_edge.gid AS eh_edge,
+            ST_Length(
+                ST_LineSubstring(
+                    end_edge.the_geom,
+                    LEAST(ST_LineLocatePoint(end_edge.the_geom, v.the_geom),
+                        ST_LineLocatePoint(end_edge.the_geom, end_proj)),
+                    GREATEST(ST_LineLocatePoint(end_edge.the_geom, v.the_geom),
+                            ST_LineLocatePoint(end_edge.the_geom, end_proj))
+                )::geography
+            ) AS eh_cost,
+            (
+                ST_Length(
+                    ST_LineSubstring(
+                        end_edge.the_geom,
+                        LEAST(ST_LineLocatePoint(end_edge.the_geom, v.the_geom),
+                            ST_LineLocatePoint(end_edge.the_geom, end_proj)),
+                        GREATEST(ST_LineLocatePoint(end_edge.the_geom, v.the_geom),
+                                ST_LineLocatePoint(end_edge.the_geom, end_proj))
+                    )::geography
+                ) / NULLIF(end_edge.w_cost, 0)
+            ) * end_edge.w_cost_s AS eh_cost_s,
+            ST_LineSubstring(
+                end_edge.the_geom,
+                LEAST(ST_LineLocatePoint(end_edge.the_geom, v.the_geom),
+                    ST_LineLocatePoint(end_edge.the_geom, end_proj)),
+                GREATEST(ST_LineLocatePoint(end_edge.the_geom, v.the_geom),
+                        ST_LineLocatePoint(end_edge.the_geom, end_proj))
+            ) AS eh_geom
         FROM ways_vertices_pgr v
         WHERE v.id = end_node
         UNION ALL
-        SELECT (dijkstra_count + 4) AS e_seq,
-               NULL::bigint AS e_node,
-               end_edge.gid AS e_edge,
-               ST_Distance(end_proj, end_point) AS e_cost,
-               (ST_Distance(end_proj, end_point)/NULLIF(end_edge.w_cost,0)) * end_edge.w_cost_s AS e_cost_s,
-               ST_MakeLine(end_proj, end_point) AS e_geom
+        SELECT
+            dijkstra_count + 3 AS eh_seq,
+            NULL::bigint AS eh_node,
+            end_edge.gid AS eh_edge,
+            ST_Distance(end_proj, end_point) AS eh_cost,
+            (ST_Distance(end_proj, end_point) / NULLIF(end_edge.w_cost, 0)) * end_edge.w_cost_s AS eh_cost_s,
+            ST_MakeLine(end_proj, end_point) AS eh_geom
     ),
+
+    -- unify all pieces
     all_segments AS (
-        SELECT s_seq AS seq, s_node AS node, s_edge AS edge, s_cost AS cost, s_cost_s AS cost_s, s_geom AS geom
-        FROM start_hops
+        SELECT sh_seq AS seq, sh_node AS node, sh_edge AS edge, sh_cost AS cost, sh_cost_s AS cost_s, sh_geom AS geom FROM start_hops
         UNION ALL
-        SELECT m_seq, m_node, m_edge, m_cost, m_cost_s, m_geom
-        FROM main_route
+        SELECT mr_seq AS seq, mr_node AS node, mr_edge AS edge, mr_cost AS cost, mr_cost_s AS cost_s, mr_geom AS geom FROM main_route
         UNION ALL
-        SELECT e_seq, e_node, e_edge, e_cost, e_cost_s, e_geom
-        FROM end_hops
+        SELECT eh_seq AS seq, eh_node AS node, eh_edge AS edge, eh_cost AS cost, eh_cost_s AS cost_s, eh_geom AS geom FROM end_hops
     )
+
+    -- final output
     SELECT
         all_segments.seq,
         all_segments.node,
@@ -132,9 +192,8 @@ BEGIN
         all_segments.cost_s,
         SUM(all_segments.cost) OVER (ORDER BY all_segments.seq) AS agg_cost,
         SUM(all_segments.cost_s) OVER (ORDER BY all_segments.seq) AS agg_cost_s,
-        ST_AsGeoJSON(all_segments.geom) AS geom
+        ST_AsGeoJSON(all_segments.geom)::text AS geom
     FROM all_segments
     ORDER BY all_segments.seq;
-
 END;
 $$ LANGUAGE plpgsql STABLE;
