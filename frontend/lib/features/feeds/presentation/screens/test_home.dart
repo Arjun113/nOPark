@@ -5,6 +5,7 @@ import 'package:nopark/features/profiles/presentation/widgets/address_scroller.d
 import 'package:nopark/features/profiles/presentation/widgets/profile_modal.dart';
 import 'package:nopark/features/trip/entities/user.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/driver_contact_card.dart';
+import 'package:nopark/features/trip/passenger/presentation/widgets/ride_card.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_cost_adjust_widget.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_over_card_rating.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_search_animation.dart';
@@ -131,6 +132,22 @@ class _HomePageState extends State<HomePage> {
                       profileImageUrl:
                           "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.vecteezy.com%2Ffree-vector%2Fprofile-icon&psig=AOvVaw3jdm_m4NfZ0qKHYFgzApd5&ust=1756697553023000&source=images&cd=vfe&opi=89978449&ved=0CBYQjRxqFwoTCJCZv7-OtI8DFQAAAAAdAAAAABAE",
                       lookForCompletion: (() {
+                        Future.delayed(Duration(seconds: 10), () {
+                          controller.next();
+                        });
+                      }),
+                    ),
+                    RideCard(
+                      title: "Trip in Progress",
+                      carName: "Mercedes C200",
+                      carColor: "white",
+                      plateNumber: "ABC123",
+                      plateState: "VIC",
+                      carImageUrl: "https://www.mercedes-benz.com.au/content/dam/hq/passengercars/cars/c-class/c-class-saloon-w206-pi/modeloverview/06-2022/images/mercedes-benz-c-class-w206-modeloverview-696x392-06-2022.png",
+                      onRideCompleted: (() {
+                        // TODO: Wait for ride to finish
+
+                        // For now, use mock
                         Future.delayed(Duration(seconds: 10), () {
                           controller.next();
                         });
