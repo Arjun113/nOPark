@@ -90,7 +90,8 @@ func (a *api) Routes() *mux.Router {
 	p.HandleFunc("/v1/accounts", a.getCurrentUserHandler).Methods("GET")
 	p.HandleFunc("/v1/accounts/logout", a.logoutUserHandler).Methods("POST")
 	p.HandleFunc("/v1/accounts/change-password", a.changePasswordHandler).Methods("POST")
-	p.HandleFunc("/v1/accounts/:id", a.getSpecificUserHandler).Methods("GET")
+	p.HandleFunc("/v1/accounts/{id}", a.getSpecificUserHandler).Methods("GET")
+	p.HandleFunc("/v1/accounts/{id}/review", a.createReviewHandler).Methods("POST")
 
 	// Protected ride routes
 	p.HandleFunc("/v1/rides/requests", a.getRideRequestsHandler).Methods("GET")

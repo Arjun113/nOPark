@@ -3,3 +3,4 @@
 data/*.pbf
 data/*.osm
 data/*.gz
+credentials.json

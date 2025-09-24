@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/Arjun113/nOPark/internal/domain"
 	"github.com/Arjun113/nOPark/internal/repository"
+	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
 
@@ -593,10 +595,6 @@ func (a *api) updateUserHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-type GetSpecificUserRequest struct {
-	ID int64 `json:"id" validate:"required"`
-}
-
 type GetSpecificUserResponse struct {
 	FirstName        string   `json:"first_name"`
 	MiddleName       string   `json:"middle_name"`
@@ -612,25 +610,21 @@ func (a *api) getSpecificUserHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	idParam := r.URL.Query().Get("id")
-	if idParam == "" {
-		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("missing user ID"))
+	// Extract the user ID from the URL path
+	vars := mux.Vars(r)
+	idParam, ok := vars["id"]
+	if !ok {
+		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("missing user ID in path"))
 		return
 	}
 
-	var req GetSpecificUserRequest
-	_, err := fmt.Sscanf(idParam, "%d", &req.ID)
-	if err != nil || req.ID <= 0 {
+	userID, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil || userID <= 0 {
 		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("invalid user ID"))
 		return
 	}
 
-	if err := a.validateRequest(req); err != nil {
-		a.errorResponse(w, r, http.StatusBadRequest, err)
-		return
-	}
-
-	account, err := a.accountsRepo.GetAccountByID(ctx, req.ID)
+	account, err := a.accountsRepo.GetAccountByID(ctx, userID)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return

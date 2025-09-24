@@ -15,14 +15,6 @@ services:
     volumes:
       - dbdata:/var/lib/postgresql/data
 
-  db_admin:
-    image: adminer
-    restart: unless-stopped
-    environment:
-      ADMINER_UPLOAD_LIMIT: 550M
-    ports:
-      - 8080:8080
-
   tileserv:
     image: pramsey/pg_tileserv:latest
     restart: unless-stopped
@@ -43,7 +35,7 @@ services:
     volumes:
       - ./data:/data
     environment:
-      - OSM_IMPORT_MODE=raw            # raw or saved
+      - OSM_IMPORT_MODE=raw # raw or saved
     restart: "no" # This is a one-off init job, don't restart it.
 
   obj:

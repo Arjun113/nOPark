@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/go-co-op/gocron"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
@@ -16,69 +16,156 @@ import (
 )
 
 func WorkerCmd(ctx context.Context) *cobra.Command {
-	var workerType string
-
 	cmd := &cobra.Command{
 		Use:   "worker",
 		Args:  cobra.ExactArgs(0),
-		Short: "Process notification jobs and other background tasks.",
+		Short: "Handles notification scheduling and processing.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if workerType == "" {
-				return fmt.Errorf("need a worker type to work on")
-			}
-
-			svc := fmt.Sprintf("worker: %s", workerType)
-			logger := cmdutil.NewLogger(svc)
+			logger := cmdutil.NewLogger("worker")
 			defer func() { _ = logger.Sync() }()
 
-			db, err := cmdutil.NewDatabasePool(ctx, 2)
+			db, err := cmdutil.NewDatabasePool(ctx, 4)
 			if err != nil {
-				return err
+				return fmt.Errorf("could not connect to database: %w", err)
 			}
 			defer db.Close()
 
-			switch workerType {
-			case "notifications":
-				return runNotificationWorker(ctx, logger, db)
-			default:
-				return fmt.Errorf("invalid worker type: %s", workerType)
+			// Initialize repositories
+			accountRepo := repository.NewPostgresAccounts(db)
+			notificationRepo := repository.NewPostgresNotifications(db)
+			ratelimitRepo := repository.NewPostgresRatelimit(db)
+
+			// Initialize FCM service for notifications
+			fcmService, err := services.NewFCMService(ctx, logger)
+			if err != nil {
+				logger.Error("failed to initialise FCM service", zap.Error(err))
+				fcmService = nil
+			} else {
+				logger.Info("FCM service initialised successfully")
 			}
+
+			// Setup scheduler
+			s := gocron.NewScheduler(time.UTC)
+			s.SetMaxConcurrentJobs(4, gocron.WaitMode)
+
+			// Schedule notification creation job every 5 seconds
+			_, err = s.Every(5).Seconds().Do(func() {
+				createNotificationsForNewRideRequests(ctx, logger, accountRepo, notificationRepo)
+			})
+			if err != nil {
+				return fmt.Errorf("failed to schedule notification creation job: %w", err)
+			}
+
+			// Schedule cleanup of expired IP blocks every 5 minutes
+			_, err = s.Every(5).Minutes().Do(func() {
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				count, err := ratelimitRepo.CleanupExpiredBlocks(ctx)
+				if err != nil {
+					logger.Error("Failed to clean up expired IP blocks", zap.Error(err))
+				} else if count > 0 {
+					logger.Info("Cleaned up expired IP blocks", zap.Int("count", count))
+				}
+			})
+			if err != nil {
+				return fmt.Errorf("failed to schedule IP block cleanup job: %w", err)
+			}
+
+			// Schedule notification processing job every 3 seconds
+			_, err = s.Every(3).Seconds().Do(func() {
+				err := processNotifications(ctx, logger, notificationRepo, fcmService)
+				if err != nil {
+					logger.Error("error processing notifications", zap.Error(err))
+				}
+			})
+			if err != nil {
+				return fmt.Errorf("failed to schedule notification processing job: %w", err)
+			}
+
+			logger.Info("combined worker started - scheduling notifications every 5s, processing every 3s, cleanup every 5min")
+			s.StartBlocking()
+
+			return nil
 		},
 	}
-
-	cmd.Flags().StringVar(&workerType, "type", "", "The type of worker to run (notifications)")
 
 	return cmd
 }
 
-func runNotificationWorker(ctx context.Context, logger *zap.Logger, db *pgxpool.Pool) error {
-	logger.Info("starting notification worker")
+func createNotificationsForNewRideRequests(ctx context.Context, logger *zap.Logger, accountRepo domain.AccountsRepository, notificationRepo domain.NotificationsRepository) {
+	logger.Debug("checking for new ride requests without notifications")
 
-	notificationRepo := repository.NewPostgresNotifications(db)
-
-	fcmService, err := services.NewFCMService(ctx, logger)
+	newRequests, err := notificationRepo.GetUnnotifiedRideRequests(ctx)
 	if err != nil {
-		logger.Error("failed to initialise FCM service", zap.Error(err))
-		fcmService = nil
-	} else {
-		logger.Info("FCM service initialised successfully")
+		logger.Error("failed to fetch new ride requests", zap.Error(err))
+		return
 	}
 
-	ticker := time.NewTicker(3 * time.Second)
-	defer ticker.Stop()
+	if len(newRequests) == 0 {
+		logger.Debug("no new ride requests found")
+		return
+	}
 
-	for {
-		select {
-		case <-ctx.Done():
-			logger.Info("notification worker stopped")
-			return nil
-		case <-ticker.C:
-			err := processNotifications(ctx, logger, notificationRepo, fcmService)
+	logger.Info("found new ride requests", zap.Int("count", len(newRequests)))
+
+	drivers, err := accountRepo.GetAccountsByType(ctx, "driver")
+	if err != nil {
+		logger.Error("failed to fetch driver accounts", zap.Error(err))
+		return
+	}
+
+	if len(drivers) == 0 {
+		logger.Debug("no driver accounts found")
+		return
+	}
+
+	logger.Info("creating notifications for drivers", zap.Int("driver_count", len(drivers)))
+
+	notificationsCreated := 0
+	for _, request := range newRequests {
+		requestNotificationsCreated := 0
+		for _, driver := range drivers {
+			notification := &domain.NotificationDBModel{
+				NotificationType:    domain.NotificationTypeRideRequest,
+				NotificationMessage: fmt.Sprintf("New ride request: %s to %s (Compensation: $%.2f)", request.PickupLocation, request.DropoffLocation, request.Compensation),
+				AccountID:           driver.ID,
+			}
+
+			createdNotification, err := notificationRepo.CreateNotification(ctx, notification)
 			if err != nil {
-				logger.Error("error processing notifications", zap.Error(err))
+				logger.Error("failed to create notification",
+					zap.Error(err),
+					zap.Int64("driver_id", driver.ID),
+					zap.Int64("request_id", request.ID))
+				continue
+			}
+
+			requestNotificationsCreated++
+			notificationsCreated++
+			logger.Debug("notification created in database",
+				zap.Int64("notification_id", createdNotification.ID),
+				zap.Int64("driver_id", driver.ID),
+				zap.Int64("request_id", request.ID))
+		}
+
+		// Mark the request as having notifications created if at least one notification was successfully created
+		if requestNotificationsCreated > 0 {
+			err := notificationRepo.MarkRequestNotificationsCreated(ctx, request.ID)
+			if err != nil {
+				logger.Error("failed to mark request notifications as created",
+					zap.Error(err),
+					zap.Int64("request_id", request.ID))
+			} else {
+				logger.Debug("request marked as having notifications created",
+					zap.Int64("request_id", request.ID),
+					zap.Int("notifications_created_for_request", requestNotificationsCreated))
 			}
 		}
 	}
+
+	logger.Info("notifications created",
+		zap.Int("total_created", notificationsCreated),
+		zap.Int("requests_processed", len(newRequests)))
 }
 
 func processNotifications(ctx context.Context, logger *zap.Logger, notificationRepo domain.NotificationsRepository, fcmService *services.FCMService) error {
@@ -98,6 +185,13 @@ func processNotifications(ctx context.Context, logger *zap.Logger, notificationR
 	failureCount := 0
 
 	for _, notification := range pendingNotifications {
+		if fcmService == nil {
+			logger.Warn("FCM service not available, skipping notification",
+				zap.Int64("notification_id", notification.ID))
+			failureCount++
+			continue
+		}
+
 		err := fcmService.SendNotification(ctx, notification)
 		if err != nil {
 			logger.Error("failed to send notification",

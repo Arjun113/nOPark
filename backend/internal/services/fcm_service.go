@@ -24,8 +24,12 @@ func NewFCMService(ctx context.Context, logger *zap.Logger) (*FCMService, error)
 		return nil, fmt.Errorf("FIREBASE_CREDENTIALS_PATH environment variable not set")
 	}
 
+	config := &firebase.Config{
+		ProjectID: "nopark-3162",
+	}
+
 	opt := option.WithCredentialsFile(credentialsPath)
-	app, err := firebase.NewApp(ctx, nil, opt)
+	app, err := firebase.NewApp(ctx, config, opt)
 	if err != nil {
 		return nil, fmt.Errorf("error initialising Firebase SDK: %w", err)
 	}

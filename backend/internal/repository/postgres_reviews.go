@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Arjun113/nOPark/internal/domain"
+	"github.com/jackc/pgx/v5"
 )
 
 type postgresReviewsRepository struct {
@@ -58,4 +59,20 @@ func (p *postgresReviewsRepository) GetUserRating(ctx context.Context, userID in
 		return nil, 0, err
 	}
 	return avgRating, numRatings, nil
+}
+
+func (p *postgresReviewsRepository) GetReviewByReviewerAndReviewee(ctx context.Context, reviewerID, revieweeID int64) (*domain.ReviewDBModel, error) {
+	row := p.conn.QueryRow(ctx,
+		`SELECT id, stars, comment, reviewer_id, reviewee_id, created_at FROM reviews WHERE reviewer_id = $1 AND reviewee_id = $2 ORDER BY created_at DESC LIMIT 1`,
+		reviewerID, revieweeID)
+
+	var r domain.ReviewDBModel
+	err := row.Scan(&r.ID, &r.Stars, &r.Comment, &r.ReviewerID, &r.RevieweeID, &r.CreatedAt)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil // No review found
+		}
+		return nil, err
+	}
+	return &r, nil
 }
