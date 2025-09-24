@@ -2,9 +2,6 @@ VM hosted on DigitalOcean under a project in Lachlan's Monash student account.
 
 \$200 credit is provided to students for the first year, which is more than enough.
 
-**Important Note**
-We turn off the VM when not in use to save credits. If the frontend is not working, the VM is likely off. Please contact Lachlan to turn it back on.
-
 ## Specs
 
 - 4 vCPUs
