@@ -1,12 +1,8 @@
-.PHONY: api scheduler worker build install clean migrate-up migrate-down migrate-status migrate-version
+.PHONY: api worker build install clean migrate-up migrate-down migrate-status migrate-version
 
 # Run the API server
 api:
 	go run cmd/nOPark/main.go api
-
-# Run the scheduler
-scheduler:
-	go run cmd/nOPark/main.go scheduler
 
 # Run the worker
 worker:

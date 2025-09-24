@@ -53,6 +53,7 @@ chmod o+r /usr/share/keyrings/caddy-stable-archive-keyring.gpg
 chmod o+r /etc/apt/sources.list.d/caddy-stable.list
 sudo apt update
 sudo apt install caddy
+sudo apt install make
 
 git clone https://github.com/Arjun113/nOPark.git
 ```
@@ -70,7 +71,7 @@ git pull
 # Kill any existing Go processes
 pkill -f "go run cmd/nOPark/main.go" || true
 
-docker compose down --volumes
+docker compose down --volumes --remove-orphans
 docker compose up --detach --build --force-recreate
 sleep 5
 make migrate-up
@@ -78,12 +79,10 @@ mkdir -p logs
 
 # Start services in background with nohup to persist after terminal closes
 nohup make api > logs/api.log 2>&1 &
-nohup make scheduler > logs/scheduler.log 2>&1 &
 nohup make worker > logs/worker.log 2>&1 &
 
 echo "Services started in background. Check logs in logs/ directory."
 echo "API PID: $(pgrep -f "go run cmd/nOPark/main.go api")"
-echo "Scheduler PID: $(pgrep -f "go run cmd/nOPark/main.go scheduler")"
 echo "Worker PID: $(pgrep -f "go run cmd/nOPark/main.go worker")"
 ```
 
@@ -97,7 +96,6 @@ pgrep -f "go run cmd/nOPark/main.go"
 
 # View logs
 tail -f logs/api.log
-tail -f logs/scheduler.log
 tail -f logs/worker.log
 ```
 
