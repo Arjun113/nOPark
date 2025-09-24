@@ -17,23 +17,23 @@ import '../widgets/base_where_next.dart';
 import '../widgets/where_next_overlay.dart';
 import 'overlay_flow.dart';
 
-class HomePage extends StatefulWidget {
+class DriverHomePage extends StatefulWidget {
   final User user;
   final List<Map<String, dynamic>> addresses;
 
-  const HomePage({super.key, required this.user, required this.addresses});
+  const DriverHomePage({super.key, required this.user, required this.addresses});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<DriverHomePage> createState() => _DriverHomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _DriverHomePageState extends State<DriverHomePage> {
   bool isExpanded = false;
   OverlayEntry? whereNextOverlay;
   final GlobalKey<WhereNextState> whereNextKey = GlobalKey<WhereNextState>();
   final GlobalKey whereNextButtonKey = GlobalKey(); // Key for the button
   final GlobalKey<PricingOverlayState> pricingOverlayKey =
-      GlobalKey<PricingOverlayState>();
+  GlobalKey<PricingOverlayState>();
   final GlobalKey<FullScreenMapState> mapKey = GlobalKey<FullScreenMapState>();
 
   get collapse => null;
@@ -42,12 +42,12 @@ class _HomePageState extends State<HomePage> {
     return widget.addresses
         .map(
           (elem) => AddressCardData(
-            name: elem['name'],
-            line1: elem['line1'],
-            line2: elem['line2'],
-            editing: false,
-          ),
-        )
+        name: elem['name'],
+        line1: elem['line1'],
+        line2: elem['line2'],
+        editing: false,
+      ),
+    )
         .toList();
   }
 
@@ -60,7 +60,7 @@ class _HomePageState extends State<HomePage> {
   // Method to get the position and size of the WhereNext button
   (Offset, Size)? _getWhereNextPosition() {
     final renderBox =
-        whereNextButtonKey.currentContext?.findRenderObject() as RenderBox?;
+    whereNextButtonKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return null;
 
     final position = renderBox.localToGlobal(Offset.zero);
@@ -80,88 +80,88 @@ class _HomePageState extends State<HomePage> {
         barrierColor: Colors.transparent,
         pageBuilder:
             (_, __, ___) => OverlayFlow(
-              onClose: () => Navigator.of(context).pop(),
-              stepsBuilder:
-                  (controller) => [
-                    WhereNextOverlay(
-                      user: widget.user,
-                      addresses: widget.addresses,
-                      onLocationSelected: (lat, lng) async {
-                        final List<MapMarker> destinationMarker = [
-                          MapMarker(position: LatLng(lat, lng)),
-                        ];
-                        final List<LatLng>? route =
-                            await RoutingService.getRoute(
-                              mapKey.currentState?.currentLocation,
-                              LatLng(lat, lng),
-                            );
-                        _updateMap(destinationMarker, route!);
-                        controller.next();
-                      },
-                      onBack: Navigator.of(context).pop,
-                      initialPosition: position,
-                      initialSize: size,
-                    ),
-                    PricingOverlay(
-                      onBack: controller.back,
-                      fromAddressName: "Arjun's House",
-                      fromCampusCode: null,
-                      toAddressName: "Woodside",
-                      toCampusCode: null,
-                      recommendedBidAUD: 15,
-                      initialSize: size,
-                      initialPosition: position,
-                      onSubmit: ((_) {
-                        // Engage popup
-                        DriverSearchOverlay.show(context);
-
-                        // TODO: Send out an API call and wait for a response
-
-                        // For now, just engage the dismissal manually
-                        Future.delayed(Duration(seconds: 3), () {
-                          DriverSearchOverlay.updateDriverFound(
-                            "Woo Jun Jian",
-                            null,
-                          );
-                          controller.next();
-                        });
-                      }),
-                    ),
-                    DriverInfoCard(
-                      driverName: "Woo Jun Jian",
-                      profileImageUrl:
-                          "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.vecteezy.com%2Ffree-vector%2Fprofile-icon&psig=AOvVaw3jdm_m4NfZ0qKHYFgzApd5&ust=1756697553023000&source=images&cd=vfe&opi=89978449&ved=0CBYQjRxqFwoTCJCZv7-OtI8DFQAAAAAdAAAAABAE",
-                      lookForCompletion: (() {
-                        Future.delayed(Duration(seconds: 10), () {
-                          controller.next();
-                        });
-                      }),
-                    ),
-                    RideCard(
-                      title: "Trip in Progress",
-                      carName: "Mercedes C200",
-                      carColor: "white",
-                      plateNumber: "ABC123",
-                      plateState: "VIC",
-                      carImageUrl: "https://www.mercedes-benz.com.au/content/dam/hq/passengercars/cars/c-class/c-class-saloon-w206-pi/modeloverview/06-2022/images/mercedes-benz-c-class-w206-modeloverview-696x392-06-2022.png",
-                      onRideCompleted: (() {
-                        // TODO: Wait for ride to finish
-
-                        // For now, use mock
-                        Future.delayed(Duration(seconds: 10), () {
-                          controller.next();
-                        });
-                      }),
-                    ),
-                    RideCompletionWidget(
-                      riderName: "Jun Woo Jian",
-                      price: "14.85",
-                      moveToZero: (() {
-                        controller.jumpTo(0);
-                      }),
-                    ),
-                  ],
+          onClose: () => Navigator.of(context).pop(),
+          stepsBuilder:
+              (controller) => [
+            WhereNextOverlay(
+              user: widget.user,
+              addresses: widget.addresses,
+              onLocationSelected: (lat, lng) async {
+                final List<MapMarker> destinationMarker = [
+                  MapMarker(position: LatLng(lat, lng)),
+                ];
+                final List<LatLng>? route =
+                await RoutingService.getRoute(
+                  mapKey.currentState?.currentLocation,
+                  LatLng(lat, lng),
+                );
+                _updateMap(destinationMarker, route!);
+                controller.next();
+              },
+              onBack: Navigator.of(context).pop,
+              initialPosition: position,
+              initialSize: size,
             ),
+            PricingOverlay(
+              onBack: controller.back,
+              fromAddressName: "Arjun's House",
+              fromCampusCode: null,
+              toAddressName: "Woodside",
+              toCampusCode: null,
+              recommendedBidAUD: 15,
+              initialSize: size,
+              initialPosition: position,
+              onSubmit: ((_) {
+                // Engage popup
+                DriverSearchOverlay.show(context);
+
+                // TODO: Send out an API call and wait for a response
+
+                // For now, just engage the dismissal manually
+                Future.delayed(Duration(seconds: 3), () {
+                  DriverSearchOverlay.updateDriverFound(
+                    "Woo Jun Jian",
+                    null,
+                  );
+                  controller.next();
+                });
+              }),
+            ),
+            DriverInfoCard(
+              driverName: "Woo Jun Jian",
+              profileImageUrl:
+              "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.vecteezy.com%2Ffree-vector%2Fprofile-icon&psig=AOvVaw3jdm_m4NfZ0qKHYFgzApd5&ust=1756697553023000&source=images&cd=vfe&opi=89978449&ved=0CBYQjRxqFwoTCJCZv7-OtI8DFQAAAAAdAAAAABAE",
+              lookForCompletion: (() {
+                Future.delayed(Duration(seconds: 10), () {
+                  controller.next();
+                });
+              }),
+            ),
+            RideCard(
+              title: "Trip in Progress",
+              carName: "Mercedes C200",
+              carColor: "white",
+              plateNumber: "ABC123",
+              plateState: "VIC",
+              carImageUrl: "https://www.mercedes-benz.com.au/content/dam/hq/passengercars/cars/c-class/c-class-saloon-w206-pi/modeloverview/06-2022/images/mercedes-benz-c-class-w206-modeloverview-696x392-06-2022.png",
+              onRideCompleted: (() {
+                // TODO: Wait for ride to finish
+
+                // For now, use mock
+                Future.delayed(Duration(seconds: 10), () {
+                  controller.next();
+                });
+              }),
+            ),
+            RideCompletionWidget(
+              riderName: "Jun Woo Jian",
+              price: "14.85",
+              moveToZero: (() {
+                controller.jumpTo(0);
+              }),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -173,15 +173,15 @@ class _HomePageState extends State<HomePage> {
         barrierColor: Colors.black.withAlpha(30),
         pageBuilder:
             (_, __, ___) => OverlayFlow(
-              onClose: () => Navigator.of(context).pop(),
-              stepsBuilder:
-                  (controller) => [
-                    PastRidesOverlay(
-                      onBack: () => Navigator.of(context).pop(),
-                      trips: [demoTrip],
-                    ),
-                  ],
+          onClose: () => Navigator.of(context).pop(),
+          stepsBuilder:
+              (controller) => [
+            PastRidesOverlay(
+              onBack: () => Navigator.of(context).pop(),
+              trips: [demoTrip],
             ),
+          ],
+        ),
       ),
     );
   }
@@ -310,15 +310,15 @@ class _HomePageState extends State<HomePage> {
                     backgroundColor: Colors.white,
                     builder:
                         (context) => ProfileBottomSheet(
-                          user: widget.user,
-                          userRole: 'Passenger',
-                          phoneController: TextEditingController(
-                            text: widget.user.phoneNumber,
-                          ),
-                          emailController: TextEditingController(
-                            text: widget.user.monashEmail,
-                          ),
-                        ),
+                      user: widget.user,
+                      userRole: 'Passenger',
+                      phoneController: TextEditingController(
+                        text: widget.user.phoneNumber,
+                      ),
+                      emailController: TextEditingController(
+                        text: widget.user.monashEmail,
+                      ),
+                    ),
                   );
                 },
                 child: CircleAvatar(

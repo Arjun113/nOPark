@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:nopark/features/feeds/presentation/screens/test_home.dart';
+import 'package:nopark/features/feeds/presentation/screens/passenger_home.dart';
 import 'package:nopark/features/trip/entities/trip_stops.dart';
 
 import 'features/trip/entities/user.dart';
@@ -56,7 +56,7 @@ class MyApp extends StatelessWidget {
           systemOverlayStyle: SystemUiOverlayStyle.light,
         ),
       ),
-      home: HomePage(user: testUser, addresses: []),
+      home: PassengerHomePage(user: testUser, addresses: []),
     );
   }
 }
