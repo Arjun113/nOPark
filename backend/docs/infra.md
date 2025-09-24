@@ -64,26 +64,20 @@ Installed golang with [this guide](https://www.cherryservers.com/blog/install-go
 
 ## Deployment
 
+Copy-paste all of the commands below at once and hit enter.
+
 ```sh
 cd nOPark/backend
 git pull
-
-# Kill any existing Go processes
 pkill -f "go run cmd/nOPark/main.go" || true
-
 docker compose down --volumes --remove-orphans
 docker compose up --detach --build --force-recreate
 sleep 5
 make migrate-up
 mkdir -p logs
-
-# Start services in background with nohup to persist after terminal closes
 nohup make api > logs/api.log 2>&1 &
 nohup make worker > logs/worker.log 2>&1 &
-
 echo "Services started in background. Check logs in logs/ directory."
-echo "API PID: $(pgrep -f "go run cmd/nOPark/main.go api")"
-echo "Worker PID: $(pgrep -f "go run cmd/nOPark/main.go worker")"
 ```
 
 ### Managing Services
