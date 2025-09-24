@@ -17,11 +17,11 @@ import (
 
 func WorkerCmd(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "worker2",
+		Use:   "worker",
 		Args:  cobra.ExactArgs(0),
 		Short: "Handles notification scheduling and processing.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logger := cmdutil.NewLogger("worker2")
+			logger := cmdutil.NewLogger("worker")
 			defer func() { _ = logger.Sync() }()
 
 			db, err := cmdutil.NewDatabasePool(ctx, 4)
