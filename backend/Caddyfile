@@ -1,0 +1,7 @@
+nopark-api.lachlanmacphee.com {
+    reverse_proxy localhost:4000
+}
+
+nopark-tiles.lachlanmacphee.com {
+    reverse_proxy localhost:7800
+}
