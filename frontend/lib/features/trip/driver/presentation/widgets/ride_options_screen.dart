@@ -50,134 +50,184 @@ Future<List<RideOption>> fetchRideOptions() async {
   ];
 }
 
-class RideOptionsScreen extends StatelessWidget {
-  const RideOptionsScreen({super.key});
+class RideOptionsScreen extends StatefulWidget {
+  final String destination;
+  final String? destinationCode;
+  final ValueChanged<List<int>>? onSelectionChanged;
+
+  const RideOptionsScreen({
+    super.key,
+    required this.destination,
+    this.destinationCode,
+    this.onSelectionChanged,
+  });
+
+  @override
+  State<RideOptionsScreen> createState() => _RideOptionsScreenState();
+}
+
+class _RideOptionsScreenState extends State<RideOptionsScreen> {
+  List<int> selectedIndices = [];
+
+  void _handleSelection(int index) {
+    setState(() {
+      if (selectedIndices.contains(index)) {
+        selectedIndices.remove(index);
+      } else {
+        selectedIndices.add(index);
+      }
+    });
+    widget.onSelectionChanged?.call(selectedIndices);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text(
-          "CA Caulfield",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      body: FutureBuilder<List<RideOption>>(
-        future: fetchRideOptions(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return const Center(child: Text("Error loading ride options"));
-          }
+    return SafeArea(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Container(
+          margin: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(10),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: FutureBuilder<List<RideOption>>(
+            future: fetchRideOptions(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(40),
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+              if (snapshot.hasError) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(40),
+                    child: Text("Error loading ride options"),
+                  ),
+                );
+              }
 
-          final rides = snapshot.data ?? [];
+              final rides = snapshot.data ?? [];
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: rides.length,
-            itemBuilder: (context, index) {
-              final ride = rides[index];
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Name + Rating
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          ride.name,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Rides list
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery
+                          .of(context)
+                          .size
+                          .height * 0.6,
+                    ),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.all(12),
+                      itemCount: rides.length,
+                      itemBuilder: (context, index) {
+                        final ride = rides[index];
+                        final isSelected = selectedIndices.contains(index);
+
+                        return GestureDetector(
+                          onTap: () => _handleSelection(index),
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? Colors.blue[100]
+                                  : Colors.grey[200],
+                              borderRadius: BorderRadius.circular(12),
+                              border: isSelected
+                                  ? Border.all(color: Colors.blue, width: 2)
+                                  : null,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Name + Rating
+                                Row(
+                                  mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      ride.name,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          ride.rating.toString(),
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Icon(
+                                          Icons.star,
+                                          color: Colors.amber,
+                                          size: 18,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                // Address
+                                Text(
+                                  ride.address,
+                                  style: const TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                // Detour
+                                Text(
+                                  "${ride.detourKm}km detour (+${ride
+                                      .detourMin}min)",
+                                  style: TextStyle(
+                                    color: Colors.grey[700],
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                // Price
+                                Text(
+                                  "AUD${ride.price.toStringAsFixed(2)}",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        Row(
-                          children: [
-                            Text(
-                              ride.rating.toString(),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(
-                              Icons.star,
-                              color: Colors.amber,
-                              size: 18,
-                            ),
-                          ],
-                        ),
-                      ],
+                        );
+                      },
                     ),
-                    const SizedBox(height: 6),
-                    // Address
-                    Text(
-                      ride.address,
-                      style: const TextStyle(
-                        color: Colors.black87,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    // Detour
-                    Text(
-                      "${ride.detourKm}km detour (+${ride.detourMin}min)",
-                      style: TextStyle(color: Colors.grey[700], fontSize: 13),
-                    ),
-                    const SizedBox(height: 8),
-                    // Price
-                    Text(
-                      "AUD${ride.price.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               );
             },
-          );
-        },
+          ),
+        ),
       ),
     );
   }
 }
-
-// Use the following code to test the RideOptionsScreen independently copy paste it on the main.dart file and it should work
-// import 'package:flutter/material.dart';
-// import 'ride_options_screen.dart';
-
-// void main() {
-//   runApp(const MyApp());
-// }
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       debugShowCheckedModeBanner: false,
-//       title: "Ride Options Demo",
-//       theme: ThemeData(
-//         primarySwatch: Colors.blue,
-//       ),
-//       home: const RideOptionsScreen(),
-//     );
-//   }
-// }
