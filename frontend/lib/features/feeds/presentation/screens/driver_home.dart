@@ -3,6 +3,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_scroller.dart';
 import 'package:nopark/features/profiles/presentation/widgets/profile_modal.dart';
+import 'package:nopark/features/trip/driver/presentation/widgets/ride_options_screen.dart';
 import 'package:nopark/features/trip/entities/user.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/driver_contact_card.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/ride_card.dart';
@@ -102,64 +103,18 @@ class _DriverHomePageState extends State<DriverHomePage> {
               initialPosition: position,
               initialSize: size,
             ),
-            PricingOverlay(
-              onBack: controller.back,
-              fromAddressName: "Arjun's House",
-              fromCampusCode: null,
-              toAddressName: "Woodside",
-              toCampusCode: null,
-              recommendedBidAUD: 15,
-              initialSize: size,
-              initialPosition: position,
-              onSubmit: ((_) {
-                // Engage popup
-                DriverSearchOverlay.show(context);
+            RideOptionsScreen(
+                destination: "Caulfield",
+                destinationCode: "CA",
+                onConfirm: (selectedIndices) async {
+                  // TODO: Send the selections to the backend
+                  // For now, mock. Remember to update the map later
 
-                // TODO: Send out an API call and wait for a response
+                  controller.next();
+                },
 
-                // For now, just engage the dismissal manually
-                Future.delayed(Duration(seconds: 3), () {
-                  DriverSearchOverlay.updateDriverFound(
-                    "Woo Jun Jian",
-                    null,
-                  );
-                  controller.next();
-                });
-              }),
             ),
-            DriverInfoCard(
-              driverName: "Woo Jun Jian",
-              profileImageUrl:
-              "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.vecteezy.com%2Ffree-vector%2Fprofile-icon&psig=AOvVaw3jdm_m4NfZ0qKHYFgzApd5&ust=1756697553023000&source=images&cd=vfe&opi=89978449&ved=0CBYQjRxqFwoTCJCZv7-OtI8DFQAAAAAdAAAAABAE",
-              lookForCompletion: (() {
-                Future.delayed(Duration(seconds: 10), () {
-                  controller.next();
-                });
-              }),
-            ),
-            RideCard(
-              title: "Trip in Progress",
-              carName: "Mercedes C200",
-              carColor: "white",
-              plateNumber: "ABC123",
-              plateState: "VIC",
-              carImageUrl: "https://www.mercedes-benz.com.au/content/dam/hq/passengercars/cars/c-class/c-class-saloon-w206-pi/modeloverview/06-2022/images/mercedes-benz-c-class-w206-modeloverview-696x392-06-2022.png",
-              onRideCompleted: (() {
-                // TODO: Wait for ride to finish
 
-                // For now, use mock
-                Future.delayed(Duration(seconds: 10), () {
-                  controller.next();
-                });
-              }),
-            ),
-            RideCompletionWidget(
-              riderName: "Jun Woo Jian",
-              price: "14.85",
-              moveToZero: (() {
-                controller.jumpTo(0);
-              }),
-            ),
           ],
         ),
       ),

@@ -54,12 +54,14 @@ class RideOptionsScreen extends StatefulWidget {
   final String destination;
   final String? destinationCode;
   final ValueChanged<List<int>>? onSelectionChanged;
+  final void Function (List<int> selections) onConfirm;
 
   const RideOptionsScreen({
     super.key,
     required this.destination,
     this.destinationCode,
     this.onSelectionChanged,
+    required this.onConfirm,
   });
 
   @override
@@ -126,10 +128,7 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
                   // Rides list
                   ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxHeight: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.6,
+                      maxHeight: MediaQuery.of(context).size.height * 0.6,
                     ),
                     child: ListView.builder(
                       shrinkWrap: true,
@@ -199,8 +198,7 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
                                 const SizedBox(height: 4),
                                 // Detour
                                 Text(
-                                  "${ride.detourKm}km detour (+${ride
-                                      .detourMin}min)",
+                                  "${ride.detourKm}km detour (+${ride.detourMin}min)",
                                   style: TextStyle(
                                     color: Colors.grey[700],
                                     fontSize: 13,
@@ -220,6 +218,35 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
                           ),
                         );
                       },
+                    ),
+                  ),
+
+                  // Confirm button
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        widget.onConfirm(selectedIndices);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: Colors.grey[300],
+                        disabledForegroundColor: Colors.grey[500],
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Confirm Selection${selectedIndices.isEmpty ? '' : ' (${selectedIndices.length})'}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                 ],
