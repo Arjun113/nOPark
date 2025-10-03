@@ -174,7 +174,7 @@ class _WhereNextOverlayState extends State<WhereNextOverlay>
                             onPressed: () {
                               if (widget.onLocationSelected != null) {
                                 widget.onLocationSelected!(
-                                    37.331656, -122.0301426); // example lat/lng
+                                    -37.840935, 144.946457); // example lat/lng
                               }
                             },
                             child: const Text("Confirm Location"),

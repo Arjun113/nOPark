@@ -3,6 +3,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_scroller.dart';
 import 'package:nopark/features/profiles/presentation/widgets/profile_modal.dart';
+import 'package:nopark/features/trip/driver/presentation/widgets/passenger_pickup_seq.dart';
 import 'package:nopark/features/trip/driver/presentation/widgets/ride_options_screen.dart';
 import 'package:nopark/features/trip/entities/user.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/driver_contact_card.dart';
@@ -112,9 +113,11 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
                   controller.next();
                 },
-
             ),
-
+            PickupSequenceWidget(
+                pickups: [
+                  PickupInfo(name: "Lachlan MacPhee", rating: 4.8, address: "1341 Dandenong Road", detourKm: 5, detourMin: 20, price: 14.8, destinationCode: "CA", destination: "Caulfield")]
+            )
           ],
         ),
       ),
