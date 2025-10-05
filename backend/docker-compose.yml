@@ -29,11 +29,12 @@ services:
   osm_setup:
     build:
       context: .
-      dockerfile: osm_setup.Dockerfile
+      dockerfile: osm/osm_setup.Dockerfile
     depends_on:
       - db
     volumes:
       - ./data:/data
+      - ./osm:/osm
     environment:
       - OSM_IMPORT_MODE=raw # raw or saved
     restart: "no" # This is a one-off init job, don't restart it.

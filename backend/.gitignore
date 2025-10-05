@@ -1,6 +1,6 @@
 .env
 .vscode
-data/*.pbf
-data/*.osm
-data/*.gz
+*.pbf
+*.osm
+*.gz
 credentials.json

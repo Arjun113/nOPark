@@ -29,7 +29,7 @@ echo "PostgreSQL is ready. Starting data import..."
 if [ "$IMPORT_MODE" = "raw" ]; then
   echo "IMPORT_MODE=raw: Importing OSM data using osm2pgrouting..."
   osm2pgrouting --f /data/Melbourne.osm \
-              --conf /data/osm2pgrouting_custom.xml \
+              --conf /osm/osm2pgrouting_custom.xml \
               --dbname nOPark \
               --username postgres \
               --host db \
@@ -51,4 +51,13 @@ else
       echo "Pre-processed SQL import complete.";
   fi
 fi
+
+echo "Running postprocess_ways.sql..."
+psql -h db -U postgres -d nOPark -f /osm/postprocess_ways.sql
+
+echo "Running routing_functions.sql..."
+psql -h db -U postgres -d nOPark -f /osm/routing_functions.sql
+
+echo "Postprocessing and routing function setup complete."
+echo "OSM data import and setup completed successfully."
 
