@@ -1,11 +1,11 @@
 meta {
-  name: 09 Confirm Proposal
+  name: 11 Complete Ride
   type: http
-  seq: 11
+  seq: 13
 }
 
 post {
-  url: http://localhost:4000/v1/rides/confirm
+  url: http://localhost:4000/v1/rides/complete
   body: json
   auth: bearer
 }
@@ -16,8 +16,7 @@ auth:bearer {
 
 body:json {
   {
-    "proposal_id": 1,
-    "confirm": "accept"
+    "ride_id": 1
   }
 }
 

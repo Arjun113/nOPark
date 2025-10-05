@@ -15,8 +15,11 @@ type RidesRepository interface {
 	GetRideAndProposals(ctx context.Context, rideID int64) (*RideDBModel, []*ProposalDBModel, error)
 	ConfirmRideProposal(ctx context.Context, proposal *ProposalDBModel, confirm string) (*ProposalDBModel, error)
 	GetRideByID(ctx context.Context, rideID int64) (*RideDBModel, error)
+	GetRideByRequestID(ctx context.Context, requestID int64) ([]*RideDBModel, error)
 	GetProposalByID(ctx context.Context, proposalID int64) (*ProposalDBModel, error)
 	GetRequestByID(ctx context.Context, requestID int64) (*RequestDBModel, error)
+	CompleteRide(ctx context.Context, rideID int64) error
+	GetPreviousRides(ctx context.Context, accountID int64, accountType string, limit int, offset int) ([]*RideDBModel, error)
 }
 
 type RideDBModel struct {

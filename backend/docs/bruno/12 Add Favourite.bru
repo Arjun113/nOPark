@@ -1,0 +1,25 @@
+meta {
+  name: 12 Add Favourite
+  type: http
+  seq: 14
+}
+
+post {
+  url: http://localhost:4000/v1/accounts/favourites
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: kqgvgzb2wrwechiiig29acdy.m8jrkjzg78tjayyyzvw3ndb9
+}
+
+body:json {
+  {
+    "address": "148 John Cena St, Melbourne, VIC 3163"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

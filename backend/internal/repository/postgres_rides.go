@@ -225,6 +225,33 @@ func (p *postgresRidesRepository) GetRideByID(ctx context.Context, rideID int64)
 	return &ride, nil
 }
 
+func (p *postgresRidesRepository) GetRideByRequestID(ctx context.Context, requestID int64) ([]*domain.RideDBModel, error) {
+	rows, err := p.conn.Query(ctx,
+		`SELECT r.id, r.status, r.created_at, r.updated_at
+		 FROM rides r
+		 JOIN proposals p ON r.id = p.ride_id
+		 WHERE p.request_id = $1`,
+		requestID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	rides := make([]*domain.RideDBModel, 0)
+	for rows.Next() {
+		var ride domain.RideDBModel
+		if err := rows.Scan(&ride.ID, &ride.Status, &ride.CreatedAt, &ride.UpdatedAt); err != nil {
+			return nil, err
+		}
+		rides = append(rides, &ride)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return rides, nil
+}
+
 func (p *postgresRidesRepository) GetProposalByID(ctx context.Context, proposalID int64) (*domain.ProposalDBModel, error) {
 	row := p.conn.QueryRow(ctx,
 		`SELECT id, request_id, status, driver_id, ride_id, created_at, updated_at FROM proposals WHERE id = $1`,
@@ -251,4 +278,49 @@ func (p *postgresRidesRepository) GetRequestByID(ctx context.Context, requestID 
 	}
 
 	return &request, nil
+}
+
+func (p *postgresRidesRepository) CompleteRide(ctx context.Context, rideID int64) error {
+	_, err := p.conn.Exec(ctx,
+		`UPDATE rides SET status = 'completed' WHERE id = $1 AND status = 'in_progress'`,
+		rideID)
+	return err
+}
+
+func (p *postgresRidesRepository) GetPreviousRides(ctx context.Context, accountID int64, accountType string, limit int, offset int) ([]*domain.RideDBModel, error) {
+	query := `
+        SELECT r.id, r.status, r.created_at, r.updated_at
+        FROM rides r
+        JOIN proposals p ON r.id = p.ride_id
+        JOIN requests req ON p.request_id = req.id
+        WHERE 
+            (
+                ($1 = 'passenger' AND req.passenger_id = $2)
+                OR
+                ($1 = 'driver' AND p.driver_id = $2)
+            )
+            AND r.status IN ('completed')
+			AND p.status IN ('accepted')
+        ORDER BY r.created_at DESC
+        LIMIT $3 OFFSET $4`
+	rows, err := p.conn.Query(ctx, query, accountType, accountID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var rides []*domain.RideDBModel
+	for rows.Next() {
+		var ride domain.RideDBModel
+		if err := rows.Scan(&ride.ID, &ride.Status, &ride.CreatedAt, &ride.UpdatedAt); err != nil {
+			return nil, err
+		}
+		rides = append(rides, &ride)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return rides, nil
 }

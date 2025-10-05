@@ -190,6 +190,24 @@ func (a *api) createRideDraftHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if any of the requests already have an in-progress or completed ride
+	for _, id := range req.RequestIds {
+		rides, err := a.ridesRepo.GetRideByRequestID(ctx, id)
+		if err != nil {
+			a.errorResponse(w, r, http.StatusInternalServerError, err)
+			return
+		}
+		if len(rides) > 0 {
+			for _, ride := range rides {
+				// Check if the ride is already in progress
+				if ride.Status == "in_progress" || ride.Status == "completed" {
+					a.errorResponse(w, r, http.StatusConflict, fmt.Errorf("a ride is already in progress or completed for request ID %d", id))
+					return
+				}
+			}
+		}
+	}
+
 	// Create ride proposals
 	var proposals []*domain.ProposalDBModel
 	for _, id := range req.RequestIds {
@@ -529,6 +547,129 @@ func (a *api) compensationEstimateHandler(w http.ResponseWriter, r *http.Request
 	response := CompensationEstimateResponse{
 		DistanceKm:    math.Round(distance*100) / 100,
 		EstimatedComp: math.Round(estimatedPrice*100) / 100,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+type CompleteRideRequest struct {
+	RideID int64 `json:"ride_id" validate:"required"`
+}
+
+func (a *api) completeRideHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
+	if err != nil {
+		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
+		return
+	}
+	if account.Type != "driver" {
+		a.errorResponse(w, r, http.StatusForbidden, fmt.Errorf("only drivers can complete rides"))
+		return
+	}
+
+	var req CompleteRideRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+	if err := a.validateRequest(req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	ride, err := a.ridesRepo.GetRideByID(ctx, req.RideID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	if ride.Status != "in_progress" {
+		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("ride is not in progress"))
+		return
+	}
+
+	if err := a.ridesRepo.CompleteRide(ctx, ride.ID); err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+type RideHistoryItem struct {
+	RideID    int64                      `json:"ride_id"`
+	Status    string                     `json:"status"`
+	DriverID  int64                      `json:"driver_id,omitempty"`
+	Requests  []GetRideRequestIndividual `json:"requests"`
+	CreatedAt string                     `json:"created_at"`
+	UpdatedAt string                     `json:"updated_at"`
+}
+
+type GetRideHistoryResponse struct {
+	Rides []RideHistoryItem `json:"rides"`
+}
+
+func (a *api) getRideHistoryHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
+	if err != nil {
+		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
+		return
+	}
+
+	rides, err := a.ridesRepo.GetPreviousRides(ctx, account.ID, account.Type, 5, 0)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	response := GetRideHistoryResponse{
+		Rides: make([]RideHistoryItem, len(rides)),
+	}
+	for i, ride := range rides {
+		_, proposals, err := a.ridesRepo.GetRideAndProposals(ctx, ride.ID)
+		if err != nil {
+			a.errorResponse(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		response.Rides[i] = RideHistoryItem{
+			RideID:    ride.ID,
+			Status:    ride.Status,
+			DriverID:  0,
+			Requests:  make([]GetRideRequestIndividual, 0),
+			CreatedAt: ride.CreatedAt,
+			UpdatedAt: ride.UpdatedAt,
+		}
+		if ride.Status == "in_progress" || ride.Status == "completed" {
+			for _, proposal := range proposals {
+				if proposal.Status != "accepted" {
+					continue
+				}
+
+				request, err := a.ridesRepo.GetRequestByID(ctx, proposal.RequestID)
+				if err != nil {
+					a.errorResponse(w, r, http.StatusInternalServerError, err)
+					return
+				}
+
+				rideRequest := GetRideRequestIndividual{
+					ID:              request.ID,
+					PickupLocation:  request.PickupLocation,
+					DropoffLocation: request.DropoffLocation,
+					Compensation:    request.Compensation,
+					PassengerID:     request.PassengerID,
+				}
+
+				response.Rides[i].Requests = append(response.Rides[i].Requests, rideRequest)
+			}
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
