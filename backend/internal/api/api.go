@@ -90,6 +90,9 @@ func (a *api) Routes() *mux.Router {
 	p.HandleFunc("/v1/accounts", a.getCurrentUserHandler).Methods("GET")
 	p.HandleFunc("/v1/accounts/logout", a.logoutUserHandler).Methods("POST")
 	p.HandleFunc("/v1/accounts/change-password", a.changePasswordHandler).Methods("POST")
+	p.HandleFunc("/v1/accounts/favourites", a.addFavouriteAddressHandler).Methods("POST")
+	p.HandleFunc("/v1/accounts/favourites", a.getFavouriteAddressesHandler).Methods("GET")
+	p.HandleFunc("/v1/accounts/favourites", a.deleteFavouriteAddressHandler).Methods("DELETE")
 	p.HandleFunc("/v1/accounts/{id}", a.getSpecificUserHandler).Methods("GET")
 	p.HandleFunc("/v1/accounts/{id}/review", a.createReviewHandler).Methods("POST")
 

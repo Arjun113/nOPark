@@ -285,3 +285,41 @@ func (p *postgresAccountsRepository) CleanupExpiredSessions(ctx context.Context)
 		"DELETE FROM sessions WHERE created_at < NOW() - INTERVAL '7 days'")
 	return err
 }
+
+func (p *postgresAccountsRepository) AddFavouriteAddress(ctx context.Context, accountID int64, address string) error {
+	_, err := p.conn.Exec(ctx,
+		"INSERT INTO account_addresses (address_line, account_id) VALUES ($1, $2)",
+		address, accountID)
+	return err
+}
+
+func (p *postgresAccountsRepository) GetFavouriteAddresses(ctx context.Context, accountID int64) ([]string, error) {
+	rows, err := p.conn.Query(ctx,
+		"SELECT address_line FROM account_addresses WHERE account_id = $1",
+		accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	addresses := make([]string, 0)
+	for rows.Next() {
+		var address string
+		if err := rows.Scan(&address); err != nil {
+			return nil, err
+		}
+		addresses = append(addresses, address)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return addresses, nil
+}
+
+func (p *postgresAccountsRepository) DeleteFavouriteAddress(ctx context.Context, accountID int64, address string) error {
+	_, err := p.conn.Exec(ctx,
+		"DELETE FROM account_addresses WHERE account_id = $1 AND address_line = $2",
+		accountID, address)
+	return err
+}

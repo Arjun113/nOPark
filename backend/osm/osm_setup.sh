@@ -26,6 +26,14 @@ export PGPASSWORD=postgres
 
 echo "PostgreSQL is ready. Starting data import..."
 
+if psql -h db -U postgres -d nOPark -tAc "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name='ways';" | grep -q 1; then
+  row_count=$(psql -h db -U postgres -d nOPark -tAc "SELECT count(*) FROM ways;")
+  if [ "$row_count" -gt 100 ]; then
+    echo "OSM data already imported (ways > 100), skipping setup."
+    exit 0
+  fi
+fi
+
 if [ "$IMPORT_MODE" = "raw" ]; then
   echo "IMPORT_MODE=raw: Importing OSM data using osm2pgrouting..."
   osm2pgrouting --f /data/Melbourne.osm \

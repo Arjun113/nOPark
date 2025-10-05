@@ -32,6 +32,9 @@ type AccountsRepository interface {
 	DeleteAllUserSessions(ctx context.Context, accountID int64) error
 	CleanupExpiredSessions(ctx context.Context) error
 	GetAccountFromSession(ctx context.Context) (*AccountDBModel, error)
+	AddFavouriteAddress(ctx context.Context, accountID int64, address string) error
+	GetFavouriteAddresses(ctx context.Context, accountID int64) ([]string, error)
+	DeleteFavouriteAddress(ctx context.Context, accountID int64, address string) error
 }
 
 const SessionExpiresInSeconds = 7 * 24 * 60 * 60       // 7 days

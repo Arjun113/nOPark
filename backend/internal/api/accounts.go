@@ -665,3 +665,87 @@ func (a *api) getSpecificUserHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
+
+type AddFavouriteAddressRequest struct {
+	Address string `json:"address" validate:"required"`
+}
+
+func (a *api) addFavouriteAddressHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
+	if err != nil {
+		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
+		return
+	}
+	var req AddFavouriteAddressRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	err = a.accountsRepo.AddFavouriteAddress(ctx, account.ID, req.Address)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+type GetFavouriteAddressesResponse struct {
+	Addresses []string `json:"addresses"`
+}
+
+func (a *api) getFavouriteAddressesHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
+	if err != nil {
+		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
+		return
+	}
+
+	addresses, err := a.accountsRepo.GetFavouriteAddresses(ctx, account.ID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	response := GetFavouriteAddressesResponse{
+		Addresses: addresses,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+type DeleteFavouriteAddressRequest struct {
+	Address string `json:"address" validate:"required"`
+}
+
+func (a *api) deleteFavouriteAddressHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
+	if err != nil {
+		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
+		return
+	}
+
+	var req DeleteFavouriteAddressRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+	err = a.accountsRepo.DeleteFavouriteAddress(ctx, account.ID, req.Address)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
