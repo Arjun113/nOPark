@@ -26,7 +26,9 @@ RUN git clone https://github.com/pgRouting/osm2pgrouting.git /osm2pgrouting \
     && make \
     && make install
 
-ENTRYPOINT ["/osm/osm_setup.sh"]
+COPY /osm/osm_setup.sh /osm/osm_setup.sh
+
+ENTRYPOINT ["sh", "-c", "chmod +x /osm/osm_setup.sh && /osm/osm_setup.sh"]
 
 
 

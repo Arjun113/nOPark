@@ -14,18 +14,26 @@ import (
 )
 
 type CreateRideRequestRequest struct {
-	PickupLocation  string  `json:"pickup_location" validate:"required"`
-	DropoffLocation string  `json:"dropoff_location" validate:"required"`
-	Compensation    float64 `json:"compensation" validate:"required,gt=0"`
+	PickupLocation   string  `json:"pickup_location,omitempty"`
+	PickupLatitude   float64 `json:"pickup_latitude" validate:"required,number"`
+	PickupLongitude  float64 `json:"pickup_longitude" validate:"required,number"`
+	DropoffLocation  string  `json:"dropoff_location" validate:"required"`
+	DropoffLatitude  float64 `json:"dropoff_latitude" validate:"required,number"`
+	DropoffLongitude float64 `json:"dropoff_longitude" validate:"required,number"`
+	Compensation     float64 `json:"compensation" validate:"required,gt=0"`
 }
 
 type CreateRideRequestResponse struct {
-	ID              int64   `json:"id"`
-	PickupLocation  string  `json:"pickup_location"`
-	DropoffLocation string  `json:"dropoff_location"`
-	Compensation    float64 `json:"compensation"`
-	PassengerID     int64   `json:"passenger_id"`
-	CreatedAt       string  `json:"created_at"`
+	ID               int64   `json:"id"`
+	PickupLocation   string  `json:"pickup_location"`
+	PickupLatitude   float64 `json:"pickup_latitude"`
+	PickupLongitude  float64 `json:"pickup_longitude"`
+	DropoffLocation  string  `json:"dropoff_location"`
+	DropoffLatitude  float64 `json:"dropoff_latitude"`
+	DropoffLongitude float64 `json:"dropoff_longitude"`
+	Compensation     float64 `json:"compensation"`
+	PassengerID      int64   `json:"passenger_id"`
+	CreatedAt        string  `json:"created_at"`
 }
 
 func (a *api) createRideRequestHandler(w http.ResponseWriter, r *http.Request) {
@@ -54,10 +62,14 @@ func (a *api) createRideRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	request := &domain.RequestDBModel{
-		PickupLocation:  req.PickupLocation,
-		DropoffLocation: req.DropoffLocation,
-		Compensation:    req.Compensation,
-		PassengerID:     account.ID,
+		PickupLocation:   req.PickupLocation,
+		PickupLatitude:   req.PickupLatitude,
+		PickupLongitude:  req.PickupLongitude,
+		DropoffLocation:  req.DropoffLocation,
+		DropoffLatitude:  req.DropoffLatitude,
+		DropoffLongitude: req.DropoffLongitude,
+		Compensation:     req.Compensation,
+		PassengerID:      account.ID,
 	}
 
 	createdRequest, err := a.ridesRepo.CreateRideRequest(ctx, request)
@@ -67,12 +79,16 @@ func (a *api) createRideRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := CreateRideRequestResponse{
-		ID:              createdRequest.ID,
-		PickupLocation:  createdRequest.PickupLocation,
-		DropoffLocation: createdRequest.DropoffLocation,
-		Compensation:    createdRequest.Compensation,
-		PassengerID:     createdRequest.PassengerID,
-		CreatedAt:       createdRequest.CreatedAt,
+		ID:               createdRequest.ID,
+		PickupLocation:   createdRequest.PickupLocation,
+		PickupLatitude:   createdRequest.PickupLatitude,
+		PickupLongitude:  createdRequest.PickupLongitude,
+		DropoffLocation:  createdRequest.DropoffLocation,
+		DropoffLatitude:  createdRequest.DropoffLatitude,
+		DropoffLongitude: createdRequest.DropoffLongitude,
+		Compensation:     createdRequest.Compensation,
+		PassengerID:      createdRequest.PassengerID,
+		CreatedAt:        createdRequest.CreatedAt,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -86,12 +102,16 @@ type GetRideRequestsRequest struct {
 }
 
 type GetRideRequestsResponseIndividual struct {
-	ID              int64   `json:"id"`
-	PickupLocation  string  `json:"pickup_location"`
-	DropoffLocation string  `json:"dropoff_location"`
-	Compensation    float64 `json:"compensation"`
-	PassengerID     int64   `json:"passenger_id"`
-	CreatedAt       string  `json:"created_at"`
+	ID               int64   `json:"id"`
+	PickupLocation   string  `json:"pickup_location"`
+	PickupLatitude   float64 `json:"pickup_latitude"`
+	PickupLongitude  float64 `json:"pickup_longitude"`
+	DropoffLocation  string  `json:"dropoff_location"`
+	DropoffLatitude  float64 `json:"dropoff_latitude"`
+	DropoffLongitude float64 `json:"dropoff_longitude"`
+	Compensation     float64 `json:"compensation"`
+	PassengerID      int64   `json:"passenger_id"`
+	CreatedAt        string  `json:"created_at"`
 }
 
 type GetRideRequestsResponse struct {
@@ -131,12 +151,16 @@ func (a *api) getRideRequestsHandler(w http.ResponseWriter, r *http.Request) {
 
 	for i, req := range rideRequests {
 		response.Requests[i] = GetRideRequestsResponseIndividual{
-			ID:              req.ID,
-			PickupLocation:  req.PickupLocation,
-			DropoffLocation: req.DropoffLocation,
-			Compensation:    req.Compensation,
-			PassengerID:     req.PassengerID,
-			CreatedAt:       req.CreatedAt,
+			ID:               req.ID,
+			PickupLocation:   req.PickupLocation,
+			PickupLatitude:   req.PickupLatitude,
+			PickupLongitude:  req.PickupLongitude,
+			DropoffLocation:  req.DropoffLocation,
+			DropoffLatitude:  req.DropoffLatitude,
+			DropoffLongitude: req.DropoffLongitude,
+			Compensation:     req.Compensation,
+			PassengerID:      req.PassengerID,
+			CreatedAt:        req.CreatedAt,
 		}
 	}
 
@@ -416,11 +440,15 @@ type GetRideSummaryRequest struct {
 }
 
 type GetRideRequestIndividual struct {
-	ID              int64   `json:"id"`
-	PickupLocation  string  `json:"pickup_location"`
-	DropoffLocation string  `json:"dropoff_location"`
-	Compensation    float64 `json:"compensation"`
-	PassengerID     int64   `json:"passenger_id"`
+	ID               int64   `json:"id"`
+	PickupLocation   string  `json:"pickup_location"`
+	PickupLatitude   float64 `json:"pickup_latitude"`
+	PickupLongitude  float64 `json:"pickup_longitude"`
+	DropoffLocation  string  `json:"dropoff_location"`
+	DropoffLatitude  float64 `json:"dropoff_latitude"`
+	DropoffLongitude float64 `json:"dropoff_longitude"`
+	Compensation     float64 `json:"compensation"`
+	PassengerID      int64   `json:"passenger_id"`
 }
 
 type GetRideProposalIndividual struct {
@@ -491,11 +519,15 @@ func (a *api) getRideSummaryHandler(w http.ResponseWriter, r *http.Request) {
 			Status:   proposal.Status,
 			DriverID: proposal.DriverID,
 			Request: GetRideRequestIndividual{
-				ID:              rideRequest.ID,
-				PickupLocation:  rideRequest.PickupLocation,
-				DropoffLocation: rideRequest.DropoffLocation,
-				Compensation:    rideRequest.Compensation,
-				PassengerID:     rideRequest.PassengerID,
+				ID:               rideRequest.ID,
+				PickupLocation:   rideRequest.PickupLocation,
+				PickupLatitude:   rideRequest.PickupLatitude,
+				PickupLongitude:  rideRequest.PickupLongitude,
+				DropoffLocation:  rideRequest.DropoffLocation,
+				DropoffLatitude:  rideRequest.DropoffLatitude,
+				DropoffLongitude: rideRequest.DropoffLongitude,
+				Compensation:     rideRequest.Compensation,
+				PassengerID:      rideRequest.PassengerID,
 			},
 		}
 
@@ -660,11 +692,15 @@ func (a *api) getRideHistoryHandler(w http.ResponseWriter, r *http.Request) {
 				}
 
 				rideRequest := GetRideRequestIndividual{
-					ID:              request.ID,
-					PickupLocation:  request.PickupLocation,
-					DropoffLocation: request.DropoffLocation,
-					Compensation:    request.Compensation,
-					PassengerID:     request.PassengerID,
+					ID:               request.ID,
+					PickupLocation:   request.PickupLocation,
+					PickupLatitude:   request.PickupLatitude,
+					PickupLongitude:  request.PickupLongitude,
+					DropoffLocation:  request.DropoffLocation,
+					DropoffLatitude:  request.DropoffLatitude,
+					DropoffLongitude: request.DropoffLongitude,
+					Compensation:     request.Compensation,
+					PassengerID:      request.PassengerID,
 				}
 
 				response.Rides[i].Requests = append(response.Rides[i].Requests, rideRequest)

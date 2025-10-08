@@ -32,7 +32,11 @@ type RideDBModel struct {
 type RequestDBModel struct {
 	ID                      int64
 	PickupLocation          string
+	PickupLatitude          float64
+	PickupLongitude         float64
 	DropoffLocation         string
+	DropoffLatitude         float64
+	DropoffLongitude        float64
 	Compensation            float64
 	PassengerID             int64
 	RideID                  *int64
