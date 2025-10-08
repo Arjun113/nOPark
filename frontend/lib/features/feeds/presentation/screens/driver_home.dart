@@ -6,11 +6,7 @@ import 'package:nopark/features/profiles/presentation/widgets/profile_modal.dart
 import 'package:nopark/features/trip/driver/presentation/widgets/passenger_pickup_seq.dart';
 import 'package:nopark/features/trip/driver/presentation/widgets/ride_options_screen.dart';
 import 'package:nopark/features/trip/entities/user.dart';
-import 'package:nopark/features/trip/passenger/presentation/widgets/driver_contact_card.dart';
-import 'package:nopark/features/trip/passenger/presentation/widgets/ride_card.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_cost_adjust_widget.dart';
-import 'package:nopark/features/trip/passenger/presentation/widgets/trip_over_card_rating.dart';
-import 'package:nopark/features/trip/passenger/presentation/widgets/trip_search_animation.dart';
 import 'package:nopark/features/trip/unified/trip_scroller.dart';
 import 'package:nopark/home_test.dart';
 import 'package:nopark/logic/routing/basic_two_router.dart';
@@ -270,12 +266,10 @@ class _DriverHomePageState extends State<DriverHomePage> {
                         (context) => ProfileBottomSheet(
                       user: widget.user,
                       userRole: 'Passenger',
-                      phoneController: TextEditingController(
-                        text: widget.user.phoneNumber,
-                      ),
                       emailController: TextEditingController(
                         text: widget.user.monashEmail,
                       ),
+                          addresses: [],
                     ),
                   );
                 },
