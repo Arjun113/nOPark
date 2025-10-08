@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_add_input.dart';
-import 'package:nopark/features/profiles/role_switcher_main.dart';
 
 import '../../../trip/entities/user.dart';
 
@@ -68,19 +67,6 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
         _animationController.reverse();
       }
     });
-  }
-
-  void roleChange(String userRole, BuildContext context) {
-    Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-            builder: (context) => RoleSwitcher(
-                user: widget.user,
-                userRole: widget.userRole == "passenger" ? "driver" : "passenger",
-                addresses: widget.addresses
-            )
-        ),
-        (route) => false
-    );
   }
 
   @override
@@ -406,29 +392,6 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
         ),
 
         const SizedBox(height: 16),
-
-        // Become a Driver button
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () => roleChange(widget.userRole, context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey[100],
-              foregroundColor: Colors.black87,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 0,
-            ),
-            child: const Text(
-              'Change Roles',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
-
-        const Spacer(),
 
         // Log Out button
         SizedBox(
