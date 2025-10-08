@@ -14,7 +14,7 @@ class User {
     required this.lastName,
     required this.monashEmail,
     required this.imageUrl,
-    required this.token
+    required this.token,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -24,7 +24,7 @@ class User {
       lastName: json['last_name'],
       imageUrl: json['profile_image'] ?? defaultImageUrl,
       monashEmail: json['monashEmail'],
-      token: json['token']
+      token: json['token'],
     );
   }
 
@@ -44,7 +44,7 @@ class User {
       'middle_name': middleName,
       'last_name': lastName,
       'email': monashEmail,
-      'token': token
+      'token': token,
     };
   }
 }

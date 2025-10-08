@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_add_input.dart';
+import 'package:nopark/logic/network/dio_client.dart';
 
 import '../../../trip/entities/user.dart';
 
@@ -335,9 +336,31 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                   ),
                   child: GestureDetector(
                     onTap: (() async {
-                      final _ = await showAddressPopup(context);
+                      final newAddress = await showAddressPopup(context);
 
                       // TODO: Send to server
+                      try {
+                        final response = await DioClient().client.post(
+                            '/addresses',
+                            data: {
+                              'address_name': newAddress?.addressNameController.text,
+                              'address_line': newAddress!.addressLine1Controller.text + newAddress.addressLine2Controller.text
+                            }
+                        );
+
+                        if (response.statusCode == 201) {
+                          // Success.
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Address Added!")));
+                        }
+
+                        else {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to add address. Please try again")));
+                        }
+                      }
+                      catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error communicating with the server: $e")));
+                      }
+
                     }),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12),
