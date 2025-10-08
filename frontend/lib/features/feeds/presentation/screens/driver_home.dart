@@ -6,11 +6,7 @@ import 'package:nopark/features/profiles/presentation/widgets/profile_modal.dart
 import 'package:nopark/features/trip/driver/presentation/widgets/passenger_pickup_seq.dart';
 import 'package:nopark/features/trip/driver/presentation/widgets/ride_options_screen.dart';
 import 'package:nopark/features/trip/entities/user.dart';
-import 'package:nopark/features/trip/passenger/presentation/widgets/driver_contact_card.dart';
-import 'package:nopark/features/trip/passenger/presentation/widgets/ride_card.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_cost_adjust_widget.dart';
-import 'package:nopark/features/trip/passenger/presentation/widgets/trip_over_card_rating.dart';
-import 'package:nopark/features/trip/passenger/presentation/widgets/trip_search_animation.dart';
 import 'package:nopark/features/trip/unified/trip_scroller.dart';
 import 'package:nopark/home_test.dart';
 import 'package:nopark/logic/routing/basic_two_router.dart';
@@ -23,7 +19,11 @@ class DriverHomePage extends StatefulWidget {
   final User user;
   final List<Map<String, dynamic>> addresses;
 
-  const DriverHomePage({super.key, required this.user, required this.addresses});
+  const DriverHomePage({
+    super.key,
+    required this.user,
+    required this.addresses,
+  });
 
   @override
   State<DriverHomePage> createState() => _DriverHomePageState();
@@ -35,7 +35,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
   final GlobalKey<WhereNextState> whereNextKey = GlobalKey<WhereNextState>();
   final GlobalKey whereNextButtonKey = GlobalKey(); // Key for the button
   final GlobalKey<PricingOverlayState> pricingOverlayKey =
-  GlobalKey<PricingOverlayState>();
+      GlobalKey<PricingOverlayState>();
   final GlobalKey<FullScreenMapState> mapKey = GlobalKey<FullScreenMapState>();
 
   get collapse => null;
@@ -44,12 +44,12 @@ class _DriverHomePageState extends State<DriverHomePage> {
     return widget.addresses
         .map(
           (elem) => AddressCardData(
-        name: elem['name'],
-        line1: elem['line1'],
-        line2: elem['line2'],
-        editing: false,
-      ),
-    )
+            name: elem['name'],
+            line1: elem['line1'],
+            line2: elem['line2'],
+            editing: false,
+          ),
+        )
         .toList();
   }
 
@@ -62,7 +62,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
   // Method to get the position and size of the WhereNext button
   (Offset, Size)? _getWhereNextPosition() {
     final renderBox =
-    whereNextButtonKey.currentContext?.findRenderObject() as RenderBox?;
+        whereNextButtonKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return null;
 
     final position = renderBox.localToGlobal(Offset.zero);
@@ -82,44 +82,54 @@ class _DriverHomePageState extends State<DriverHomePage> {
         barrierColor: Colors.transparent,
         pageBuilder:
             (_, __, ___) => OverlayFlow(
-          onClose: () => Navigator.of(context).pop(),
-          stepsBuilder:
-              (controller) => [
-            WhereNextOverlay(
-              user: widget.user,
-              addresses: widget.addresses,
-              onLocationSelected: (lat, lng) async {
-                final List<MapMarker> destinationMarker = [
-                  MapMarker(position: LatLng(lat, lng)),
-                ];
-                final List<LatLng>? route =
-                await RoutingService.getRoute(
-                  mapKey.currentState?.currentLocation,
-                  LatLng(lat, lng),
-                );
-                _updateMap(destinationMarker, route!);
-                controller.next();
-              },
-              onBack: Navigator.of(context).pop,
-              initialPosition: position,
-              initialSize: size,
-            ),
-            RideOptionsScreen(
-                destination: "Caulfield",
-                destinationCode: "CA",
-                onConfirm: (selectedIndices) async {
-                  // TODO: Send the selections to the backend
-                  // For now, mock. Remember to update the map later
+              onClose: () => Navigator.of(context).pop(),
+              stepsBuilder:
+                  (controller) => [
+                    WhereNextOverlay(
+                      user: widget.user,
+                      addresses: widget.addresses,
+                      onLocationSelected: (lat, lng) async {
+                        final List<MapMarker> destinationMarker = [
+                          MapMarker(position: LatLng(lat, lng)),
+                        ];
+                        final List<LatLng>? route =
+                            await RoutingService.getRoute(
+                              mapKey.currentState?.currentLocation,
+                              LatLng(lat, lng),
+                            );
+                        _updateMap(destinationMarker, route!);
+                        controller.next();
+                      },
+                      onBack: Navigator.of(context).pop,
+                      initialPosition: position,
+                      initialSize: size,
+                    ),
+                    RideOptionsScreen(
+                      destination: "Caulfield",
+                      destinationCode: "CA",
+                      onConfirm: (selectedIndices) async {
+                        // TODO: Send the selections to the backend
+                        // For now, mock. Remember to update the map later
 
-                  controller.next();
-                },
+                        controller.next();
+                      },
+                    ),
+                    PickupSequenceWidget(
+                      pickups: [
+                        PickupInfo(
+                          name: "Lachlan MacPhee",
+                          rating: 4.8,
+                          address: "1341 Dandenong Road",
+                          detourKm: 5,
+                          detourMin: 20,
+                          price: 14.8,
+                          destinationCode: "CA",
+                          destination: "Caulfield",
+                        ),
+                      ],
+                    ),
+                  ],
             ),
-            PickupSequenceWidget(
-                pickups: [
-                  PickupInfo(name: "Lachlan MacPhee", rating: 4.8, address: "1341 Dandenong Road", detourKm: 5, detourMin: 20, price: 14.8, destinationCode: "CA", destination: "Caulfield")]
-            )
-          ],
-        ),
       ),
     );
   }
@@ -131,15 +141,15 @@ class _DriverHomePageState extends State<DriverHomePage> {
         barrierColor: Colors.black.withAlpha(30),
         pageBuilder:
             (_, __, ___) => OverlayFlow(
-          onClose: () => Navigator.of(context).pop(),
-          stepsBuilder:
-              (controller) => [
-            PastRidesOverlay(
-              onBack: () => Navigator.of(context).pop(),
-              trips: [demoTrip],
+              onClose: () => Navigator.of(context).pop(),
+              stepsBuilder:
+                  (controller) => [
+                    PastRidesOverlay(
+                      onBack: () => Navigator.of(context).pop(),
+                      trips: [demoTrip],
+                    ),
+                  ],
             ),
-          ],
-        ),
       ),
     );
   }
@@ -268,15 +278,15 @@ class _DriverHomePageState extends State<DriverHomePage> {
                     backgroundColor: Colors.white,
                     builder:
                         (context) => ProfileBottomSheet(
-                      user: widget.user,
-                      userRole: 'Passenger',
-                      phoneController: TextEditingController(
-                        text: widget.user.phoneNumber,
-                      ),
-                      emailController: TextEditingController(
-                        text: widget.user.monashEmail,
-                      ),
-                    ),
+                          user: widget.user,
+                          userRole: 'Passenger',
+                          phoneController: TextEditingController(
+                            text: widget.user.phoneNumber,
+                          ),
+                          emailController: TextEditingController(
+                            text: widget.user.monashEmail,
+                          ),
+                        ),
                   );
                 },
                 child: CircleAvatar(
