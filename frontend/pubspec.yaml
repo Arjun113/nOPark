@@ -1,6 +1,6 @@
 name: nopark
 description: "A new Flutter project."
-publish_to: 'none'
+publish_to: "none"
 version: 0.1.0
 
 environment:
@@ -9,7 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-    
+  dio: ^5.9.0
   google_fonts: ^6.1.0
   dynamic_color: ^1.6.6
   geolocator: ^14.0.2
@@ -72,4 +72,3 @@ flutter:
         - asset: assets/fonts/B612-BoldItalic.ttf
           weight: 700
           style: italic
-

@@ -1,7 +1,5 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:nopark/logic/network/dio_client.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -18,9 +16,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   String _userType = 'passenger'; // Default user type
   bool _isLoading = false;
-
-  // IMPORTANT: Use 10.0.2.2 for Android Emulator to connect to localhost
-  final String _apiUrl = 'http://10.0.2.2:4000/v1/accounts';
 
   Future<void> _register() async {
     if (_firstNameController.text.isEmpty ||
@@ -45,17 +40,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      final response = await http.post(
-        Uri.parse(_apiUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
+      final response = await DioClient().client.post(
+        '/accounts',
+        data: {
           'first_name': _firstNameController.text.trim(),
           'last_name': _lastNameController.text.trim(),
           'email': _emailController.text.trim(),
           'password': _passwordController.text.trim(),
           'type': _userType,
           "fcm_token": "test-token",
-        }),
+        },
       );
 
       if (response.statusCode == 201) {
@@ -70,7 +64,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         // Handle errors from the backend (e.g., 409 Conflict for existing email)
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${response.body}')));
+        ).showSnackBar(SnackBar(content: Text('Error: ${response.data}')));
       }
     } catch (e) {
       // Handle network or other exceptions
@@ -110,6 +104,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 controller: _firstNameController,
                 decoration: InputDecoration(
                   labelText: 'First Name',
+                  labelStyle: const TextStyle(color: Colors.black87),
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 16,
                     horizontal: 20,
@@ -125,6 +120,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 controller: _lastNameController,
                 decoration: InputDecoration(
                   labelText: 'Last Name',
+                  labelStyle: const TextStyle(color: Colors.black87),
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 16,
                     horizontal: 20,
@@ -141,6 +137,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   labelText: 'Email',
+                  labelStyle: const TextStyle(color: Colors.black87),
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 16,
                     horizontal: 20,
@@ -157,6 +154,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: 'Password',
+                  labelStyle: const TextStyle(color: Colors.black87),
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 16,
                     horizontal: 20,
@@ -173,6 +171,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: 'Confirm Password',
+                  labelStyle: const TextStyle(color: Colors.black87),
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 16,
                     horizontal: 20,
@@ -188,6 +187,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 initialValue: _userType,
                 decoration: InputDecoration(
                   labelText: 'I am a...',
+                  labelStyle: const TextStyle(color: Colors.black87),
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 16,
                     horizontal: 20,
