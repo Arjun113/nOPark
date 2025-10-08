@@ -11,10 +11,9 @@ class Driver extends User {
     required super.firstName,
     required super.middleName,
     required super.lastName,
-    required super.phoneNumber,
-    required super.dateOfBirth,
     required super.monashEmail,
     required super.imageUrl,
+    required super.token
   });
 
   factory Driver.fromJson(Map<String, dynamic> json) {
@@ -24,11 +23,10 @@ class Driver extends User {
       lastName: baseUser.lastName,
       middleName: baseUser.middleName,
       monashEmail: baseUser.monashEmail,
-      phoneNumber: baseUser.phoneNumber,
       imageUrl: baseUser.imageUrl,
-      dateOfBirth: baseUser.dateOfBirth,
       licenseType: json['licenseType'],
       rating: json['rating'],
+      token: json['token']
     );
   }
 
@@ -39,11 +37,10 @@ class Driver extends User {
       'middleName': middleName,
       'lastName': lastName,
       'imageUrl': imageUrl,
-      'dateOfBirth': dateOfBirth.toString(),
-      'phoneNumber': phoneNumber,
       'monashEmail': monashEmail,
       'rating': rating,
       'licenseType': licenseType,
+      'token': token
     };
   }
 }

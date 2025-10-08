@@ -20,11 +20,9 @@ class RoleSwitcher extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (userRole) {
       case "passenger": 
-        return PassengerHomePage(user: user, addresses: addresses);
+        Navigator.pushReplacementNamed(context, '/passenger');
       case "driver":
-        return DriverHomePage(user: user, addresses: addresses);
-      case "both":
-        return PassengerHomePage(user: user, addresses: addresses);
+        Navigator.pushReplacementNamed(context, '/driver');
     }
     return PassengerHomePage(user: user, addresses: addresses);
   }

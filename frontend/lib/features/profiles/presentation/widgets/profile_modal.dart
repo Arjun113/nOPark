@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_add_input.dart';
+import 'package:nopark/features/profiles/role_switcher_main.dart';
 
 import '../../../trip/entities/user.dart';
 
@@ -8,10 +9,10 @@ enum ProfileSheetState { collapsed, expanded }
 class ProfileBottomSheet extends StatefulWidget {
   final User user;
   final String userRole;
-  final TextEditingController phoneController;
   final TextEditingController emailController;
   final String? profileImageUrl;
   final int ridesCount;
+  final List<Map<String, dynamic>> addresses;
   final VoidCallback? onLogOut;
   final VoidCallback? onBecomeDriver;
   final Widget? savedAddressesWidget; // Your existing saved addresses widget
@@ -20,8 +21,8 @@ class ProfileBottomSheet extends StatefulWidget {
     super.key,
     required this.user,
     required this.userRole,
-    required this.phoneController,
     required this.emailController,
+    required this.addresses,
     this.profileImageUrl,
     this.ridesCount = 0,
     this.onLogOut,
@@ -68,6 +69,19 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
         _animationController.reverse();
       }
     });
+  }
+
+  void roleChange(String userRole, BuildContext context) {
+    Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+            builder: (context) => RoleSwitcher(
+                user: widget.user,
+                userRole: widget.userRole == "passenger" ? "driver" : "passenger",
+                addresses: widget.addresses
+            )
+        ),
+        (route) => false
+    );
   }
 
   @override
@@ -260,16 +274,6 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildContactRow(
-                Icons.phone,
-                widget.phoneController,
-                _isPhoneEditing,
-                () {
-                  setState(() {
-                    _isPhoneEditing = !_isPhoneEditing;
-                  });
-                },
-              ),
               const SizedBox(height: 12),
               _buildContactRow(
                 Icons.email,
@@ -408,7 +412,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: widget.onBecomeDriver,
+            onPressed: () => roleChange(widget.userRole, context),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.grey[100],
               foregroundColor: Colors.black87,
@@ -492,11 +496,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                     autofocus: true,
                     onEditingComplete: () {
                       setState(() {
-                        if (controller == widget.phoneController) {
-                          _isPhoneEditing = false;
-                        } else {
-                          _isEmailEditing = false;
-                        }
+                        _isEmailEditing = false;
                       });
                     },
                   )

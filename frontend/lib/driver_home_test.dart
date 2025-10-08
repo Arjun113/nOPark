@@ -18,9 +18,8 @@ User testUser = User(
   middleName: "",
   lastName: "Sanghi",
   monashEmail: "asan0084@student.monash.edu",
-  phoneNumber: "0434998568",
   imageUrl: "https://53.fs1.hubspotusercontent-na1.net/hubfs/53/image8-2.jpg",
-  dateOfBirth: DateTime(2005, 9, 8),
+  token: '33939urewjwjdeowpujr3u0f'
 );
 
 Stop stop1 = Stop(

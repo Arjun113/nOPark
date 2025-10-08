@@ -270,12 +270,10 @@ class _DriverHomePageState extends State<DriverHomePage> {
                         (context) => ProfileBottomSheet(
                       user: widget.user,
                       userRole: 'Passenger',
-                      phoneController: TextEditingController(
-                        text: widget.user.phoneNumber,
-                      ),
                       emailController: TextEditingController(
                         text: widget.user.monashEmail,
                       ),
+                          addresses: [],
                     ),
                   );
                 },
