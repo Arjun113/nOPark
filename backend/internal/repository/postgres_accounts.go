@@ -323,3 +323,12 @@ func (p *postgresAccountsRepository) DeleteFavouriteAddress(ctx context.Context,
 		accountID, address)
 	return err
 }
+
+func (p *postgresAccountsRepository) RemoveUnverifiedExpiredAccounts(ctx context.Context) (int64, error) {
+	tags, err := p.conn.Exec(ctx,
+		"DELETE FROM accounts WHERE email_verified = false AND email_verification_expires_at < NOW()")
+	if err != nil {
+		return 0, err
+	}
+	return tags.RowsAffected(), nil
+}

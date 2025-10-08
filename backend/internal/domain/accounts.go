@@ -35,6 +35,7 @@ type AccountsRepository interface {
 	AddFavouriteAddress(ctx context.Context, accountID int64, address string) error
 	GetFavouriteAddresses(ctx context.Context, accountID int64) ([]string, error)
 	DeleteFavouriteAddress(ctx context.Context, accountID int64, address string) error
+	RemoveUnverifiedExpiredAccounts(ctx context.Context) (int64, error)
 }
 
 const SessionExpiresInSeconds = 7 * 24 * 60 * 60       // 7 days

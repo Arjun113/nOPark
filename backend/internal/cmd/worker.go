@@ -56,6 +56,21 @@ func WorkerCmd(ctx context.Context) *cobra.Command {
 				return fmt.Errorf("failed to schedule notification creation job: %w", err)
 			}
 
+			// Schedule cleanup of unverified expired accounts every hour
+			_, err = s.Every(2).Minutes().Do(func() {
+				ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+				defer cancel()
+				count, err := accountRepo.RemoveUnverifiedExpiredAccounts(ctx)
+				if err != nil {
+					logger.Error("failed to remove unverified expired accounts", zap.Error(err))
+				} else {
+					logger.Info("Cleaned up unverified expired accounts", zap.Int("count", int(count)))
+				}
+			})
+			if err != nil {
+				return fmt.Errorf("failed to schedule unverified expired accounts cleanup job: %w", err)
+			}
+
 			// Schedule cleanup of expired IP blocks every 5 minutes
 			_, err = s.Every(5).Minutes().Do(func() {
 				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
