@@ -34,23 +34,13 @@ class _LoginScreenState extends State<LoginScreen> {
           'password': _passwordController.text.trim(),
         },
       );
-
-      if (response.statusCode == 200) {
-        final token = response.data['token'];
-        CredentialStorage.setLoginToken(token);
-        // TODO: Navigate to home screen
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Failed to login')));
-        }
-      }
+      final token = response.data['token'];
+      CredentialStorage.setLoginToken(token);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to connect to the server')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to login')));
       }
     } finally {
       setState(() {
