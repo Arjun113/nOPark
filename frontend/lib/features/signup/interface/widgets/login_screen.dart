@@ -1,6 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -97,8 +98,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     vertical: 16,
                     horizontal: 20,
                   ),
-                  enabledBorder: _customBorder(Colors.purple),
-                  focusedBorder: _customBorder(Colors.purple),
+                  enabledBorder: _customBorder(const Color(0xFFFFB74D)),
+                  focusedBorder: _customBorder(const Color(0xFFFFB74D)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -112,8 +113,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     vertical: 16,
                     horizontal: 20,
                   ),
-                  enabledBorder: _customBorder(Colors.purple),
-                  focusedBorder: _customBorder(Colors.purple),
+                  enabledBorder: _customBorder(const Color(0xFFFFB74D)),
+                  focusedBorder: _customBorder(const Color(0xFFFFB74D)),
                 ),
               ),
               const SizedBox(height: 32),
@@ -134,6 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
+                            color: Colors.black,
                           ),
                         ),
               ),
@@ -156,7 +158,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 },
                 child: const Text(
                   'Register',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],

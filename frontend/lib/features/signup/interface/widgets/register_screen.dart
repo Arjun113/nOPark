@@ -1,6 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -113,8 +114,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     vertical: 16,
                     horizontal: 20,
                   ),
-                  enabledBorder: _customBorder(Colors.purple),
-                  focusedBorder: _customBorder(Colors.purple),
+                  enabledBorder: _customBorder(const Color(0xFFFFB74D)),
+                  focusedBorder: _customBorder(const Color(0xFFFFB74D)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -128,8 +129,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     vertical: 16,
                     horizontal: 20,
                   ),
-                  enabledBorder: _customBorder(Colors.purple),
-                  focusedBorder: _customBorder(Colors.purple),
+                  enabledBorder: _customBorder(const Color(0xFFFFB74D)),
+                  focusedBorder: _customBorder(const Color(0xFFFFB74D)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -144,8 +145,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     vertical: 16,
                     horizontal: 20,
                   ),
-                  enabledBorder: _customBorder(Colors.purple),
-                  focusedBorder: _customBorder(Colors.purple),
+                  enabledBorder: _customBorder(const Color(0xFFFFB74D)),
+                  focusedBorder: _customBorder(const Color(0xFFFFB74D)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -160,8 +161,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     vertical: 16,
                     horizontal: 20,
                   ),
-                  enabledBorder: _customBorder(Colors.purple),
-                  focusedBorder: _customBorder(Colors.purple),
+                  enabledBorder: _customBorder(const Color(0xFFFFB74D)),
+                  focusedBorder: _customBorder(const Color(0xFFFFB74D)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -176,23 +177,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     vertical: 16,
                     horizontal: 20,
                   ),
-                  enabledBorder: _customBorder(Colors.purple),
-                  focusedBorder: _customBorder(Colors.purple),
+                  enabledBorder: _customBorder(const Color(0xFFFFB74D)),
+                  focusedBorder: _customBorder(const Color(0xFFFFB74D)),
                 ),
               ),
               const SizedBox(height: 16),
 
               // User Type Dropdown
               DropdownButtonFormField<String>(
-                value: _userType,
+                initialValue: _userType,
                 decoration: InputDecoration(
                   labelText: 'I am a...',
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 16,
                     horizontal: 20,
                   ),
-                  enabledBorder: _customBorder(Colors.purple),
-                  focusedBorder: _customBorder(Colors.purple),
+                  enabledBorder: _customBorder(const Color(0xFFFFB74D)),
+                  focusedBorder: _customBorder(const Color(0xFFFFB74D)),
                 ),
                 items:
                     ['passenger', 'driver']
@@ -229,6 +230,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
               ),

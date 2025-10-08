@@ -400,7 +400,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                     _isDarkMode = value;
                   });
                 },
-                activeColor: Colors.orange,
+                activeThumbColor: Colors.orange,
               ),
             ],
           ),
