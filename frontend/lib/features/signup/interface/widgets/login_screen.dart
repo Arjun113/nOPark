@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nopark/features/authentications/datasources/local_datastorer.dart';
 import 'package:nopark/logic/network/dio_client.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -36,22 +37,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (response.statusCode == 200) {
         final token = response.data['token'];
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login successful! Token: $token')),
-        );
-
-        // TODO: Save token securely (e.g., using flutter_secure_storage or SharedPreferences)
-        Navigator.pushReplacementNamed(context, '/home');
+        CredentialStorage.setLoginToken(token);
+        // TODO: Navigate to home screen
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${response.data}')));
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Failed to login')));
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to connect to the server: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to connect to the server')),
+        );
+      }
     } finally {
       setState(() {
         _isLoading = false;
