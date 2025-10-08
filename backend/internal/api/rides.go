@@ -61,6 +61,17 @@ func (a *api) createRideRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	existing_requests, err := a.ridesRepo.GetActiveRideRequests(ctx, nil, nil, &account.ID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	if len(existing_requests) > 0 {
+		a.errorResponse(w, r, http.StatusConflict, fmt.Errorf("active ride request already exists"))
+		return
+	}
+
 	request := &domain.RequestDBModel{
 		PickupLocation:   req.PickupLocation,
 		PickupLatitude:   req.PickupLatitude,
@@ -99,6 +110,7 @@ func (a *api) createRideRequestHandler(w http.ResponseWriter, r *http.Request) {
 type GetRideRequestsRequest struct {
 	IDs          *[]string `json:"ids,omitempty"`
 	Compensation *float64  `json:"compensation,omitempty"`
+	PassengerID  *int64    `json:"passenger_id,omitempty"`
 }
 
 type GetRideRequestsResponseIndividual struct {
@@ -129,17 +141,25 @@ func (a *api) getRideRequestsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var passengerID *int64 = nil
+	if passengerIDStr := r.URL.Query().Get("passenger_id"); passengerIDStr != "" {
+		if val, err := strconv.ParseInt(passengerIDStr, 10, 64); err == nil {
+			passengerID = &val
+		}
+	}
+
 	ids := r.URL.Query()["ids"]
 	req := GetRideRequestsRequest{
 		IDs:          &ids,
 		Compensation: ubCompensation,
+		PassengerID:  passengerID,
 	}
 	if err := a.validateRequest(req); err != nil {
 		a.errorResponse(w, r, http.StatusBadRequest, err)
 		return
 	}
 
-	rideRequests, err := a.ridesRepo.GetActiveRideRequests(ctx, req.IDs, req.Compensation)
+	rideRequests, err := a.ridesRepo.GetActiveRideRequests(ctx, req.IDs, req.Compensation, req.PassengerID)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return
