@@ -40,7 +40,6 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
   late AnimationController _animationController;
   late Animation<double> _heightAnimation;
   bool _isDarkMode = false;
-  bool _isPhoneEditing = false;
   bool _isEmailEditing = false;
 
   @override
