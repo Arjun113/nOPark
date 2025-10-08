@@ -99,7 +99,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withAlpha(15),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
@@ -135,7 +135,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withAlpha(15),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
