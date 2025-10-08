@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'NoPark App',
+      title: 'nOPark App',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const LoginScreen(),
       routes: {
