@@ -1,7 +1,5 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:nopark/logic/network/dio_client.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,9 +12,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-
-  // IMPORTANT: Use 10.0.2.2 for Android Emulator to connect to localhost
-  final String _apiUrl = 'http://10.0.2.2:4000/v1/accounts/login';
 
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
@@ -31,33 +26,29 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final response = await http.post(
-        Uri.parse(_apiUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
+      final response = await DioClient().client.post(
+        '/accounts/login',
+        data: {
           'email': _emailController.text.trim(),
           'password': _passwordController.text.trim(),
-        }),
+        },
       );
 
       if (response.statusCode == 200) {
-        // Successfully logged in
-        final responseBody = jsonDecode(response.body);
-        final token = responseBody['token'];
+        final token = response.data['token'];
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login successful! Token: $token')),
         );
-        // TODO: Navigate to the home screen and save the token securely
-        // For example: Navigator.pushReplacementNamed(context, '/home');
+
+        // TODO: Save token securely (e.g., using flutter_secure_storage or SharedPreferences)
+        Navigator.pushReplacementNamed(context, '/home');
       } else {
-        // Handle errors (e.g., 401 Unauthorized)
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${response.body}')));
+        ).showSnackBar(SnackBar(content: Text('Error: ${response.data}')));
       }
     } catch (e) {
-      // Handle network errors
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to connect to the server: $e')),
       );
