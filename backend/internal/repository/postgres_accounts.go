@@ -286,26 +286,26 @@ func (p *postgresAccountsRepository) CleanupExpiredSessions(ctx context.Context)
 	return err
 }
 
-func (p *postgresAccountsRepository) AddFavouriteAddress(ctx context.Context, accountID int64, address string) error {
+func (p *postgresAccountsRepository) AddFavouriteAddress(ctx context.Context, accountID int64, addressName string, addressLine string) error {
 	_, err := p.conn.Exec(ctx,
-		"INSERT INTO account_addresses (address_line, account_id) VALUES ($1, $2)",
-		address, accountID)
+		"INSERT INTO account_addresses (account_id, address_name, address_line) VALUES ($1, $2, $3)",
+		accountID, addressName, addressLine)
 	return err
 }
 
-func (p *postgresAccountsRepository) GetFavouriteAddresses(ctx context.Context, accountID int64) ([]string, error) {
+func (p *postgresAccountsRepository) GetFavouriteAddresses(ctx context.Context, accountID int64) ([]domain.AddressDBModel, error) {
 	rows, err := p.conn.Query(ctx,
-		"SELECT address_line FROM account_addresses WHERE account_id = $1",
+		"SELECT id, address_name, address_line FROM account_addresses WHERE account_id = $1",
 		accountID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	addresses := make([]string, 0)
+	addresses := make([]domain.AddressDBModel, 0)
 	for rows.Next() {
-		var address string
-		if err := rows.Scan(&address); err != nil {
+		var address domain.AddressDBModel
+		if err := rows.Scan(&address.ID, &address.AddressName, &address.AddressLine); err != nil {
 			return nil, err
 		}
 		addresses = append(addresses, address)
@@ -317,10 +317,10 @@ func (p *postgresAccountsRepository) GetFavouriteAddresses(ctx context.Context, 
 	return addresses, nil
 }
 
-func (p *postgresAccountsRepository) DeleteFavouriteAddress(ctx context.Context, accountID int64, address string) error {
+func (p *postgresAccountsRepository) DeleteFavouriteAddress(ctx context.Context, accountID int64, addressID int64) error {
 	_, err := p.conn.Exec(ctx,
-		"DELETE FROM account_addresses WHERE account_id = $1 AND address_line = $2",
-		accountID, address)
+		"DELETE FROM account_addresses WHERE account_id = $1 AND id = $2",
+		accountID, addressID)
 	return err
 }
 
