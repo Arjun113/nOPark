@@ -419,7 +419,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
               elevation: 0,
             ),
             child: const Text(
-              'Become a Driver',
+              'Change Roles',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ),
