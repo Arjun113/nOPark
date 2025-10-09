@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_scroller.dart';
@@ -11,6 +13,7 @@ import 'package:nopark/features/trip/passenger/presentation/widgets/trip_over_ca
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_search_animation.dart';
 import 'package:nopark/features/trip/unified/trip_scroller.dart';
 import 'package:nopark/home_test.dart';
+import 'package:nopark/logic/network/dio_client.dart';
 import 'package:nopark/logic/routing/basic_two_router.dart';
 
 import '../widgets/base_where_next.dart';
@@ -115,12 +118,37 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                       recommendedBidAUD: 15,
                       initialSize: size,
                       initialPosition: position,
-                      onSubmit: ((_) {
+                      onSubmit: ((newBid) async {
                         // Engage popup
                         DriverSearchOverlay.show(context);
 
-                        // TODO: Send out an API call and wait for a response
+                        try {
+                          final origin_coord = await placemarkFromCoordinates(mapKey.currentState!.currentLocation!.latitude, mapKey.currentState!.currentLocation!.longitude);
+                          final dest_coord = await placemarkFromCoordinates(mapKey.currentState!.destinationMarker[0].position.latitude, mapKey.currentState!.destinationMarker[0].position.longitude);
 
+                          final response = await DioClient().client.post(
+                              '/rides/requests',
+                            data: {
+                                "pickup_location": origin_coord[0].name,
+                                "pickup_latitude": mapKey.currentState!.currentLocation!.latitude,
+                                "pickup_longitude": mapKey.currentState!.currentLocation!.longitude,
+                                "dropoff_location": dest_coord[0].name,
+                                "dropoff_latitude": mapKey.currentState!.destinationMarker[0].position.latitude,
+                                "dropoff_longitude": mapKey.currentState!.destinationMarker[0].position.longitude,
+                                "compensation": newBid
+                            }
+                          );
+
+                          if (response.statusCode == 201) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Ride created successfully!")));
+                          }
+                          else {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error encountered in creating the ride. Please try again!")));
+                          }
+                        }
+                        catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error contacting the server.")));
+                        }
 
                         // For now, just engage the dismissal manually
                         Future.delayed(Duration(seconds: 3), () {
