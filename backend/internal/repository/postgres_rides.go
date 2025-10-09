@@ -17,13 +17,13 @@ func NewPostgresRides(conn Connection) domain.RidesRepository {
 
 func (p *postgresRidesRepository) CreateRideRequest(ctx context.Context, req *domain.RequestDBModel) (*domain.RequestDBModel, error) {
 	row := p.conn.QueryRow(ctx,
-		`INSERT INTO requests (pickup_location, dropoff_location, compensation, passenger_id, notifs_crtd) 
-		 VALUES ($1, $2, $3, $4, $5) 
-		 RETURNING id, pickup_location, dropoff_location, compensation, passenger_id, notifs_crtd, created_at`,
-		req.PickupLocation, req.DropoffLocation, req.Compensation, req.PassengerID, false)
+		`INSERT INTO requests (pickup_location, pickup_latitude, pickup_longitude, dropoff_location, dropoff_latitude, dropoff_longitude, compensation, passenger_id, notifs_crtd) 
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+		 RETURNING id, pickup_location, pickup_latitude, pickup_longitude, dropoff_location, dropoff_latitude, dropoff_longitude, compensation, passenger_id, notifs_crtd, created_at`,
+		req.PickupLocation, req.PickupLatitude, req.PickupLongitude, req.DropoffLocation, req.DropoffLatitude, req.DropoffLongitude, req.Compensation, req.PassengerID, false)
 
 	var request domain.RequestDBModel
-	err := row.Scan(&request.ID, &request.PickupLocation, &request.DropoffLocation, &request.Compensation, &request.PassengerID, &request.AreNotificationsCreated, &request.CreatedAt)
+	err := row.Scan(&request.ID, &request.PickupLocation, &request.PickupLatitude, &request.PickupLongitude, &request.DropoffLocation, &request.DropoffLatitude, &request.DropoffLongitude, &request.Compensation, &request.PassengerID, &request.AreNotificationsCreated, &request.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -31,8 +31,8 @@ func (p *postgresRidesRepository) CreateRideRequest(ctx context.Context, req *do
 	return &request, nil
 }
 
-func (p *postgresRidesRepository) GetActiveRideRequests(ctx context.Context, ids *[]string, ub_compensation *float64) ([]*domain.RequestDBModel, error) {
-	query := `SELECT id, pickup_location, dropoff_location, compensation, passenger_id, notifs_crtd, created_at 
+func (p *postgresRidesRepository) GetActiveRideRequests(ctx context.Context, ids *[]string, ub_compensation *float64, passenger_id *int64) ([]*domain.RequestDBModel, error) {
+	query := `SELECT id, pickup_location, pickup_latitude, pickup_longitude, dropoff_location, dropoff_latitude, dropoff_longitude, compensation, passenger_id, notifs_crtd, created_at 
 			  FROM requests 
 			  WHERE ride_id IS NULL`
 	args := []any{}
@@ -48,6 +48,11 @@ func (p *postgresRidesRepository) GetActiveRideRequests(ctx context.Context, ids
 		args = append(args, *ub_compensation)
 		argIdx++
 	}
+	if passenger_id != nil {
+		query += fmt.Sprintf(` AND passenger_id = $%d`, argIdx)
+		args = append(args, *passenger_id)
+		argIdx++
+	}
 
 	rows, err := p.conn.Query(ctx, query, args...)
 	if err != nil {
@@ -58,7 +63,7 @@ func (p *postgresRidesRepository) GetActiveRideRequests(ctx context.Context, ids
 	var requests []*domain.RequestDBModel
 	for rows.Next() {
 		var req domain.RequestDBModel
-		if err := rows.Scan(&req.ID, &req.PickupLocation, &req.DropoffLocation, &req.Compensation, &req.PassengerID, &req.AreNotificationsCreated, &req.CreatedAt); err != nil {
+		if err := rows.Scan(&req.ID, &req.PickupLocation, &req.PickupLatitude, &req.PickupLongitude, &req.DropoffLocation, &req.DropoffLatitude, &req.DropoffLongitude, &req.Compensation, &req.PassengerID, &req.AreNotificationsCreated, &req.CreatedAt); err != nil {
 			return nil, err
 		}
 		requests = append(requests, &req)
@@ -268,11 +273,11 @@ func (p *postgresRidesRepository) GetProposalByID(ctx context.Context, proposalI
 
 func (p *postgresRidesRepository) GetRequestByID(ctx context.Context, requestID int64) (*domain.RequestDBModel, error) {
 	row := p.conn.QueryRow(ctx,
-		`SELECT id, pickup_location, dropoff_location, compensation, passenger_id, ride_id, created_at FROM requests WHERE id = $1`,
+		`SELECT id, pickup_location, pickup_latitude, pickup_longitude, dropoff_location, dropoff_latitude, dropoff_longitude, compensation, passenger_id, ride_id, created_at FROM requests WHERE id = $1`,
 		requestID)
 
 	var request domain.RequestDBModel
-	err := row.Scan(&request.ID, &request.PickupLocation, &request.DropoffLocation, &request.Compensation, &request.PassengerID, &request.RideID, &request.CreatedAt)
+	err := row.Scan(&request.ID, &request.PickupLocation, &request.PickupLatitude, &request.PickupLongitude, &request.DropoffLocation, &request.DropoffLatitude, &request.DropoffLongitude, &request.Compensation, &request.PassengerID, &request.RideID, &request.CreatedAt)
 	if err != nil {
 		return nil, err
 	}

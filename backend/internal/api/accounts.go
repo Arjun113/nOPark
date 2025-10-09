@@ -667,7 +667,8 @@ func (a *api) getSpecificUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type AddFavouriteAddressRequest struct {
-	Address string `json:"address" validate:"required"`
+	AddressName string `json:"address_name" validate:"required"`
+	AddressLine string `json:"address_line" validate:"required"`
 }
 
 func (a *api) addFavouriteAddressHandler(w http.ResponseWriter, r *http.Request) {
@@ -685,7 +686,7 @@ func (a *api) addFavouriteAddressHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = a.accountsRepo.AddFavouriteAddress(ctx, account.ID, req.Address)
+	err = a.accountsRepo.AddFavouriteAddress(ctx, account.ID, req.AddressName, req.AddressLine)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return
@@ -694,8 +695,14 @@ func (a *api) addFavouriteAddressHandler(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusNoContent)
 }
 
+type Address struct {
+	ID          int64  `json:"id"`
+	AddressName string `json:"address_name"`
+	AddressLine string `json:"address_line"`
+}
+
 type GetFavouriteAddressesResponse struct {
-	Addresses []string `json:"addresses"`
+	Addresses []Address `json:"addresses"`
 }
 
 func (a *api) getFavouriteAddressesHandler(w http.ResponseWriter, r *http.Request) {
@@ -713,8 +720,18 @@ func (a *api) getFavouriteAddressesHandler(w http.ResponseWriter, r *http.Reques
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return
 	}
+
+	apiAddresses := make([]Address, len(addresses))
+	for i, addr := range addresses {
+		apiAddresses[i] = Address{
+			ID:          addr.ID,
+			AddressName: addr.AddressName,
+			AddressLine: addr.AddressLine,
+		}
+	}
+
 	response := GetFavouriteAddressesResponse{
-		Addresses: addresses,
+		Addresses: apiAddresses,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -723,7 +740,7 @@ func (a *api) getFavouriteAddressesHandler(w http.ResponseWriter, r *http.Reques
 }
 
 type DeleteFavouriteAddressRequest struct {
-	Address string `json:"address" validate:"required"`
+	AddressID int64 `json:"address_id" validate:"required"`
 }
 
 func (a *api) deleteFavouriteAddressHandler(w http.ResponseWriter, r *http.Request) {
@@ -741,7 +758,7 @@ func (a *api) deleteFavouriteAddressHandler(w http.ResponseWriter, r *http.Reque
 		a.errorResponse(w, r, http.StatusBadRequest, err)
 		return
 	}
-	err = a.accountsRepo.DeleteFavouriteAddress(ctx, account.ID, req.Address)
+	err = a.accountsRepo.DeleteFavouriteAddress(ctx, account.ID, req.AddressID)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return

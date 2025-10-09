@@ -9,8 +9,12 @@ CREATE TABLE rides (
 
 CREATE TABLE requests (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    pickup_location VARCHAR(255) NOT NULL,
-    dropoff_location VARCHAR(255) NOT NULL,
+    pickup_location VARCHAR(100),
+    pickup_latitude DECIMAL(9,6) NOT NULL CHECK (pickup_latitude BETWEEN -90 AND 90),
+    pickup_longitude DECIMAL(9,6) NOT NULL CHECK (pickup_longitude BETWEEN -180 AND 180),
+    dropoff_location VARCHAR(100) NOT NULL,
+    dropoff_latitude DECIMAL(9,6) NOT NULL CHECK (dropoff_latitude BETWEEN -90 AND 90),
+    dropoff_longitude DECIMAL(9,6) NOT NULL CHECK (dropoff_longitude BETWEEN -180 AND 180),
     compensation DECIMAL(10, 2) NOT NULL,
     passenger_id BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
     ride_id BIGINT REFERENCES rides(id) ON DELETE CASCADE,

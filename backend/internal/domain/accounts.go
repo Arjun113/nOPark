@@ -32,15 +32,21 @@ type AccountsRepository interface {
 	DeleteAllUserSessions(ctx context.Context, accountID int64) error
 	CleanupExpiredSessions(ctx context.Context) error
 	GetAccountFromSession(ctx context.Context) (*AccountDBModel, error)
-	AddFavouriteAddress(ctx context.Context, accountID int64, address string) error
-	GetFavouriteAddresses(ctx context.Context, accountID int64) ([]string, error)
-	DeleteFavouriteAddress(ctx context.Context, accountID int64, address string) error
+	AddFavouriteAddress(ctx context.Context, accountID int64, addressName string, addressLine string) error
+	GetFavouriteAddresses(ctx context.Context, accountID int64) ([]AddressDBModel, error)
+	DeleteFavouriteAddress(ctx context.Context, accountID int64, addressID int64) error
 	RemoveUnverifiedExpiredAccounts(ctx context.Context) (int64, error)
 }
 
 const SessionExpiresInSeconds = 7 * 24 * 60 * 60       // 7 days
 const EmailVerificationExpiresInSeconds = 24 * 60 * 60 // 24 hours
 const PasswordResetExpiresInSeconds = 60 * 60          // 1 hour
+
+type AddressDBModel struct {
+	ID          int64
+	AddressName string
+	AddressLine string
+}
 
 type AccountDBModel struct {
 	ID                         int64
