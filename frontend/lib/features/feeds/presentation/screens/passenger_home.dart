@@ -123,16 +123,16 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         DriverSearchOverlay.show(context);
 
                         try {
-                          final origin_coord = await placemarkFromCoordinates(mapKey.currentState!.currentLocation!.latitude, mapKey.currentState!.currentLocation!.longitude);
-                          final dest_coord = await placemarkFromCoordinates(mapKey.currentState!.destinationMarker[0].position.latitude, mapKey.currentState!.destinationMarker[0].position.longitude);
+                          final originCoord = await placemarkFromCoordinates(mapKey.currentState!.currentLocation!.latitude, mapKey.currentState!.currentLocation!.longitude);
+                          final destCoord = await placemarkFromCoordinates(mapKey.currentState!.destinationMarker[0].position.latitude, mapKey.currentState!.destinationMarker[0].position.longitude);
 
                           final response = await DioClient().client.post(
                               '/rides/requests',
                             data: {
-                                "pickup_location": origin_coord[0].name,
+                                "pickup_location": originCoord[0].name,
                                 "pickup_latitude": mapKey.currentState!.currentLocation!.latitude,
                                 "pickup_longitude": mapKey.currentState!.currentLocation!.longitude,
-                                "dropoff_location": dest_coord[0].name,
+                                "dropoff_location": destCoord[0].name,
                                 "dropoff_latitude": mapKey.currentState!.destinationMarker[0].position.latitude,
                                 "dropoff_longitude": mapKey.currentState!.destinationMarker[0].position.longitude,
                                 "compensation": newBid
