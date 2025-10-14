@@ -257,15 +257,15 @@ func (a *api) getRideRequestsAsDriver(ctx context.Context, account *domain.Accou
 			a.errorResponse(w, r, http.StatusInternalServerError, err)
 			return
 		}
-		if requestParams.DistanceM != nil && detourRoute.Distance > *requestParams.DistanceM {
-			continue
-		}
-		if requestParams.TimeS != nil && detourRoute.Duration > *requestParams.TimeS {
-			continue
-		}
-
 		detourTimeDelta := detourRoute.Duration - driverRoute.Duration
 		detourDistanceDelta := detourRoute.Distance - driverRoute.Distance
+
+		if requestParams.DistanceM != nil && detourDistanceDelta > *requestParams.DistanceM {
+			continue
+		}
+		if requestParams.TimeS != nil && detourTimeDelta > *requestParams.TimeS {
+			continue
+		}
 
 		response.Requests = append(response.Requests, GetRideRequestsResponseIndividual{
 			ID:               rideRequest.ID,

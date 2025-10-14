@@ -14,8 +14,8 @@ params:query {
   compensation: 45
   dropoff_lat: -37.92176873238315
   dropoff_lon: 145.13999169015517
-  ~ids: 7
-  ~ids: 1
+  ~distance_m: 600
+  ~time_s: 60
 }
 
 auth:bearer {
@@ -30,6 +30,6 @@ docs {
   Params, behaviour, and response are different between passenger and driver. Role is checked via access token.
   
   Driver:
-  Saved params needed (Optional Compensation UB, Optional ids).
+  Saved params needed (Optional Compensation UB, Optional detour distance UB, Optional detour time UB).
   If you want estimate in distance, must provide dropoff lat lon AND requesting user must already have their location updated at least once.
 }
