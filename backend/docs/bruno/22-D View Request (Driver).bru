@@ -1,0 +1,35 @@
+meta {
+  name: 22-D View Request (Driver)
+  type: http
+  seq: 15
+}
+
+get {
+  url: http://localhost:4000/v1/rides/requests?compensation=45&dropoff_lat=-37.92176873238315&dropoff_lon=145.13999169015517
+  body: none
+  auth: bearer
+}
+
+params:query {
+  compensation: 45
+  dropoff_lat: -37.92176873238315
+  dropoff_lon: 145.13999169015517
+  ~ids: 7
+  ~ids: 1
+}
+
+auth:bearer {
+  token: zbqfwnimghrhmw98eqvpsv9c.rjzu8biy8xhb5p2nifazm5dh
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  Params, behaviour, and response are different between passenger and driver. Role is checked via access token.
+  
+  Driver:
+  Saved params needed (Optional Compensation UB, Optional ids).
+  If you want estimate in distance, must provide dropoff lat lon AND requesting user must already have their location updated at least once.
+}

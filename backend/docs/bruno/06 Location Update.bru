@@ -1,0 +1,26 @@
+meta {
+  name: 06 Location Update
+  type: http
+  seq: 8
+}
+
+put {
+  url: http://localhost:4000/v1/accounts/location
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: zbqfwnimghrhmw98eqvpsv9c.rjzu8biy8xhb5p2nifazm5dh
+}
+
+body:json {
+  {
+    "lat": -37.90993797506078,
+    "lng": 145.12365164981418
+  }
+}
+
+settings {
+  encodeUrl: true
+}

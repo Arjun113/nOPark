@@ -1,7 +1,7 @@
 meta {
-  name: 06 Request
+  name: 21 Create Request
   type: http
-  seq: 8
+  seq: 13
 }
 
 post {
@@ -11,14 +11,14 @@ post {
 }
 
 auth:bearer {
-  token: j42znu2zynnbbwiptee5ftw7.fqbvy8b9myxabc7g5wa6mrbt
+  token: gne7n3k4442pt25mriqm4qra.pv457nfb7aq3uezfyh7sjz2h
 }
 
 body:json {
   {
   //   "pickup_location": "North Avenue Monash",
-    "pickup_latitude": -37.90993797506078,
-    "pickup_longitude": 145.12365164981418,
+    "pickup_latitude": -37.91240918480912, 
+    "pickup_longitude": 145.1151649132983,
     "dropoff_location": "East Avenue Monash",
     "dropoff_latitude": -37.92176873238315,
     "dropoff_longitude": 145.13999169015517,
@@ -28,4 +28,8 @@ body:json {
 
 settings {
   encodeUrl: true
+}
+
+docs {
+  pickup_location can be omitted. 
 }
