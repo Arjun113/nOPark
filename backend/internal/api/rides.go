@@ -10,6 +10,7 @@ import (
 
 	"github.com/Arjun113/nOPark/internal/domain"
 	"github.com/Arjun113/nOPark/internal/repository"
+	"github.com/Arjun113/nOPark/internal/utils"
 	"go.uber.org/zap"
 )
 
@@ -68,7 +69,7 @@ func (a *api) createRideRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(existing_requests) > 0 {
-		a.errorResponse(w, r, http.StatusConflict, fmt.Errorf("active ride request already exists"))
+		a.errorResponse(w, r, http.StatusConflict, fmt.Errorf("active ride request already exists for this passenger"))
 		return
 	}
 

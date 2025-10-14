@@ -36,7 +36,7 @@ Please use the code below to verify your email address:
 
 %s
 
-This code will expire in 1 hour.
+This code will expire in 24 hours.
 
 If you didn't create an account, please ignore this email.
 

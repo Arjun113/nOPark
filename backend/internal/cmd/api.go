@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/Arjun113/nOPark/internal/api"
-	"github.com/Arjun113/nOPark/internal/cmdutil"
+	"github.com/Arjun113/nOPark/internal/utils"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -24,10 +24,10 @@ func APICmd(ctx context.Context) *cobra.Command {
 				port, _ = strconv.Atoi(os.Getenv("PORT"))
 			}
 
-			logger := cmdutil.NewLogger("api")
+			logger := utils.NewLogger("api")
 			defer func() { _ = logger.Sync() }()
 
-			db, err := cmdutil.NewDatabasePool(ctx, 16)
+			db, err := utils.NewDatabasePool(ctx, 16)
 			if err != nil {
 				return err
 			}

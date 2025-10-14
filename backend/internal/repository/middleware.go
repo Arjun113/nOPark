@@ -152,7 +152,6 @@ func RateLimitMiddleware(repo domain.RatelimitRepository, logger *zap.Logger) fu
 			}
 
 			ip := getClientIP(r)
-			print(ip)
 
 			blocked, expiresAt, err := repo.IsIPBlocked(r.Context(), ip)
 			if err != nil {

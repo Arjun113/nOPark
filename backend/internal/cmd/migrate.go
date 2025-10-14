@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Arjun113/nOPark/internal/cmdutil"
+	"github.com/Arjun113/nOPark/internal/utils"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -40,7 +40,7 @@ func migrateUpCmd(ctx context.Context) *cobra.Command {
 			}
 			defer m.Close()
 
-			logger := cmdutil.NewLogger("migrate")
+			logger := utils.NewLogger("migrate")
 			defer func() { _ = logger.Sync() }()
 
 			if err := m.Up(); err != nil && err != migrate.ErrNoChange {
@@ -65,7 +65,7 @@ func migrateDownCmd(ctx context.Context) *cobra.Command {
 			}
 			defer m.Close()
 
-			logger := cmdutil.NewLogger("migrate")
+			logger := utils.NewLogger("migrate")
 			defer func() { _ = logger.Sync() }()
 
 			if err := m.Steps(-1); err != nil && err != migrate.ErrNoChange {
