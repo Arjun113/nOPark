@@ -14,8 +14,8 @@ func NewPostgresMaps(conn Connection) domain.MapsRepository {
 	return &postgresMapsRepository{conn: conn}
 }
 
-func (p *postgresMapsRepository) GetRouteBetween(ctx context.Context, startLat float64, startLng float64, endLat float64, endLng float64) (*domain.RouteDBModel, error) {
-	rows, err := p.conn.Query(ctx, `SELECT * FROM get_route_between($1, $2, $3, $4)`, startLng, startLat, endLng, endLat)
+func (p *postgresMapsRepository) GetDirectRoute(ctx context.Context, start domain.Coordinates, dest domain.Coordinates) (*domain.RouteDBModel, error) {
+	rows, err := p.conn.Query(ctx, `SELECT * FROM get_route_between($1, $2, $3, $4)`, start.Lon, start.Lat, dest.Lon, dest.Lat)
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +24,6 @@ func (p *postgresMapsRepository) GetRouteBetween(ctx context.Context, startLat f
 	var coordinates [][]float64
 	var totalDistance float64
 	var estimatedDuration float64
-	var startLatSet bool = false
 
 	for rows.Next() {
 		var seq int
@@ -41,20 +40,13 @@ func (p *postgresMapsRepository) GetRouteBetween(ctx context.Context, startLat f
 			continue
 		}
 
-		if !startLatSet {
-			// First coordinate is start
-			startLng = lineString[0][0]
-			startLat = lineString[0][1]
-			startLatSet = true
-		}
-
 		// Latest tracking
-		endLng = lineString[len(lineString)-1][0]
-		endLat = lineString[len(lineString)-1][1]
+		dest.Lon = lineString[len(lineString)-1][0]
+		dest.Lat = lineString[len(lineString)-1][1]
 		totalDistance = aggCost
 		estimatedDuration = aggCostS
 
-		// Coordinates update
+		// Coordinates list construction
 		if len(coordinates) == 0 {
 			// First segment, just add all
 			coordinates = append(coordinates, lineString...)
@@ -81,14 +73,56 @@ func (p *postgresMapsRepository) GetRouteBetween(ctx context.Context, startLat f
 	polyline := domain.EncodePolyline(coordinates)
 
 	route := domain.RouteDBModel{
-		StartLatitude:  startLat,
-		StartLongitude: startLng,
-		EndLatitude:    endLat,
-		EndLongitude:   endLng,
+		StartLatitude:  start.Lat,
+		StartLongitude: start.Lon,
+		EndLatitude:    dest.Lat,
+		EndLongitude:   dest.Lon,
 		Distance:       totalDistance,
-		Duration:       int(estimatedDuration),
+		Duration:       int64(estimatedDuration),
 		Polyline:       polyline,
 	}
 
 	return &route, nil
+}
+
+func (p *postgresMapsRepository) GetMultistopRoute(ctx context.Context, start domain.Coordinates, waypoints []domain.Coordinates, dest domain.Coordinates) (*domain.RouteDBModel, error) {
+
+	if len(waypoints) == 0 {
+		return p.GetDirectRoute(ctx, start, dest)
+	}
+
+	var polylines []string
+	var totalDistance float64
+	var totalDuration int64
+
+	stops := []domain.Coordinates{start}
+	stops = append(stops, waypoints...)
+	stops = append(stops, dest)
+
+	legCount := len(stops) - 1
+	for i := range legCount {
+		legRoute, err := p.GetDirectRoute(ctx, stops[i], stops[i+1])
+		if err != nil {
+			return nil, err
+		}
+		polylines = append(polylines, legRoute.Polyline)
+		totalDistance += legRoute.Distance
+		totalDuration += legRoute.Duration
+	}
+
+	combinedPolyline, err := domain.CombinePolylines(polylines)
+	if err != nil {
+		return nil, err
+	}
+
+	return &domain.RouteDBModel{
+		StartLatitude:  start.Lat,
+		StartLongitude: start.Lon,
+		EndLatitude:    dest.Lat,
+		EndLongitude:   dest.Lon,
+		Distance:       totalDistance,
+		Duration:       totalDuration,
+		Polyline:       combinedPolyline,
+	}, nil
+
 }

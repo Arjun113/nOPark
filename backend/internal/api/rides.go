@@ -111,23 +111,30 @@ func (a *api) createRideRequestHandler(w http.ResponseWriter, r *http.Request) {
 type GetRideRequestsRequest struct {
 	IDs          *[]string `json:"ids,omitempty"`
 	Compensation *float64  `json:"compensation,omitempty"`
-	PassengerID  *int64    `json:"passenger_id,omitempty"`
+	DropoffLat   float64   `json:"dropoff_lat" validate:"required,min=-90,max=90"`
+	DropoffLon   float64   `json:"dropoff_lon" validate:"required,min=-180,max=180"`
+	DistanceM    *float64  `json:"distance_m,omitempty"`
+	TimeS        *int64    `json:"time_s,omitempty"`
 }
 
 type GetRideRequestsResponseIndividual struct {
-	ID               int64   `json:"id"`
-	PickupLocation   string  `json:"pickup_location"`
-	PickupLatitude   float64 `json:"pickup_latitude"`
-	PickupLongitude  float64 `json:"pickup_longitude"`
-	DropoffLocation  string  `json:"dropoff_location"`
-	DropoffLatitude  float64 `json:"dropoff_latitude"`
-	DropoffLongitude float64 `json:"dropoff_longitude"`
-	Compensation     float64 `json:"compensation"`
-	PassengerID      int64   `json:"passenger_id"`
-	CreatedAt        string  `json:"created_at"`
+	ID               int64    `json:"id"`
+	PickupLocation   string   `json:"pickup_location"`
+	PickupLatitude   float64  `json:"pickup_latitude"`
+	PickupLongitude  float64  `json:"pickup_longitude"`
+	DropoffLocation  string   `json:"dropoff_location"`
+	DropoffLatitude  float64  `json:"dropoff_latitude"`
+	DropoffLongitude float64  `json:"dropoff_longitude"`
+	DetourRoute      *string  `json:"detour_route,omitempty"`
+	DetourTimeS      *int64   `json:"detour_time_s,omitempty"`
+	DetourDistanceM  *float64 `json:"detour_distance_m,omitempty"`
+	Compensation     float64  `json:"compensation"`
+	PassengerID      int64    `json:"passenger_id"`
+	CreatedAt        string   `json:"created_at"`
 }
 
 type GetRideRequestsResponse struct {
+	Polyline string                              `json:"polyline"`
 	Requests []GetRideRequestsResponseIndividual `json:"requests"`
 }
 
@@ -135,32 +142,24 @@ func (a *api) getRideRequestsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	var ubCompensation *float64 = nil
-	if compStr := r.URL.Query().Get("compensation"); compStr != "" {
-		if val, err := strconv.ParseFloat(compStr, 64); err == nil {
-			ubCompensation = &val
-		}
-	}
-
-	var passengerID *int64 = nil
-	if passengerIDStr := r.URL.Query().Get("passenger_id"); passengerIDStr != "" {
-		if val, err := strconv.ParseInt(passengerIDStr, 10, 64); err == nil {
-			passengerID = &val
-		}
-	}
-
-	ids := r.URL.Query()["ids"]
-	req := GetRideRequestsRequest{
-		IDs:          &ids,
-		Compensation: ubCompensation,
-		PassengerID:  passengerID,
-	}
-	if err := a.validateRequest(req); err != nil {
-		a.errorResponse(w, r, http.StatusBadRequest, err)
+	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
+	if err != nil {
+		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 		return
 	}
 
-	rideRequests, err := a.ridesRepo.GetActiveRideRequests(ctx, req.IDs, req.Compensation, req.PassengerID)
+	switch account.Type {
+	case "driver":
+		a.getRideRequestsAsDriver(ctx, account, w, r)
+	case "passenger":
+		a.getRideRequestsAsPassenger(ctx, account, w, r)
+	default:
+		a.errorResponse(w, r, http.StatusForbidden, fmt.Errorf("only drivers and passengers can view ride requests"))
+	}
+}
+
+func (a *api) getRideRequestsAsPassenger(ctx context.Context, account *domain.AccountDBModel, w http.ResponseWriter, r *http.Request) {
+	rideRequests, err := a.ridesRepo.GetActiveRideRequests(ctx, nil, nil, &account.ID)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return
@@ -170,19 +169,119 @@ func (a *api) getRideRequestsHandler(w http.ResponseWriter, r *http.Request) {
 		Requests: make([]GetRideRequestsResponseIndividual, len(rideRequests)),
 	}
 
-	for i, req := range rideRequests {
+	for i, rideRequest := range rideRequests {
 		response.Requests[i] = GetRideRequestsResponseIndividual{
-			ID:               req.ID,
-			PickupLocation:   req.PickupLocation,
-			PickupLatitude:   req.PickupLatitude,
-			PickupLongitude:  req.PickupLongitude,
-			DropoffLocation:  req.DropoffLocation,
-			DropoffLatitude:  req.DropoffLatitude,
-			DropoffLongitude: req.DropoffLongitude,
-			Compensation:     req.Compensation,
-			PassengerID:      req.PassengerID,
-			CreatedAt:        req.CreatedAt,
+			ID:               rideRequest.ID,
+			PickupLocation:   rideRequest.PickupLocation,
+			PickupLatitude:   rideRequest.PickupLatitude,
+			PickupLongitude:  rideRequest.PickupLongitude,
+			DropoffLocation:  rideRequest.DropoffLocation,
+			DropoffLatitude:  rideRequest.DropoffLatitude,
+			DropoffLongitude: rideRequest.DropoffLongitude,
+			Compensation:     rideRequest.Compensation,
+			PassengerID:      rideRequest.PassengerID,
+			CreatedAt:        rideRequest.CreatedAt,
 		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (a *api) getRideRequestsAsDriver(ctx context.Context, account *domain.AccountDBModel, w http.ResponseWriter, r *http.Request) {
+
+	// Parse query parameters
+	ubCompensation, _ := utils.FloatFromQueryParam(r, "compensation", true)
+	dropoffLat, err := utils.FloatFromQueryParam(r, "dropoff_lat", false)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("dropoff_lat parameter is required and must be a valid float"))
+		return
+	}
+	dropoffLon, err := utils.FloatFromQueryParam(r, "dropoff_lon", false)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("dropoff_lon parameter is required and must be a valid float"))
+		return
+	}
+	distanceM, _ := utils.FloatFromQueryParam(r, "distance_m", true)
+	timeS, _ := utils.IntFromQueryParam(r, "time_s", true)
+	ids := r.URL.Query()["ids"]
+
+	requestParams := GetRideRequestsRequest{
+		IDs:          &ids,
+		Compensation: ubCompensation,
+		DropoffLat:   *dropoffLat,
+		DropoffLon:   *dropoffLon,
+		DistanceM:    distanceM,
+		TimeS:        timeS,
+	}
+	if err := a.validateRequest(requestParams); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	if account.CurrentLongitude == nil || account.CurrentLatitude == nil {
+		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("current location required to calculate detour distance and time"))
+		return
+	}
+
+	rideRequests, err := a.ridesRepo.GetActiveRideRequests(ctx, nil, requestParams.Compensation, nil)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	// Calculate driver's route
+	// var wkt string
+	start := domain.Coordinates{Lat: *account.CurrentLatitude, Lon: *account.CurrentLongitude}
+	dest := domain.Coordinates{Lat: requestParams.DropoffLat, Lon: requestParams.DropoffLon}
+	driverRoute, err := a.mapsRepo.GetDirectRoute(ctx, start, dest)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, fmt.Errorf("error calculating driver's route"))
+		return
+	}
+
+	response := GetRideRequestsResponse{
+		Polyline: driverRoute.Polyline,
+		Requests: make([]GetRideRequestsResponseIndividual, 0),
+	}
+
+	// Calculate distance and time for each request
+	for _, rideRequest := range rideRequests {
+		detourRoute, err := a.mapsRepo.GetMultistopRoute(ctx,
+			start,
+			[]domain.Coordinates{{Lat: rideRequest.PickupLatitude, Lon: rideRequest.PickupLongitude}},
+			dest,
+		)
+		if err != nil {
+			a.errorResponse(w, r, http.StatusInternalServerError, err)
+			return
+		}
+		if requestParams.DistanceM != nil && detourRoute.Distance > *requestParams.DistanceM {
+			continue
+		}
+		if requestParams.TimeS != nil && detourRoute.Duration > *requestParams.TimeS {
+			continue
+		}
+
+		detourTimeDelta := detourRoute.Duration - driverRoute.Duration
+		detourDistanceDelta := detourRoute.Distance - driverRoute.Distance
+
+		response.Requests = append(response.Requests, GetRideRequestsResponseIndividual{
+			ID:               rideRequest.ID,
+			PickupLocation:   rideRequest.PickupLocation,
+			PickupLatitude:   rideRequest.PickupLatitude,
+			PickupLongitude:  rideRequest.PickupLongitude,
+			DropoffLocation:  rideRequest.DropoffLocation,
+			DropoffLatitude:  rideRequest.DropoffLatitude,
+			DropoffLongitude: rideRequest.DropoffLongitude,
+			DetourTimeS:      &detourTimeDelta,
+			DetourDistanceM:  &detourDistanceDelta,
+			DetourRoute:      &detourRoute.Polyline,
+			Compensation:     rideRequest.Compensation,
+			PassengerID:      rideRequest.PassengerID,
+			CreatedAt:        rideRequest.CreatedAt,
+		})
 	}
 
 	w.Header().Set("Content-Type", "application/json")

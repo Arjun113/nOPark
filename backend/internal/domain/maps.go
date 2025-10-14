@@ -18,12 +18,17 @@ type RouteDBModel struct {
 	EndLatitude    float64
 	EndLongitude   float64
 	Distance       float64
-	Duration       int
+	Duration       int64
 	Polyline       string
 }
 
+type Coordinates struct {
+	Lat, Lon float64
+}
+
 type MapsRepository interface {
-	GetRouteBetween(ctx context.Context, startLat float64, startLng float64, endLat float64, endLng float64) (*RouteDBModel, error)
+	GetDirectRoute(ctx context.Context, start Coordinates, dest Coordinates) (*RouteDBModel, error)
+	GetMultistopRoute(ctx context.Context, start Coordinates, waypoints []Coordinates, dest Coordinates) (*RouteDBModel, error)
 }
 
 // ExtractCoordinatesFromGeoJSON parses a GeoJSON LineString and returns [][]float64
@@ -83,4 +88,66 @@ func encodeValue(value int) string {
 	encoded.WriteByte(byte(value) + 63)
 
 	return encoded.String()
+}
+
+func DecodePolyline(encoded string) [][]float64 {
+	var coords [][]float64
+	index := 0
+	lat, lon := 0, 0
+
+	for index < len(encoded) {
+		// Decode latitude
+		result, shift := 0, 0
+		for {
+			b := int(encoded[index]) - 63
+			index++
+			result |= (b & 0x1F) << shift
+			shift += 5
+			if b < 0x20 {
+				break
+			}
+		}
+		dlat := (result >> 1) ^ (-(result & 1))
+		lat += dlat
+
+		// Decode longitude
+		result, shift = 0, 0
+		for {
+			b := int(encoded[index]) - 63
+			index++
+			result |= (b & 0x1F) << shift
+			shift += 5
+			if b < 0x20 {
+				break
+			}
+		}
+		dlon := (result >> 1) ^ (-(result & 1))
+		lon += dlon
+
+		coords = append(coords, []float64{float64(lon) * 1e-5, float64(lat) * 1e-5}) // [lon, lat] for WKT
+	}
+
+	return coords
+}
+
+func CombinePolylines(polys []string) (string, error) {
+	if len(polys) == 0 {
+		return "", nil
+	}
+
+	var combinedCoords [][]float64
+
+	for i, p := range polys {
+		coords := DecodePolyline(p)
+
+		if i > 0 && len(coords) > 0 {
+			// skip first point to avoid duplicate at junction
+			coords = coords[1:]
+		}
+
+		combinedCoords = append(combinedCoords, coords...)
+	}
+
+	encoded := EncodePolyline(combinedCoords)
+	return string(encoded), nil
 }
