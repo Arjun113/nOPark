@@ -95,6 +95,7 @@ func (a *api) Routes() *mux.Router {
 	p.HandleFunc("/v1/accounts/addresses", a.deleteFavouriteAddressHandler).Methods("DELETE")
 	p.HandleFunc("/v1/accounts/{id}", a.getSpecificUserHandler).Methods("GET")
 	p.HandleFunc("/v1/accounts/{id}/review", a.createReviewHandler).Methods("POST")
+	p.HandleFunc("/v1/accounts/location", a.updateLocationHandler).Methods("PUT")
 
 	// Protected ride routes
 	p.HandleFunc("/v1/rides/requests", a.getRideRequestsHandler).Methods("GET")

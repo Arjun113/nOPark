@@ -79,25 +79,27 @@ func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := domain.GenerateSecureToken()
+	code := domain.GenerateVerificationCode()
+	expiresAt := domain.GetCurrentTimeRFC3339()
+	expiresAt, err = domain.AddTimeToRFC3339(expiresAt, 24*time.Hour)
 	if err != nil {
-		a.logger.Error("Failed to generate email verification token", zap.Error(err))
-	} else {
-		expiresAt := domain.GetCurrentTimeRFC3339()
-		expiresAt, err = domain.AddTimeToRFC3339(expiresAt, 24*time.Hour)
-		if err != nil {
-			a.logger.Error("Failed to set email verification expiration", zap.Error(err))
-		} else {
-			err = a.accountsRepo.SetEmailVerificationToken(ctx, fmt.Sprintf("%d", createdAccount.ID), token, expiresAt)
-			if err != nil {
-				a.logger.Error("Failed to set email verification token", zap.Error(err))
-			} else {
-				err = a.emailService.SendEmailVerification(createdAccount.Email, token)
-				if err != nil {
-					a.logger.Error("Failed to send email verification", zap.Error(err))
-				}
-			}
-		}
+		a.logger.Error("Failed to set email verification expiration", zap.Error(err))
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	err = a.accountsRepo.SetEmailVerificationToken(ctx, fmt.Sprintf("%d", createdAccount.ID), code, expiresAt)
+	if err != nil {
+		a.logger.Error("Failed to set email verification token", zap.Error(err))
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	err = a.emailService.SendEmailVerification(createdAccount.Email, code)
+	if err != nil {
+		a.logger.Error("Failed to send email verification", zap.Error(err))
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
 	}
 
 	response := CreateUserResponse{
@@ -759,6 +761,41 @@ func (a *api) deleteFavouriteAddressHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	err = a.accountsRepo.DeleteFavouriteAddress(ctx, account.ID, req.AddressID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+type UpdateLocationRequest struct {
+	Latitude  float64 `json:"lat" validate:"required,latitude"`
+	Longitude float64 `json:"lng" validate:"required,longitude"`
+}
+
+func (a *api) updateLocationHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
+	if err != nil {
+		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
+		return
+	}
+
+	var req UpdateLocationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := a.validateRequest(req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	err = a.accountsRepo.UpdateLocation(ctx, account.ID, req.Latitude, req.Longitude)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return

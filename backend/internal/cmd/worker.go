@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
-	"github.com/Arjun113/nOPark/internal/cmdutil"
+	"github.com/Arjun113/nOPark/internal/utils"
 	"github.com/Arjun113/nOPark/internal/domain"
 	"github.com/Arjun113/nOPark/internal/repository"
 	"github.com/Arjun113/nOPark/internal/services"
@@ -21,10 +21,10 @@ func WorkerCmd(ctx context.Context) *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		Short: "Handles notification scheduling and processing.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logger := cmdutil.NewLogger("worker")
+			logger := utils.NewLogger("worker")
 			defer func() { _ = logger.Sync() }()
 
-			db, err := cmdutil.NewDatabasePool(ctx, 4)
+			db, err := utils.NewDatabasePool(ctx, 4)
 			if err != nil {
 				return fmt.Errorf("could not connect to database: %w", err)
 			}

@@ -332,3 +332,10 @@ func (p *postgresAccountsRepository) RemoveUnverifiedExpiredAccounts(ctx context
 	}
 	return tags.RowsAffected(), nil
 }
+
+func (p *postgresAccountsRepository) UpdateLocation(ctx context.Context, accountID int64, lat, lon float64) error {
+	_, err := p.conn.Exec(ctx,
+		"UPDATE accounts SET current_latitude = $1, current_longitude = $2 WHERE id = $3",
+		lat, lon, accountID)
+	return err
+}

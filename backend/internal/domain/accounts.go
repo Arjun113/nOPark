@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"strings"
 	"time"
 
@@ -36,6 +37,7 @@ type AccountsRepository interface {
 	GetFavouriteAddresses(ctx context.Context, accountID int64) ([]AddressDBModel, error)
 	DeleteFavouriteAddress(ctx context.Context, accountID int64, addressID int64) error
 	RemoveUnverifiedExpiredAccounts(ctx context.Context) (int64, error)
+	UpdateLocation(ctx context.Context, accountID int64, lat, lon float64) error
 }
 
 const SessionExpiresInSeconds = 7 * 24 * 60 * 60       // 7 days
@@ -175,4 +177,17 @@ func GenerateSession() (string, string, []byte) {
 	token := id + "." + secret
 
 	return id, token, secretHash
+}
+
+func GenerateVerificationCode() string {
+	code := ""
+	for i := 0; i < 6; i++ {
+		n, err := rand.Int(rand.Reader, big.NewInt(10))
+		if err != nil {
+			// Fallback in case of error
+			return "000000"
+		}
+		code += n.String()
+	}
+	return code
 }
