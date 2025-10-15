@@ -894,6 +894,82 @@ func (a *api) compensationEstimateHandler(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(response)
 }
 
+type ReachPickupRequest struct {
+	RideID           int64   `json:"ride_id" validate:"required"`
+	CurrentLatitude  float64 `json:"current_lat" validate:"required,min=-90,max=90"`
+	CurrentLongitude float64 `json:"current_lon" validate:"required,min=-180,max=180"`
+}
+
+func (a *api) reachPickupHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	account, err := a.accountsRepo.GetAccountFromSession(ctx)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
+		return
+	}
+	if account.Type != "driver" {
+		a.errorResponse(w, r, http.StatusForbidden, fmt.Errorf("only drivers can update their location"))
+		return
+	}
+
+	// Parse input
+	var req ReachPickupRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+	if err := a.validateRequest(req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	// Check ride exists and is in progress
+	ride, err := a.ridesRepo.GetRideByID(ctx, req.RideID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	if ride.Status != "in_progress" {
+		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("ride is not in progress"))
+		return
+	}
+
+	// Get Request
+	requests, err := a.ridesRepo.GetUnvisitedRequestsByRideID(ctx, req.RideID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	if len(requests) == 0 {
+		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("no unvisited requests found for this ride"))
+		return
+	}
+
+	var closest *domain.RequestDBModel
+	var closestDistance float64 = -1
+	for _, request := range requests {
+		distance := domain.CalculateHaversineDistance(req.CurrentLatitude, req.CurrentLongitude, request.PickupLatitude, request.PickupLongitude)
+		if closestDistance == -1 || distance < closestDistance {
+			closestDistance = distance
+			closest = request
+		}
+	}
+	if closestDistance > 1000 {
+		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("you are too far from the nearest pickup location (%.2f meters)", closestDistance))
+		return
+	}
+
+	// Mark request as visited
+	if err := a.ridesRepo.MarkRequestAsVisited(ctx, closest.ID); err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 type CompleteRideRequest struct {
 	RideID int64 `json:"ride_id" validate:"required"`
 }

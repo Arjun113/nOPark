@@ -1,0 +1,27 @@
+meta {
+  name: 25 Reach Pickup
+  type: http
+  seq: 19
+}
+
+post {
+  url: http://localhost:4000/v1/rides/confirm
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: 53tir35zxd425jb7ppr6fqi2.pfjgs4cxrrn96bz8zcb9hy2x
+}
+
+body:json {
+  {
+    "ride_id": 17,
+    "current_lat": -37.88956859498674,
+    "current_lon": 145.0763105748035
+  }
+}
+
+settings {
+  encodeUrl: true
+}

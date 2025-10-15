@@ -277,11 +277,11 @@ func (p *postgresRidesRepository) GetProposalByID(ctx context.Context, proposalI
 
 func (p *postgresRidesRepository) GetRequestByID(ctx context.Context, requestID int64) (*domain.RequestDBModel, error) {
 	row := p.conn.QueryRow(ctx,
-		`SELECT id, pickup_location, pickup_latitude, pickup_longitude, dropoff_location, dropoff_latitude, dropoff_longitude, compensation, passenger_id, ride_id, created_at FROM requests WHERE id = $1`,
+		`SELECT id, pickup_location, pickup_latitude, pickup_longitude, dropoff_location, dropoff_latitude, dropoff_longitude, compensation, passenger_id, ride_id, visited, created_at FROM requests WHERE id = $1`,
 		requestID)
 
 	var request domain.RequestDBModel
-	err := row.Scan(&request.ID, &request.PickupLocation, &request.PickupLatitude, &request.PickupLongitude, &request.DropoffLocation, &request.DropoffLatitude, &request.DropoffLongitude, &request.Compensation, &request.PassengerID, &request.RideID, &request.CreatedAt)
+	err := row.Scan(&request.ID, &request.PickupLocation, &request.PickupLatitude, &request.PickupLongitude, &request.DropoffLocation, &request.DropoffLatitude, &request.DropoffLongitude, &request.Compensation, &request.PassengerID, &request.RideID, &request.Visited, &request.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -383,4 +383,43 @@ func (p *postgresRidesRepository) GetInProgressRidesWithLocations(ctx context.Co
 	}
 
 	return results, nil
+}
+
+func (p *postgresRidesRepository) GetUnvisitedRequestsByRideID(ctx context.Context, rideID int64) ([]*domain.RequestDBModel, error) {
+	query := `
+		SELECT req.id, req.pickup_location, req.pickup_latitude, req.pickup_longitude, req.dropoff_location, req.dropoff_latitude, req.dropoff_longitude, req.compensation, req.passenger_id, req.ride_id, req.notifs_crtd, req.created_at
+		FROM requests req
+		JOIN proposals p ON p.request_id = req.id
+		WHERE p.ride_id = $1 AND p.status = 'accepted' AND req.visited = FALSE 
+	`
+	rows, err := p.conn.Query(ctx, query, rideID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var requests []*domain.RequestDBModel
+	for rows.Next() {
+		var req domain.RequestDBModel
+		if err := rows.Scan(&req.ID, &req.PickupLocation, &req.PickupLatitude, &req.PickupLongitude, &req.DropoffLocation, &req.DropoffLatitude, &req.DropoffLongitude, &req.Compensation, &req.PassengerID, &req.RideID, &req.AreNotificationsCreated, &req.CreatedAt); err != nil {
+			return nil, err
+		}
+		requests = append(requests, &req)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return requests, nil
+}
+
+func (p *postgresRidesRepository) MarkRequestAsVisited(ctx context.Context, requestID int64) error {
+	query := `
+		UPDATE requests
+		SET visited = TRUE
+		WHERE id = $1
+	`
+	_, err := p.conn.Exec(ctx, query, requestID)
+	return err
 }

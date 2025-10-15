@@ -117,6 +117,9 @@ func (a *api) getRouteForRideHandler(w http.ResponseWriter, r *http.Request) {
 				a.errorResponse(w, r, http.StatusInternalServerError, err)
 				return
 			}
+			if request.Visited {
+				continue
+			}
 
 			waypoints = append(waypoints, domain.Coordinates{Lat: request.PickupLatitude, Lon: request.PickupLongitude})
 		}

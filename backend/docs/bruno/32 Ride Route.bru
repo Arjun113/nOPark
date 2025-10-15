@@ -1,17 +1,21 @@
 meta {
   name: 32 Ride Route
   type: http
-  seq: 22
+  seq: 23
 }
 
 get {
-  url: http://localhost:4000/v1/rides/route
+  url: http://localhost:4000/v1/rides/route?ride_id=17
   body: none
   auth: bearer
 }
 
+params:query {
+  ride_id: 17
+}
+
 auth:bearer {
-  token: kihifkkiwrtvgv3avve7djdq.batau883t4i8vbek86zzkyzp
+  token: jrwmmpkmamxceprwnf46m4yv.jnw9zjxc2bpfegk47t5sestr
 }
 
 body:json {

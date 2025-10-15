@@ -18,6 +18,8 @@ type RidesRepository interface {
 	GetRideByRequestID(ctx context.Context, requestID int64) ([]*RideDBModel, error)
 	GetProposalByID(ctx context.Context, proposalID int64) (*ProposalDBModel, error)
 	GetRequestByID(ctx context.Context, requestID int64) (*RequestDBModel, error)
+	GetUnvisitedRequestsByRideID(ctx context.Context, rideID int64) ([]*RequestDBModel, error)
+	MarkRequestAsVisited(ctx context.Context, requestID int64) error
 	CompleteRide(ctx context.Context, rideID int64) error
 	GetPreviousRides(ctx context.Context, accountID int64, accountType string, limit int, offset int) ([]*RideDBModel, error)
 	GetInProgressRidesWithLocations(ctx context.Context) ([]*RideWithLocationsDBModel, error)
@@ -44,6 +46,7 @@ type RequestDBModel struct {
 	PassengerID             int64
 	RideID                  *int64
 	AreNotificationsCreated bool
+	Visited                 bool
 	CreatedAt               string
 }
 
