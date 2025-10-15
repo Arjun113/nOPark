@@ -240,6 +240,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
 
                         // TODO: Pull the ride proposal and chuck it in the alert dialog
 
+
                         // Store the prospective ride ID
                         bool acception = await showDialog(
                           context: context,
