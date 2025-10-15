@@ -1,7 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:geocoding/geocoding.dart' hide Location;
 import 'package:nopark/features/feeds/datamodels/passenger/ride_request_response.dart';
 import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_scroller.dart';
@@ -18,6 +18,7 @@ import 'package:nopark/logic/network/dio_client.dart';
 import 'package:nopark/logic/routing/basic_two_router.dart';
 import 'package:nopark/logic/utilities/firebase_notif_waiter.dart';
 
+import '../../../trip/entities/location.dart';
 import '../widgets/base_where_next.dart';
 import '../widgets/where_next_overlay.dart';
 import 'overlay_flow.dart';
@@ -46,10 +47,11 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
   final GlobalKey<FullScreenMapState> mapKey = GlobalKey<FullScreenMapState>();
 
   // Variables for the flow system
-  String? destination;
+  Location? destination;
   RideRequestResponse? rideReqResp;
   int? prospectiveRideId;
-
+  double? initialCompensation;
+  String? destinationString;
 
   get collapse => null;
 
@@ -111,6 +113,31 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                               LatLng(lat, lng),
                             );
                         _updateMap(destinationMarker, route!);
+
+                        // Send request to backend to get initial compensation
+                        try {
+                          final response = await DioClient().client.post(
+                              '/rides/compensation',
+                            data: {
+                                "start_latitude": mapKey.currentState?.currentLocation?.latitude,
+                                "start_longitude": mapKey.currentState?.currentLocation?.longitude,
+                                "end_latitude": lat,
+                                "end_longitude": lng
+                            }
+                          );
+
+                        }
+                        catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text("Error contacting the server")
+                              )
+                          );
+                        }
+
+                        destination = Location(lat: lat, long: lng);
+                        destinationString = (await placemarkFromCoordinates(lat, lng))[0].name;
+
                         controller.next();
                       },
                       onBack: Navigator.of(context).pop,
@@ -121,7 +148,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                       onBack: controller.back,
                       fromAddressName: "Current Location",
                       fromCampusCode: null,
-                      toAddressName: "Woodside",
+                      toAddressName: destinationString!,
                       toCampusCode: null,
                       recommendedBidAUD: 15,
                       initialSize: size,
@@ -211,7 +238,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         }
 
                         // Wait for FCM notification about prospective ride
-                        RemoteMessage driver_prospectus = await waitForJob("passengerRideProposal");
+                        RemoteMessage driver_prospectus = await waitForJob("ride_created");
 
                         // TODO: Pull the ride proposal and chuck it in the alert dialog
 
@@ -287,6 +314,16 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                               );
                             }
                           }
+
+                          // Go back to home if rejected.
+
+                          if (acception == false) {
+                            controller.jumpTo(0);
+                            rideReqResp = null;
+                            prospectiveRideId = null;
+                            destination = null;
+                          }
+
                         controller.next();
                       }),
                     ),
