@@ -1,2 +1,2 @@
-const openStreetMapUri = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+const openStreetMapUri = 'https://nopark-tiles.lachlanmacphee.com/{z}/{x}/{y}.pbf';
 const openStreetMapUserAgent = 'com.nopark.loc';
