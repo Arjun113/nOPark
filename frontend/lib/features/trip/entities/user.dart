@@ -7,6 +7,7 @@ class User {
       'https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg';
   final String imageUrl;
   final String token;
+  List<String> addresses;
 
   User({
     required this.firstName,
@@ -15,7 +16,8 @@ class User {
     required this.monashEmail,
     required this.imageUrl,
     required this.token,
-  });
+    List<String>? addresses,
+  }) : addresses = addresses ?? [];
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
@@ -25,6 +27,7 @@ class User {
       imageUrl: json['profile_image'] ?? defaultImageUrl,
       monashEmail: json['monashEmail'],
       token: json['token'],
+      addresses: List<String>.from(json['addresses'] ?? []),
     );
   }
 
@@ -45,6 +48,7 @@ class User {
       'last_name': lastName,
       'email': monashEmail,
       'token': token,
+      'addresses': addresses,
     };
   }
 }
