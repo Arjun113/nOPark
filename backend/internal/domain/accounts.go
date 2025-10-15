@@ -38,6 +38,7 @@ type AccountsRepository interface {
 	DeleteFavouriteAddress(ctx context.Context, accountID int64, addressID int64) error
 	RemoveUnverifiedExpiredAccounts(ctx context.Context) (int64, error)
 	UpdateLocation(ctx context.Context, accountID int64, lat, lon float64) error
+	CreateVehicle(ctx context.Context, vehicle *VehicleDBModel) (*VehicleDBModel, error)
 }
 
 const SessionExpiresInSeconds = 7 * 24 * 60 * 60       // 7 days
@@ -80,6 +81,18 @@ type SessionDBModel struct {
 type SessionDBModelWithToken struct {
 	SessionModel *SessionDBModel
 	Token        string
+}
+
+type VehicleDBModel struct {
+	ID           int64
+	Make         string
+	Model        string
+	ModelYear    int
+	Colour       string
+	LicensePlate string
+	AccountID    int64
+	CreatedAt    string
+	UpdatedAt    string
 }
 
 func HashPassword(password string) (string, error) {

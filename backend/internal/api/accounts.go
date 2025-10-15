@@ -803,3 +803,70 @@ func (a *api) updateLocationHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+type CreateVehicleRequest struct {
+	Make         string `json:"make" validate:"required"`
+	Model        string `json:"model" validate:"required"`
+	ModelYear    int    `json:"model_year" validate:"required,min=1886,max=2100"`
+	Colour       string `json:"colour" validate:"required"`
+	LicensePlate string `json:"license_plate" validate:"required"`
+}
+
+type CreateVehicleResponse struct {
+	ID           int64  `json:"id"`
+	Make         string `json:"make"`
+	Model        string `json:"model"`
+	ModelYear    int    `json:"model_year"`
+	Colour       string `json:"colour"`
+	LicensePlate string `json:"license_plate"`
+}
+
+func (a *api) createVehicleHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
+	if err != nil {
+		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
+		return
+	}
+
+	var req CreateVehicleRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := a.validateRequest(req); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	vehicle := &domain.VehicleDBModel{
+		Make:         req.Make,
+		Model:        req.Model,
+		ModelYear:    req.ModelYear,
+		Colour:       req.Colour,
+		LicensePlate: req.LicensePlate,
+		AccountID:    account.ID,
+	}
+
+	createdVehicle, err := a.accountsRepo.CreateVehicle(ctx, vehicle)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	response := CreateVehicleResponse{
+		ID:           createdVehicle.ID,
+		Make:         createdVehicle.Make,
+		Model:        createdVehicle.Model,
+		ModelYear:    createdVehicle.ModelYear,
+		Colour:       createdVehicle.Colour,
+		LicensePlate: createdVehicle.LicensePlate,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
+}

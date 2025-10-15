@@ -339,3 +339,22 @@ func (p *postgresAccountsRepository) UpdateLocation(ctx context.Context, account
 		lat, lon, accountID)
 	return err
 }
+
+func (p *postgresAccountsRepository) CreateVehicle(ctx context.Context, vehicle *domain.VehicleDBModel) (*domain.VehicleDBModel, error) {
+	var createdVehicle domain.VehicleDBModel
+
+	row := p.conn.QueryRow(ctx,
+		`INSERT INTO vehicles (make, model, model_year, colour, license_plate, account_id) 
+		 VALUES ($1, $2, $3, $4, $5, $6) 
+		 RETURNING id, make, model, model_year, colour, license_plate, account_id, created_at, updated_at`,
+		vehicle.Make, vehicle.Model, vehicle.ModelYear, vehicle.Colour, vehicle.LicensePlate, vehicle.AccountID)
+
+	err := row.Scan(&createdVehicle.ID, &createdVehicle.Make, &createdVehicle.Model, &createdVehicle.ModelYear,
+		&createdVehicle.Colour, &createdVehicle.LicensePlate, &createdVehicle.AccountID,
+		&createdVehicle.CreatedAt, &createdVehicle.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	return &createdVehicle, nil
+}
