@@ -39,13 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
         },
       );
       final token = response.data['token'];
-
       CredentialStorage.setLoginToken(token);
-      CredentialStorage.setLoginCredentials(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-      );
-
       if (response.data.type == "driver" && mounted) {
         Navigator.push(
           context,
