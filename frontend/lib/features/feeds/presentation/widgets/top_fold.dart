@@ -11,7 +11,6 @@ class TopFoldWhereNext extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
         child: Row (

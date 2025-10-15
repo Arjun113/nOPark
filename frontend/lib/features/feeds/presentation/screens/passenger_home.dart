@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart' hide Location;
@@ -531,6 +532,32 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                               text: user!.email,
                             ),
                             addresses: addresses,
+                            onLogOut: (() async {
+                              try {
+                                // TODO: Lachlan and Taiyeb: clear cred store
+                                final response = await DioClient().client.post(
+                                    '/accounts/logout',
+                                    data: {}
+                                );
+
+                                if (response.statusCode == 201) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text("Successfully Logged Out"))
+                                  );
+                                  Navigator.pushReplacementNamed(context, '/login');
+                                }
+                                else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text("Unable to log out."))
+                                  );
+                                }
+                              }
+                              catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("Unable to contact server."))
+                                );
+                              }
+                            }),
                           ),
                     );
                   }
