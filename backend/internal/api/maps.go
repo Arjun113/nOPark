@@ -100,10 +100,17 @@ func (a *api) getRouteForRideHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Collect waypoints from proposals
-	var destination domain.Coordinates
+	// Collect waypoints from proposals and determine destination
 	waypoints := make([]domain.Coordinates, 0)
-	for i, prop := range proposals {
+
+	// Use ride's destination coordinates if available, otherwise get from request
+	destination := domain.Coordinates{
+		Lat: ride.DestinationLatitude,
+		Lon: ride.DestinationLongitude,
+	}
+
+	// Process all accepted proposals to collect waypoints
+	for _, prop := range proposals {
 		if prop.Status == "accepted" {
 			request, err := a.ridesRepo.GetRequestByID(ctx, prop.RequestID)
 			if err != nil {
@@ -112,11 +119,6 @@ func (a *api) getRouteForRideHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			waypoints = append(waypoints, domain.Coordinates{Lat: request.PickupLatitude, Lon: request.PickupLongitude})
-
-			// Get a single dest
-			if i == 1 {
-				destination = domain.Coordinates{Lat: request.DropoffLatitude, Lon: request.DropoffLongitude}
-			}
 		}
 	}
 

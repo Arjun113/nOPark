@@ -11,7 +11,7 @@ const PricePerKm = 0.25
 type RidesRepository interface {
 	CreateRideRequest(ctx context.Context, req *RequestDBModel) (*RequestDBModel, error)
 	GetActiveRideRequests(ctx context.Context, ids *[]string, ub_compensation *float64, passenger_id *int64) ([]*RequestDBModel, error)
-	CreateRideAndProposals(ctx context.Context, proposals []*ProposalDBModel) (*RideDBModel, []*ProposalDBModel, error)
+	CreateRideAndProposals(ctx context.Context, proposals []*ProposalDBModel, destLat, destLon float64) (*RideDBModel, []*ProposalDBModel, error)
 	GetRideAndProposals(ctx context.Context, rideID int64) (*RideDBModel, []*ProposalDBModel, error)
 	ConfirmRideProposal(ctx context.Context, proposal *ProposalDBModel, confirm string) (*ProposalDBModel, error)
 	GetRideByID(ctx context.Context, rideID int64) (*RideDBModel, error)
@@ -24,10 +24,12 @@ type RidesRepository interface {
 }
 
 type RideDBModel struct {
-	ID        int64
-	Status    string
-	CreatedAt string
-	UpdatedAt string
+	ID                   int64
+	Status               string
+	DestinationLatitude  float64
+	DestinationLongitude float64
+	CreatedAt            string
+	UpdatedAt            string
 }
 
 type RequestDBModel struct {

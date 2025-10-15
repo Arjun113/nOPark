@@ -3,6 +3,8 @@
 CREATE TABLE rides (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     status VARCHAR(50) NOT NULL DEFAULT 'awaiting_confirmation' CHECK (status IN ('awaiting_confirmation', 'in_progress', 'completed', 'rejected')),
+    destination_latitude DECIMAL(9,6) NOT NULL CHECK (destination_latitude IS NULL OR destination_latitude BETWEEN -90 AND 90),
+    destination_longitude DECIMAL(9,6) NOT NULL CHECK (destination_longitude IS NULL OR destination_longitude BETWEEN -180 AND 180),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );

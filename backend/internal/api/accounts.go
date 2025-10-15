@@ -771,7 +771,7 @@ func (a *api) deleteFavouriteAddressHandler(w http.ResponseWriter, r *http.Reque
 
 type UpdateLocationRequest struct {
 	Latitude  float64 `json:"lat" validate:"required,latitude"`
-	Longitude float64 `json:"lng" validate:"required,longitude"`
+	Longitude float64 `json:"lon" validate:"required,longitude"`
 }
 
 func (a *api) updateLocationHandler(w http.ResponseWriter, r *http.Request) {

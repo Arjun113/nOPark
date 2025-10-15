@@ -76,11 +76,15 @@ func (p *postgresRidesRepository) GetActiveRideRequests(ctx context.Context, ids
 	return requests, nil
 }
 
-func (p *postgresRidesRepository) CreateRideAndProposals(ctx context.Context, proposals []*domain.ProposalDBModel) (*domain.RideDBModel, []*domain.ProposalDBModel, error) {
-	row := p.conn.QueryRow(ctx, `INSERT INTO rides DEFAULT VALUES RETURNING id, status, created_at, updated_at`)
+func (p *postgresRidesRepository) CreateRideAndProposals(ctx context.Context, proposals []*domain.ProposalDBModel, destLat, destLon float64) (*domain.RideDBModel, []*domain.ProposalDBModel, error) {
+	row := p.conn.QueryRow(ctx,
+		`INSERT INTO rides (destination_latitude, destination_longitude) 
+		 VALUES ($1, $2) 
+		 RETURNING id, status, destination_latitude, destination_longitude, created_at, updated_at`,
+		destLat, destLon)
 
 	var ride domain.RideDBModel
-	err := row.Scan(&ride.ID, &ride.Status, &ride.CreatedAt, &ride.UpdatedAt)
+	err := row.Scan(&ride.ID, &ride.Status, &ride.DestinationLatitude, &ride.DestinationLongitude, &ride.CreatedAt, &ride.UpdatedAt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -110,10 +114,10 @@ func (p *postgresRidesRepository) GetRideAndProposals(ctx context.Context, rideI
 
 	// Get the ride details
 	row := p.conn.QueryRow(ctx,
-		`SELECT id, status, created_at, updated_at FROM rides WHERE id = $1`,
+		`SELECT id, status, destination_latitude, destination_longitude, created_at, updated_at FROM rides WHERE id = $1`,
 		rideID)
 
-	err := row.Scan(&ride.ID, &ride.Status, &ride.CreatedAt, &ride.UpdatedAt)
+	err := row.Scan(&ride.ID, &ride.Status, &ride.DestinationLatitude, &ride.DestinationLongitude, &ride.CreatedAt, &ride.UpdatedAt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -218,11 +222,11 @@ func (p *postgresRidesRepository) ConfirmRideProposal(ctx context.Context, propo
 
 func (p *postgresRidesRepository) GetRideByID(ctx context.Context, rideID int64) (*domain.RideDBModel, error) {
 	row := p.conn.QueryRow(ctx,
-		`SELECT id, status, created_at, updated_at FROM rides WHERE id = $1`,
+		`SELECT id, status, destination_latitude, destination_longitude, created_at, updated_at FROM rides WHERE id = $1`,
 		rideID)
 
 	var ride domain.RideDBModel
-	err := row.Scan(&ride.ID, &ride.Status, &ride.CreatedAt, &ride.UpdatedAt)
+	err := row.Scan(&ride.ID, &ride.Status, &ride.DestinationLatitude, &ride.DestinationLongitude, &ride.CreatedAt, &ride.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +236,7 @@ func (p *postgresRidesRepository) GetRideByID(ctx context.Context, rideID int64)
 
 func (p *postgresRidesRepository) GetRideByRequestID(ctx context.Context, requestID int64) ([]*domain.RideDBModel, error) {
 	rows, err := p.conn.Query(ctx,
-		`SELECT r.id, r.status, r.created_at, r.updated_at
+		`SELECT r.id, r.status, r.destination_latitude, r.destination_longitude, r.created_at, r.updated_at
 		 FROM rides r
 		 JOIN proposals p ON r.id = p.ride_id
 		 WHERE p.request_id = $1 AND p.status != 'rejected'`,
@@ -294,7 +298,7 @@ func (p *postgresRidesRepository) CompleteRide(ctx context.Context, rideID int64
 
 func (p *postgresRidesRepository) GetPreviousRides(ctx context.Context, accountID int64, accountType string, limit int, offset int) ([]*domain.RideDBModel, error) {
 	query := `
-        SELECT r.id, r.status, r.created_at, r.updated_at
+        SELECT r.id, r.status, r.destination_latitude, r.destination_longitude, r.created_at, r.updated_at
         FROM rides r
         JOIN proposals p ON r.id = p.ride_id
         JOIN requests req ON p.request_id = req.id
@@ -317,7 +321,7 @@ func (p *postgresRidesRepository) GetPreviousRides(ctx context.Context, accountI
 	var rides []*domain.RideDBModel
 	for rows.Next() {
 		var ride domain.RideDBModel
-		if err := rows.Scan(&ride.ID, &ride.Status, &ride.CreatedAt, &ride.UpdatedAt); err != nil {
+		if err := rows.Scan(&ride.ID, &ride.Status, &ride.DestinationLatitude, &ride.DestinationLongitude, &ride.CreatedAt, &ride.UpdatedAt); err != nil {
 			return nil, err
 		}
 		rides = append(rides, &ride)

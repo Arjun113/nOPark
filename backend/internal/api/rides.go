@@ -289,7 +289,9 @@ func (a *api) getRideRequestsAsDriver(ctx context.Context, account *domain.Accou
 }
 
 type CreateRideDraftRequest struct {
-	RequestIds []int64 `json:"request_ids" validate:"required"`
+	RequestIds     []int64 `json:"request_ids" validate:"required"`
+	DestinationLat float64 `json:"destination_lat" validate:"required,min=-90,max=90"`
+	DestinationLon float64 `json:"destination_lon" validate:"required,min=-180,max=180"`
 }
 
 type CreateRideProposalIndividual struct {
@@ -302,9 +304,11 @@ type CreateRideProposalIndividual struct {
 }
 
 type CreateRideDraftResponse struct {
-	ID        int64                          `json:"id"`
-	Status    string                         `json:"status"`
-	Proposals []CreateRideProposalIndividual `json:"proposals"`
+	ID             int64                          `json:"id"`
+	Status         string                         `json:"status"`
+	DestinationLat float64                        `json:"destination_lat"`
+	DestinationLon float64                        `json:"destination_lon"`
+	Proposals      []CreateRideProposalIndividual `json:"proposals"`
 }
 
 func (a *api) createRideDraftHandler(w http.ResponseWriter, r *http.Request) {
@@ -361,7 +365,9 @@ func (a *api) createRideDraftHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		proposals = append(proposals, &proposal)
 	}
-	newRide, newProposals, err := a.ridesRepo.CreateRideAndProposals(ctx, proposals)
+
+	// Pass destination coordinates from request
+	newRide, newProposals, err := a.ridesRepo.CreateRideAndProposals(ctx, proposals, req.DestinationLat, req.DestinationLon)
 	if err != nil {
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return
@@ -405,9 +411,11 @@ func (a *api) createRideDraftHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := CreateRideDraftResponse{
-		ID:        newRide.ID,
-		Status:    newRide.Status,
-		Proposals: make([]CreateRideProposalIndividual, len(newProposals)),
+		ID:             newRide.ID,
+		Status:         newRide.Status,
+		DestinationLat: newRide.DestinationLatitude,
+		DestinationLon: newRide.DestinationLongitude,
+		Proposals:      make([]CreateRideProposalIndividual, len(newProposals)),
 	}
 
 	for i, prop := range newProposals {
@@ -755,9 +763,11 @@ type GetRideProposalIndividual struct {
 }
 
 type GetRideSummaryResponse struct {
-	ID        int64                       `json:"id"`
-	Status    string                      `json:"status"`
-	Proposals []GetRideProposalIndividual `json:"proposals"`
+	ID             int64                       `json:"id"`
+	Status         string                      `json:"status"`
+	DestinationLat float64                     `json:"destination_lat"`
+	DestinationLon float64                     `json:"destination_lon"`
+	Proposals      []GetRideProposalIndividual `json:"proposals"`
 }
 
 func (a *api) getRideSummaryHandler(w http.ResponseWriter, r *http.Request) {
@@ -798,9 +808,11 @@ func (a *api) getRideSummaryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := GetRideSummaryResponse{
-		ID:        ride.ID,
-		Status:    ride.Status,
-		Proposals: make([]GetRideProposalIndividual, len(proposals)),
+		ID:             ride.ID,
+		Status:         ride.Status,
+		DestinationLat: ride.DestinationLatitude,
+		DestinationLon: ride.DestinationLongitude,
+		Proposals:      make([]GetRideProposalIndividual, len(proposals)),
 	}
 
 	for i, proposal := range proposals {
@@ -964,12 +976,14 @@ func (a *api) completeRideHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type RideHistoryItem struct {
-	RideID    int64                      `json:"ride_id"`
-	Status    string                     `json:"status"`
-	DriverID  int64                      `json:"driver_id,omitempty"`
-	Requests  []GetRideRequestIndividual `json:"requests"`
-	CreatedAt string                     `json:"created_at"`
-	UpdatedAt string                     `json:"updated_at"`
+	RideID         int64                      `json:"ride_id"`
+	DestinationLat float64                    `json:"destination_lat"`
+	DestinationLon float64                    `json:"destination_lon"`
+	Status         string                     `json:"status"`
+	DriverID       int64                      `json:"driver_id,omitempty"`
+	Requests       []GetRideRequestIndividual `json:"requests"`
+	CreatedAt      string                     `json:"created_at"`
+	UpdatedAt      string                     `json:"updated_at"`
 }
 
 type GetRideHistoryResponse struct {
@@ -1003,12 +1017,14 @@ func (a *api) getRideHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		response.Rides[i] = RideHistoryItem{
-			RideID:    ride.ID,
-			Status:    ride.Status,
-			DriverID:  0,
-			Requests:  make([]GetRideRequestIndividual, 0),
-			CreatedAt: ride.CreatedAt,
-			UpdatedAt: ride.UpdatedAt,
+			RideID:         ride.ID,
+			Status:         ride.Status,
+			DestinationLat: ride.DestinationLatitude,
+			DestinationLon: ride.DestinationLongitude,
+			DriverID:       0,
+			Requests:       make([]GetRideRequestIndividual, 0),
+			CreatedAt:      ride.CreatedAt,
+			UpdatedAt:      ride.UpdatedAt,
 		}
 		if ride.Status == "in_progress" || ride.Status == "completed" {
 			for _, proposal := range proposals {
