@@ -126,3 +126,19 @@ func (p *postgresNotificationsRepository) GetPendingNotifications(ctx context.Co
 
 	return notifications, nil
 }
+
+func (p *postgresNotificationsRepository) ProximityNotificationExists(ctx context.Context, passengerID, driverID, rideID int64) (bool, error) {
+	var exists bool
+	err := p.conn.QueryRow(ctx,
+		`SELECT EXISTS(
+			SELECT 1 FROM notifications 
+			WHERE notification_type = 'proximity' 
+			AND account_id = $1 
+			AND notification_message LIKE '%Driver ' || $2 || ' for ride ' || $3 || '%'
+		)`,
+		passengerID, driverID, rideID).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+}

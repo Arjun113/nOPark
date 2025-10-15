@@ -9,10 +9,10 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
-	"github.com/Arjun113/nOPark/internal/utils"
 	"github.com/Arjun113/nOPark/internal/domain"
 	"github.com/Arjun113/nOPark/internal/repository"
 	"github.com/Arjun113/nOPark/internal/services"
+	"github.com/Arjun113/nOPark/internal/utils"
 )
 
 func WorkerCmd(ctx context.Context) *cobra.Command {
@@ -34,8 +34,7 @@ func WorkerCmd(ctx context.Context) *cobra.Command {
 			accountRepo := repository.NewPostgresAccounts(db)
 			notificationRepo := repository.NewPostgresNotifications(db)
 			ratelimitRepo := repository.NewPostgresRatelimit(db)
-
-			// Initialize FCM service for notifications
+			ridesRepo := repository.NewPostgresRides(db) // Initialize FCM service for notifications
 			fcmService, err := services.NewFCMService(ctx, logger)
 			if err != nil {
 				logger.Error("failed to initialise FCM service", zap.Error(err))
@@ -56,7 +55,13 @@ func WorkerCmd(ctx context.Context) *cobra.Command {
 				return fmt.Errorf("failed to schedule notification creation job: %w", err)
 			}
 
-			// Schedule cleanup of unverified expired accounts every hour
+			// Schedule proximity notification creation job every 5 seconds
+			_, err = s.Every(5).Seconds().Do(func() {
+				createNotificationsForDriverCloseToPassenger(ctx, logger, ridesRepo, notificationRepo)
+			})
+			if err != nil {
+				return fmt.Errorf("failed to schedule proximity notification creation job: %w", err)
+			} // Schedule cleanup of unverified expired accounts every hour
 			_, err = s.Every(2).Minutes().Do(func() {
 				ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 				defer cancel()
@@ -97,7 +102,7 @@ func WorkerCmd(ctx context.Context) *cobra.Command {
 				return fmt.Errorf("failed to schedule notification processing job: %w", err)
 			}
 
-			logger.Info("combined worker started - scheduling notifications every 5s, processing every 3s, cleanup every 5min")
+			logger.Info("combined worker started - scheduling notifications every 5s, proximity checks every 5s, processing every 3s, cleanup every 5min")
 			s.StartBlocking()
 
 			return nil
@@ -237,4 +242,108 @@ func processNotifications(ctx context.Context, logger *zap.Logger, notificationR
 		zap.Int("failure_count", failureCount))
 
 	return nil
+}
+
+func createNotificationsForDriverCloseToPassenger(ctx context.Context, logger *zap.Logger, ridesRepo domain.RidesRepository, notificationRepo domain.NotificationsRepository) {
+	logger.Debug("checking for drivers close to passengers")
+
+	// Get all in-progress rides with driver and passenger locations
+	ridesWithLocations, err := ridesRepo.GetInProgressRidesWithLocations(ctx)
+	if err != nil {
+		logger.Error("failed to fetch in-progress rides with locations", zap.Error(err))
+		return
+	}
+
+	if len(ridesWithLocations) == 0 {
+		logger.Debug("no in-progress rides found")
+		return
+	}
+
+	logger.Debug("found in-progress rides", zap.Int("count", len(ridesWithLocations)))
+
+	notificationsCreated := 0
+
+	for _, ride := range ridesWithLocations {
+		// Check if both driver and passenger have locations
+		if ride.DriverLatitude == nil || ride.DriverLongitude == nil {
+			logger.Debug("driver location not available",
+				zap.Int64("ride_id", ride.RideID),
+				zap.Int64("driver_id", ride.DriverID))
+			continue
+		}
+
+		if ride.PassengerLatitude == nil || ride.PassengerLongitude == nil {
+			logger.Debug("passenger location not available",
+				zap.Int64("ride_id", ride.RideID),
+				zap.Int64("passenger_id", ride.PassengerID))
+			continue
+		}
+
+		// Calculate distance between driver and passenger (pickup location)
+		distanceKm := domain.CalculateHaversineDistance(
+			*ride.DriverLatitude,
+			*ride.DriverLongitude,
+			ride.PickupLatitude,
+			ride.PickupLongitude,
+		)
+
+		// Check if driver is within 100 meters (0.1 km) of the pickup location
+		if distanceKm > 0.1 {
+			logger.Debug("driver not close enough to pickup location",
+				zap.Int64("ride_id", ride.RideID),
+				zap.Int64("driver_id", ride.DriverID),
+				zap.Int64("passenger_id", ride.PassengerID),
+				zap.Float64("distance_km", distanceKm))
+			continue
+		}
+
+		// Check if we've already sent a proximity notification for this driver-passenger-ride combo
+		exists, err := notificationRepo.ProximityNotificationExists(ctx, ride.PassengerID, ride.DriverID, ride.RideID)
+		if err != nil {
+			logger.Error("failed to check for existing proximity notification",
+				zap.Error(err),
+				zap.Int64("ride_id", ride.RideID),
+				zap.Int64("driver_id", ride.DriverID),
+				zap.Int64("passenger_id", ride.PassengerID))
+			continue
+		}
+
+		if exists {
+			logger.Debug("proximity notification already exists",
+				zap.Int64("ride_id", ride.RideID),
+				zap.Int64("driver_id", ride.DriverID),
+				zap.Int64("passenger_id", ride.PassengerID))
+			continue
+		}
+
+		// Create the proximity notification
+		notification := &domain.NotificationDBModel{
+			NotificationType:    domain.NotificationTypeProximity,
+			NotificationMessage: fmt.Sprintf("Driver %d for ride %d is nearby! They are approximately %.0f meters away.", ride.DriverID, ride.RideID, distanceKm*1000),
+			AccountID:           ride.PassengerID,
+		}
+
+		createdNotification, err := notificationRepo.CreateNotification(ctx, notification)
+		if err != nil {
+			logger.Error("failed to create proximity notification",
+				zap.Error(err),
+				zap.Int64("ride_id", ride.RideID),
+				zap.Int64("driver_id", ride.DriverID),
+				zap.Int64("passenger_id", ride.PassengerID))
+			continue
+		}
+
+		notificationsCreated++
+		logger.Info("proximity notification created",
+			zap.Int64("notification_id", createdNotification.ID),
+			zap.Int64("ride_id", ride.RideID),
+			zap.Int64("driver_id", ride.DriverID),
+			zap.Int64("passenger_id", ride.PassengerID),
+			zap.Float64("distance_meters", distanceKm*1000))
+	}
+
+	if notificationsCreated > 0 {
+		logger.Info("proximity notifications created",
+			zap.Int("total_created", notificationsCreated))
+	}
 }

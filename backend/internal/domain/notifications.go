@@ -12,6 +12,7 @@ type NotificationsRepository interface {
 	GetPendingNotifications(ctx context.Context, limit int) ([]*NotificationWithAccountDBModel, error)
 	MarkNotificationAsSent(ctx context.Context, notificationID int64) error
 	MarkRequestNotificationsCreated(ctx context.Context, requestID int64) error
+	ProximityNotificationExists(ctx context.Context, passengerID, driverID, rideID int64) (bool, error)
 }
 
 type NotificationDBModel struct {

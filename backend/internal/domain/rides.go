@@ -20,6 +20,7 @@ type RidesRepository interface {
 	GetRequestByID(ctx context.Context, requestID int64) (*RequestDBModel, error)
 	CompleteRide(ctx context.Context, rideID int64) error
 	GetPreviousRides(ctx context.Context, accountID int64, accountType string, limit int, offset int) ([]*RideDBModel, error)
+	GetInProgressRidesWithLocations(ctx context.Context) ([]*RideWithLocationsDBModel, error)
 }
 
 type RideDBModel struct {
@@ -52,6 +53,18 @@ type ProposalDBModel struct {
 	RideID    int64
 	CreatedAt string
 	UpdatedAt string
+}
+
+type RideWithLocationsDBModel struct {
+	RideID             int64
+	DriverID           int64
+	DriverLatitude     *float64
+	DriverLongitude    *float64
+	PassengerID        int64
+	PassengerLatitude  *float64
+	PassengerLongitude *float64
+	PickupLatitude     float64
+	PickupLongitude    float64
 }
 
 func CalculateHaversineDistance(lat1, lng1, lat2, lng2 float64) float64 {
