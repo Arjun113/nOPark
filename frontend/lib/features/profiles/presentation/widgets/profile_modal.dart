@@ -338,10 +338,9 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                     onTap: (() async {
                       final newAddress = await showAddressPopup(context);
 
-                      // TODO: Send to server
                       try {
                         final response = await DioClient().client.post(
-                          '/addresses',
+                          '/accounts/addresses',
                           data: {
                             'address_name':
                                 newAddress?.addressNameController.text,
@@ -351,7 +350,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                           },
                         );
 
-                        if (response.statusCode == 201) {
+                        if (response.statusCode == 204) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text("Address Added!")),

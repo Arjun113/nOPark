@@ -36,15 +36,23 @@ func APICmd(ctx context.Context) *cobra.Command {
 			api := api.NewAPI(ctx, logger, db)
 			srv := api.Server(port)
 
-			go func() { _ = srv.ListenAndServe() }()
+			errChan := make(chan error, 1)
+			go func() {
+				if err := srv.ListenAndServe(); err != nil {
+					errChan <- err
+				}
+			}()
 
 			logger.Info("started api", zap.Int("port", port))
 
-			<-ctx.Done()
-
-			_ = srv.Shutdown(ctx)
-
-			return nil
+			select {
+			case err := <-errChan:
+				logger.Error("failed to start server", zap.Error(err), zap.Int("port", port))
+				return err
+			case <-ctx.Done():
+				_ = srv.Shutdown(ctx)
+				return nil
+			}
 		},
 	}
 

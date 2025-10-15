@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nopark/features/authentications/presentation/screens/otp_entry_screen.dart';
 import 'package:nopark/logic/network/dio_client.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -83,7 +84,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               content: Text('Registration successful! Please log in.'),
             ),
           );
-          Navigator.pushReplacementNamed(context, '/login');
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) {
+                return OTPEntryScreen(email: _emailController.text.trim());
+              },
+            ),
+          );
         }
       } else {
         // Handle errors from the backend (e.g., 409 Conflict for existing email)

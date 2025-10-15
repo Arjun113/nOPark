@@ -111,18 +111,18 @@ func AuthMiddleware(accountsRepo domain.AccountsRepository) func(http.Handler) h
 			if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
 				sessionToken = strings.TrimPrefix(authHeader, "Bearer ")
 			} else {
-				http.Error(w, "authorization header required", http.StatusUnauthorized)
+				http.Error(w, "auth: authorization header required", http.StatusUnauthorized)
 				return
 			}
 
 			// Validate session token
 			session, err := accountsRepo.ValidateSessionToken(ctx, sessionToken)
 			if err != nil {
-				http.Error(w, "authentication failed", http.StatusUnauthorized)
+				http.Error(w, "auth: authentication failed", http.StatusUnauthorized)
 				return
 			}
 			if session == nil {
-				http.Error(w, "invalid session", http.StatusUnauthorized)
+				http.Error(w, "auth: invalid session", http.StatusUnauthorized)
 				return
 			}
 
