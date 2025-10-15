@@ -2,6 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:nopark/features/authentications/datasources/local_datastorer.dart';
 import 'package:nopark/features/feeds/datamodels/passenger/ride_request_response.dart';
 import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_scroller.dart';
@@ -23,14 +24,7 @@ import '../widgets/where_next_overlay.dart';
 import 'overlay_flow.dart';
 
 class PassengerHomePage extends StatefulWidget {
-  final User user;
-  final List<Map<String, dynamic>> addresses;
-
-  const PassengerHomePage({
-    super.key,
-    required this.user,
-    required this.addresses,
-  });
+  const PassengerHomePage({super.key});
 
   @override
   State<PassengerHomePage> createState() => _PassengerHomePageState();
@@ -45,16 +39,39 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
       GlobalKey<PricingOverlayState>();
   final GlobalKey<FullScreenMapState> mapKey = GlobalKey<FullScreenMapState>();
 
+  // User and address data from CredentialStorage
+  User? user;
+  List<Map<String, dynamic>> addresses = [];
+  bool isLoading = true;
+
   // Variables for the flow system
   String? destination;
   RideRequestResponse? rideReqResp;
   int? prospectiveRideId;
 
-
   get collapse => null;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final loadedUser = await CredentialStorage.getUser();
+    setState(() {
+      user = loadedUser;
+      addresses =
+          loadedUser?.addresses
+              .map((addr) => {'name': addr, 'line1': addr, 'line2': ''})
+              .toList() ??
+          [];
+      isLoading = false;
+    });
+  }
+
   List<AddressCardData> convertListToAddressCard() {
-    return widget.addresses
+    return addresses
         .map(
           (elem) => AddressCardData(
             name: elem['name'],
@@ -99,8 +116,8 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
               stepsBuilder:
                   (controller) => [
                     WhereNextOverlay(
-                      user: widget.user,
-                      addresses: widget.addresses,
+                      user: user!,
+                      addresses: addresses,
                       onLocationSelected: (lat, lng) async {
                         final List<MapMarker> destinationMarker = [
                           MapMarker(position: LatLng(lat, lng)),
@@ -186,7 +203,9 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                                   content: Text("Ride created successfully!"),
                                 ),
                               );
-                              rideReqResp = RideRequestResponse.fromJson(response.data);
+                              rideReqResp = RideRequestResponse.fromJson(
+                                response.data,
+                              );
                             }
                           } else {
                             if (mounted) {
@@ -211,48 +230,52 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         }
 
                         // Wait for FCM notification about prospective ride
-                        RemoteMessage driverProspectus = await waitForJob("passengerRideProposal");
+                        RemoteMessage driverProspectus = await waitForJob(
+                          "passengerRideProposal",
+                        );
 
                         // TODO: Pull the ride proposal and chuck it in the alert dialog
 
                         // Store the prospective ride ID
                         bool acception = await showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: Text("Please confirm the ride."),
-                              content: Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text("Driver name: "),
-                                  Text("Driver rating: ")
+                          context: context,
+                          builder:
+                              (context) => AlertDialog(
+                                title: Text("Please confirm the ride."),
+                                content: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("Driver name: "),
+                                    Text("Driver rating: "),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed:
+                                        (() => Navigator.of(context).pop(true)),
+                                    child: Text("Accept Ride"),
+                                  ),
+                                  TextButton(
+                                    onPressed:
+                                        (() =>
+                                            Navigator.of(context).pop(false)),
+                                    child: Text("Reject Ride"),
+                                  ),
                                 ],
                               ),
-                              actions: [
-                                TextButton(
-                                    onPressed: (() =>
-                                      Navigator.of(context).pop(true)
-                                    ),
-                                    child: Text("Accept Ride")
-                                ),
-                                TextButton(
-                                    onPressed: (() => Navigator.of(context).pop(false)),
-                                    child: Text("Reject Ride")
-                                )
-                              ],
-                            ));
+                        );
 
                         // Send server yes or no
                         try {
                           final response = await DioClient().client.post(
-                              '/rides/confirm',
-                              data: {
-                                'proposal_id': driverProspectus
-                                    .data['proposal_id'],
-                                'confirm': acception == true
-                                    ? 'accept'
-                                    : 'reject'
-                              }
+                            '/rides/confirm',
+                            data: {
+                              'proposal_id':
+                                  driverProspectus.data['proposal_id'],
+                              'confirm':
+                                  acception == true ? 'accept' : 'reject',
+                            },
                           );
 
                           if (response.statusCode == 201) {
@@ -260,33 +283,34 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                      "Ride acceptance or denial sent"),
+                                    "Ride acceptance or denial sent",
+                                  ),
                                 ),
                               );
                             }
-                          }
-                          else {
+                          } else {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                      content: Text(
-                                          "Ride acceptance or denial could not be successfully communicated")
-                                  )
+                                SnackBar(
+                                  content: Text(
+                                    "Ride acceptance or denial could not be successfully communicated",
+                                  ),
+                                ),
                               );
                             }
                             return;
                           }
-                        }
-                        catch (e) {
+                        } catch (e) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text(
-                                        "Error communicating with the server")
-                                )
-                              );
-                            }
+                              SnackBar(
+                                content: Text(
+                                  "Error communicating with the server",
+                                ),
+                              ),
+                            );
                           }
+                        }
                         controller.next();
                       }),
                     ),
@@ -361,6 +385,16 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (user == null) {
+      return const Scaffold(
+        body: Center(child: Text('Failed to load user data')),
+      );
+    }
+
     return Scaffold(
       body: Stack(
         children: [
@@ -456,7 +490,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
               top: 60,
               left: 30,
               child: Text(
-                "Hello ${widget.user.firstName}",
+                "Hello ${user?.firstName ?? 'Guest'}",
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w500,
@@ -469,24 +503,28 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
               right: 30,
               child: GestureDetector(
                 onTap: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.white,
-                    builder:
-                        (context) => ProfileBottomSheet(
-                          user: widget.user,
-                          userRole: 'Passenger',
-                          emailController: TextEditingController(
-                            text: widget.user.monashEmail,
+                  if (user != null) {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.white,
+                      builder:
+                          (context) => ProfileBottomSheet(
+                            user: user!,
+                            userRole: 'Passenger',
+                            emailController: TextEditingController(
+                              text: user!.email,
+                            ),
+                            addresses: addresses,
                           ),
-                          addresses: widget.addresses,
-                        ),
-                  );
+                    );
+                  }
                 },
                 child: CircleAvatar(
                   radius: 24,
-                  backgroundImage: NetworkImage(widget.user.imageUrl),
+                  backgroundImage: NetworkImage(
+                    user?.imageUrl ?? User.defaultImageUrl,
+                  ),
                 ),
               ),
             ),

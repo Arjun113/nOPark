@@ -1,5 +1,5 @@
-import '../entities/user.dart';
 import '../../../constants/licensetype.dart';
+import '../entities/user.dart';
 
 class Driver extends User {
   final double rating;
@@ -11,7 +11,8 @@ class Driver extends User {
     required super.firstName,
     required super.middleName,
     required super.lastName,
-    required super.monashEmail,
+    required super.email,
+    required super.type,
     required super.imageUrl,
   });
 
@@ -21,8 +22,9 @@ class Driver extends User {
       firstName: baseUser.firstName,
       lastName: baseUser.lastName,
       middleName: baseUser.middleName,
-      monashEmail: baseUser.monashEmail,
+      email: baseUser.email,
       imageUrl: baseUser.imageUrl,
+      type: "driver",
       licenseType: json['licenseType'],
       rating: json['rating'],
     );
@@ -35,7 +37,7 @@ class Driver extends User {
       'middleName': middleName,
       'lastName': lastName,
       'imageUrl': imageUrl,
-      'monashEmail': monashEmail,
+      'email': email,
       'rating': rating,
       'licenseType': licenseType,
     };
