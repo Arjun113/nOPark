@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:nopark/features/authentications/datasources/local_datastorer.dart';
+import 'package:nopark/features/authentications/presentation/screens/otp_entry_screen.dart';
 import 'package:nopark/logic/network/dio_client.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -37,6 +39,22 @@ class _LoginScreenState extends State<LoginScreen> {
       final token = response.data['token'];
       CredentialStorage.setLoginToken(token);
     } catch (e) {
+      if (e is DioException) {
+        if (e.response?.data != null &&
+            e.response!.data.toString().contains("not verified")) {
+          if (mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) =>
+                        OTPEntryScreen(email: _emailController.text.trim()),
+              ),
+            );
+          }
+          return;
+        }
+      }
       if (mounted) {
         ScaffoldMessenger.of(
           context,

@@ -27,7 +27,6 @@ class DioClient {
         onError: (e, handler) async {
           if (e.response?.statusCode == 401) {
             await CredentialStorage.deleteLoginToken();
-            // TODO: Redirect to login screen
             return handler.next(e);
           } else {
             return handler.next(e);

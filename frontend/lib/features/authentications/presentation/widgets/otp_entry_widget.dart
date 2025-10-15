@@ -53,7 +53,7 @@ class OTPEntryState extends State<OTPEntry> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: List.generate(widget.otpLength, (index) {
         return SizedBox(
-          width: 100,
+          width: 60,
           child: TextField(
             controller: textControllers[index],
             textAlign: TextAlign.center,
@@ -63,7 +63,7 @@ class OTPEntryState extends State<OTPEntry> {
               counterText: '',
               border: OutlineInputBorder(),
             ),
-            style: TextStyle(fontSize: 60),
+            style: TextStyle(fontSize: 20),
             keyboardType: TextInputType.number,
             inputFormatters: [LengthLimitingTextInputFormatter(1)],
             onChanged: (value) => onInputChanged(value, index),
