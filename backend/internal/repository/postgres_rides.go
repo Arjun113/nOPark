@@ -235,7 +235,7 @@ func (p *postgresRidesRepository) GetRideByRequestID(ctx context.Context, reques
 		`SELECT r.id, r.status, r.created_at, r.updated_at
 		 FROM rides r
 		 JOIN proposals p ON r.id = p.ride_id
-		 WHERE p.request_id = $1`,
+		 WHERE p.request_id = $1 AND p.status != 'rejected'`,
 		requestID)
 	if err != nil {
 		return nil, err

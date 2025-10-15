@@ -16,13 +16,13 @@ func NewPostgresNotifications(conn Connection) domain.NotificationsRepository {
 
 func (p *postgresNotificationsRepository) CreateNotification(ctx context.Context, notification *domain.NotificationDBModel) (*domain.NotificationDBModel, error) {
 	row := p.conn.QueryRow(ctx,
-		`INSERT INTO notifications (notification_type, notification_message, account_id, is_sent) 
-		 VALUES ($1, $2, $3, $4) 
-		 RETURNING id, notification_type, notification_message, account_id, is_sent, created_at`,
-		notification.NotificationType, notification.NotificationMessage, notification.AccountID, false)
+		`INSERT INTO notifications (notification_type, notification_message, payload, account_id, is_sent) 
+		 VALUES ($1, $2, $3, $4, $5) 
+		 RETURNING id, notification_type, notification_message, payload, account_id, is_sent, created_at`,
+		notification.NotificationType, notification.NotificationMessage, notification.Payload, notification.AccountID, false)
 
 	var n domain.NotificationDBModel
-	err := row.Scan(&n.ID, &n.NotificationType, &n.NotificationMessage, &n.AccountID, &n.IsSent, &n.CreatedAt)
+	err := row.Scan(&n.ID, &n.NotificationType, &n.NotificationMessage, &n.Payload, &n.AccountID, &n.IsSent, &n.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func (p *postgresNotificationsRepository) CreateNotification(ctx context.Context
 
 func (p *postgresNotificationsRepository) GetNotificationsByAccountID(ctx context.Context, accountID int64) ([]*domain.NotificationDBModel, error) {
 	rows, err := p.conn.Query(ctx,
-		`SELECT id, notification_type, notification_message, account_id, is_sent, created_at 
+		`SELECT id, notification_type, notification_message, payload, account_id, is_sent, created_at 
 		 FROM notifications 
 		 WHERE account_id = $1 
 		 ORDER BY created_at DESC`,
@@ -45,7 +45,7 @@ func (p *postgresNotificationsRepository) GetNotificationsByAccountID(ctx contex
 	var notifications []*domain.NotificationDBModel
 	for rows.Next() {
 		var n domain.NotificationDBModel
-		if err := rows.Scan(&n.ID, &n.NotificationType, &n.NotificationMessage, &n.AccountID, &n.IsSent, &n.CreatedAt); err != nil {
+		if err := rows.Scan(&n.ID, &n.NotificationType, &n.NotificationMessage, &n.Payload, &n.AccountID, &n.IsSent, &n.CreatedAt); err != nil {
 			return nil, err
 		}
 		notifications = append(notifications, &n)
@@ -97,7 +97,7 @@ func (p *postgresNotificationsRepository) MarkRequestNotificationsCreated(ctx co
 
 func (p *postgresNotificationsRepository) GetPendingNotifications(ctx context.Context, limit int) ([]*domain.NotificationWithAccountDBModel, error) {
 	rows, err := p.conn.Query(ctx,
-		`SELECT n.id, n.notification_type, n.notification_message, n.account_id, n.is_sent, n.created_at,
+		`SELECT n.id, n.notification_type, n.notification_message, n.payload, n.account_id, n.is_sent, n.created_at,
 		        a.email, a.firstname, a.lastname, a.fcm_token
 		 FROM notifications n
 		 JOIN accounts a ON n.account_id = a.id
@@ -113,7 +113,7 @@ func (p *postgresNotificationsRepository) GetPendingNotifications(ctx context.Co
 	var notifications []*domain.NotificationWithAccountDBModel
 	for rows.Next() {
 		var n domain.NotificationWithAccountDBModel
-		if err := rows.Scan(&n.ID, &n.NotificationType, &n.NotificationMessage, &n.AccountID, &n.Sent, &n.CreatedAt,
+		if err := rows.Scan(&n.ID, &n.NotificationType, &n.NotificationMessage, &n.Payload, &n.AccountID, &n.Sent, &n.CreatedAt,
 			&n.AccountEmail, &n.AccountFirstName, &n.AccountLastName, &n.AccountFCMToken); err != nil {
 			return nil, err
 		}

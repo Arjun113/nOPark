@@ -9,10 +9,10 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
-	"github.com/Arjun113/nOPark/internal/utils"
 	"github.com/Arjun113/nOPark/internal/domain"
 	"github.com/Arjun113/nOPark/internal/repository"
 	"github.com/Arjun113/nOPark/internal/services"
+	"github.com/Arjun113/nOPark/internal/utils"
 )
 
 func WorkerCmd(ctx context.Context) *cobra.Command {
@@ -140,10 +140,12 @@ func createNotificationsForNewRideRequests(ctx context.Context, logger *zap.Logg
 	for _, request := range newRequests {
 		requestNotificationsCreated := 0
 		for _, driver := range drivers {
+			notificationPayload := fmt.Sprintf(`{"notification": %s}`, domain.NotificationRequestCreated)
 			notification := &domain.NotificationDBModel{
-				NotificationType:    domain.NotificationTypeRideRequest,
+				NotificationType:    domain.NotificationTypeRideUpdates,
 				NotificationMessage: fmt.Sprintf("New ride request: %s to %s (Compensation: $%.2f)", request.PickupLocation, request.DropoffLocation, request.Compensation),
 				AccountID:           driver.ID,
+				Payload:             &notificationPayload,
 			}
 
 			createdNotification, err := notificationRepo.CreateNotification(ctx, notification)
