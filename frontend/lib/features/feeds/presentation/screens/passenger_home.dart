@@ -1,6 +1,8 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:nopark/features/feeds/datamodels/passenger/ride_request_response.dart';
 import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_scroller.dart';
 import 'package:nopark/features/profiles/presentation/widgets/profile_modal.dart';
@@ -14,6 +16,7 @@ import 'package:nopark/features/trip/unified/trip_scroller.dart';
 import 'package:nopark/home_test.dart';
 import 'package:nopark/logic/network/dio_client.dart';
 import 'package:nopark/logic/routing/basic_two_router.dart';
+import 'package:nopark/logic/utilities/firebase_notif_waiter.dart';
 
 import '../widgets/base_where_next.dart';
 import '../widgets/where_next_overlay.dart';
@@ -41,6 +44,12 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
   final GlobalKey<PricingOverlayState> pricingOverlayKey =
       GlobalKey<PricingOverlayState>();
   final GlobalKey<FullScreenMapState> mapKey = GlobalKey<FullScreenMapState>();
+
+  // Variables for the flow system
+  String? destination;
+  RideRequestResponse? rideReqResp;
+  int? prospectiveRideId;
+
 
   get collapse => null;
 
@@ -110,7 +119,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                     ),
                     PricingOverlay(
                       onBack: controller.back,
-                      fromAddressName: "Arjun's House",
+                      fromAddressName: "Current Location",
                       fromCampusCode: null,
                       toAddressName: "Woodside",
                       toCampusCode: null,
@@ -177,6 +186,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                                   content: Text("Ride created successfully!"),
                                 ),
                               );
+                              rideReqResp = RideRequestResponse.fromJson(response.data);
                             }
                           } else {
                             if (mounted) {
@@ -188,6 +198,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                                 ),
                               );
                             }
+                            return;
                           }
                         } catch (e) {
                           if (mounted) {
@@ -199,14 +210,84 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                           }
                         }
 
-                        // For now, just engage the dismissal manually
-                        Future.delayed(Duration(seconds: 3), () {
-                          DriverSearchOverlay.updateDriverFound(
-                            "Woo Jun Jian",
-                            null,
+                        // Wait for FCM notification about prospective ride
+                        RemoteMessage driver_prospectus = await waitForJob("passengerRideProposal");
+
+                        // TODO: Pull the ride proposal and chuck it in the alert dialog
+
+                        // Store the prospective ride ID
+                        bool acception = await showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: Text("Please confirm the ride."),
+                              content: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("Driver name: "),
+                                  Text("Driver rating: ")
+                                ],
+                              ),
+                              actions: [
+                                TextButton(
+                                    onPressed: (() =>
+                                      Navigator.of(context).pop(true)
+                                    ),
+                                    child: Text("Accept Ride")
+                                ),
+                                TextButton(
+                                    onPressed: (() => Navigator.of(context).pop(false)),
+                                    child: Text("Reject Ride")
+                                )
+                              ],
+                            ));
+
+                        // Send server yes or no
+                        try {
+                          final response = await DioClient().client.post(
+                              '/rides/confirm',
+                              data: {
+                                'proposal_id': driver_prospectus
+                                    .data['proposal_id'],
+                                'confirm': acception == true
+                                    ? 'accept'
+                                    : 'reject'
+                              }
                           );
-                          controller.next();
-                        });
+
+                          if (response.statusCode == 201) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      "Ride acceptance or denial sent"),
+                                ),
+                              );
+                            }
+                          }
+                          else {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          "Ride acceptance or denial could not be successfully communicated")
+                                  )
+                              );
+                            }
+                            return;
+                          }
+                        }
+                        catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(
+                                        "Error communicating with the server")
+                                )
+                              );
+                            }
+                          }
+                        controller.next();
                       }),
                     ),
                     DriverInfoCard(
@@ -214,6 +295,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                       profileImageUrl:
                           "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.vecteezy.com%2Ffree-vector%2Fprofile-icon&psig=AOvVaw3jdm_m4NfZ0qKHYFgzApd5&ust=1756697553023000&source=images&cd=vfe&opi=89978449&ved=0CBYQjRxqFwoTCJCZv7-OtI8DFQAAAAAdAAAAABAE",
                       lookForCompletion: (() {
+                        // TODO: Ride completion endpoint
                         Future.delayed(Duration(seconds: 10), () {
                           controller.next();
                         });
