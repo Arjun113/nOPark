@@ -431,16 +431,16 @@ type GetRideProposalsRequest struct {
 }
 
 type GetRideProposalResponse struct {
-	ID        int64 `json:"id"`
-	RequestID int64 `json:"request_id"`
-	Status    string
-	DriverID  int64
-	RideID    int64
-	Polyline  string
-	Duration  int64
-	Distance  float64
-	CreatedAt string
-	UpdatedAt string
+	ID        int64   `json:"id"`
+	RequestID int64   `json:"request_id"`
+	Status    string  `json:"status"`
+	DriverID  int64   `json:"driver_id"`
+	RideID    int64   `json:"ride_id"`
+	Polyline  string  `json:"polyline"`
+	Duration  int64   `json:"duration"`
+	Distance  float64 `json:"distance"`
+	CreatedAt string  `json:"created_at"`
+	UpdatedAt string  `json:"updated_at"`
 }
 
 func (a *api) GetRideProposalsHandler(w http.ResponseWriter, r *http.Request) {
