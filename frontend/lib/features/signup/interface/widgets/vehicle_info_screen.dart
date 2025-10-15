@@ -87,7 +87,6 @@ class _VehicleInfoScreenState extends State<VehicleInfoScreen> {
         SnackBar(content: Text('Failed to connect to the server: $e')),
       );
     } finally {
-      if (!mounted) return;
       setState(() => _isLoading = false);
     }
   }
