@@ -2,28 +2,12 @@ package email
 
 import (
 	"fmt"
-	"os"
-	"strconv"
 )
 
-type Service struct {
-	host     string
-	port     int
-	username string
-	password string
-}
+type Service struct{}
 
 func NewService() *Service {
-	port, err := strconv.Atoi(os.Getenv("SMTP_PORT"))
-	if err != nil {
-		port = 587
-	}
-	return &Service{
-		host:     os.Getenv("SMTP_HOST"),
-		port:     port,
-		username: os.Getenv("SMTP_USERNAME"),
-		password: os.Getenv("SMTP_PASSWORD"),
-	}
+	return &Service{}
 }
 
 func (s *Service) SendEmailVerification(to, token string) error {
