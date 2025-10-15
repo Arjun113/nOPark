@@ -341,26 +341,44 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                       // TODO: Send to server
                       try {
                         final response = await DioClient().client.post(
-                            '/addresses',
-                            data: {
-                              'address_name': newAddress?.addressNameController.text,
-                              'address_line': newAddress!.addressLine1Controller.text + newAddress.addressLine2Controller.text
-                            }
+                          '/addresses',
+                          data: {
+                            'address_name':
+                                newAddress?.addressNameController.text,
+                            'address_line':
+                                newAddress!.addressLine1Controller.text +
+                                newAddress.addressLine2Controller.text,
+                          },
                         );
 
                         if (response.statusCode == 201) {
-                          // Success.
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Address Added!")));
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Address Added!")),
+                            );
+                          }
+                        } else {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  "Failed to add address. Please try again",
+                                ),
+                              ),
+                            );
+                          }
                         }
-
-                        else {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to add address. Please try again")));
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                "Error communicating with the server: $e",
+                              ),
+                            ),
+                          );
                         }
                       }
-                      catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error communicating with the server: $e")));
-                      }
-
                     }),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12),

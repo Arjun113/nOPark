@@ -54,23 +54,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (response.statusCode == 201) {
         // 201 Created - Success!
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registration successful! Please log in.'),
-          ),
-        );
-        Navigator.pushReplacementNamed(context, '/login');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registration successful! Please log in.'),
+            ),
+          );
+          Navigator.pushReplacementNamed(context, '/login');
+        }
       } else {
         // Handle errors from the backend (e.g., 409 Conflict for existing email)
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${response.data}')));
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error: ${response.data}')));
+        }
       }
     } catch (e) {
       // Handle network or other exceptions
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to connect to the server: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to connect to the server: $e')),
+        );
+      }
     } finally {
       setState(() {
         _isLoading = false;
