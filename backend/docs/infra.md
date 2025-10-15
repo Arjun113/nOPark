@@ -13,6 +13,16 @@ VM hosted on DigitalOcean under a project in Lachlan's Monash student account.
 
 `170.64.194.226`
 
+## Domains
+
+`nopark-api.lachlanmacphee.com`
+
+This is the subdomain for the API
+
+`nopark-tiles.lachlanmacphee.com`
+
+This is the subdomain for the tile server https://github.com/CrunchyData/pg_tileserv
+
 ## SSH Access
 
 Username/password combo is stored in Lachlan's Bitwarden vault.
