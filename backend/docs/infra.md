@@ -75,15 +75,19 @@ Copy-paste all of the commands below at once and hit enter.
 
 ```sh
 cd nOPark/backend
-git pull
-pkill -f "go run cmd/nOPark/main.go" || true
+git fetch --all
+git reset --hard origin/main
+pkill -f "bin/nOPark" || true
+sleep 2
 docker compose down --volumes --remove-orphans
 docker compose up --detach --build --force-recreate
 sleep 5
+go mod download
+make build
 make migrate-up
 mkdir -p logs
-nohup make api > logs/api.log 2>&1 &
-nohup make worker > logs/worker.log 2>&1 &
+nohup ./bin/nOPark api > logs/api.log 2>&1 &
+nohup ./bin/nOPark worker > logs/worker.log 2>&1 &
 echo "Services started in background. Check logs in logs/ directory."
 ```
 
@@ -93,7 +97,7 @@ To check service status:
 
 ```sh
 # Check if services are running
-pgrep -f "go run cmd/nOPark/main.go"
+pgrep -f "bin/nOPark"
 
 # View logs
 tail -f logs/api.log
@@ -103,6 +107,6 @@ tail -f logs/worker.log
 To stop services:
 
 ```sh
-# Stop all Go processes
-pkill -f "go run cmd/nOPark/main.go"
+# Stop all nOPark processes
+pkill -f "bin/nOPark"
 ```
