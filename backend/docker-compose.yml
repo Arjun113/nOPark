@@ -15,17 +15,6 @@ services:
     volumes:
       - dbdata:/var/lib/postgresql/data
 
-  tileserv:
-    image: pramsey/pg_tileserv:latest
-    restart: unless-stopped
-    ports:
-      - 7800:7800
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/nOPark
-    depends_on:
-      - db
-      - osm_setup
-
   osm_setup:
     build:
       context: .
