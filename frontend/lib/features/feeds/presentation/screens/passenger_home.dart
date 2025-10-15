@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_scroller.dart';
@@ -123,31 +122,81 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         DriverSearchOverlay.show(context);
 
                         try {
-                          final originCoord = await placemarkFromCoordinates(mapKey.currentState!.currentLocation!.latitude, mapKey.currentState!.currentLocation!.longitude);
-                          final destCoord = await placemarkFromCoordinates(mapKey.currentState!.destinationMarker[0].position.latitude, mapKey.currentState!.destinationMarker[0].position.longitude);
+                          final originCoord = await placemarkFromCoordinates(
+                            mapKey.currentState!.currentLocation!.latitude,
+                            mapKey.currentState!.currentLocation!.longitude,
+                          );
+                          final destCoord = await placemarkFromCoordinates(
+                            mapKey
+                                .currentState!
+                                .destinationMarker[0]
+                                .position
+                                .latitude,
+                            mapKey
+                                .currentState!
+                                .destinationMarker[0]
+                                .position
+                                .longitude,
+                          );
 
                           final response = await DioClient().client.post(
-                              '/rides/requests',
+                            '/rides/requests',
                             data: {
-                                "pickup_location": originCoord[0].name,
-                                "pickup_latitude": mapKey.currentState!.currentLocation!.latitude,
-                                "pickup_longitude": mapKey.currentState!.currentLocation!.longitude,
-                                "dropoff_location": destCoord[0].name,
-                                "dropoff_latitude": mapKey.currentState!.destinationMarker[0].position.latitude,
-                                "dropoff_longitude": mapKey.currentState!.destinationMarker[0].position.longitude,
-                                "compensation": newBid
-                            }
+                              "pickup_location": originCoord[0].name,
+                              "pickup_latitude":
+                                  mapKey
+                                      .currentState!
+                                      .currentLocation!
+                                      .latitude,
+                              "pickup_longitude":
+                                  mapKey
+                                      .currentState!
+                                      .currentLocation!
+                                      .longitude,
+                              "dropoff_location": destCoord[0].name,
+                              "dropoff_latitude":
+                                  mapKey
+                                      .currentState!
+                                      .destinationMarker[0]
+                                      .position
+                                      .latitude,
+                              "dropoff_longitude":
+                                  mapKey
+                                      .currentState!
+                                      .destinationMarker[0]
+                                      .position
+                                      .longitude,
+                              "compensation": newBid,
+                            },
                           );
 
                           if (response.statusCode == 201) {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Ride created successfully!")));
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Ride created successfully!"),
+                                ),
+                              );
+                            }
+                          } else {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    "Error encountered in creating the ride. Please try again!",
+                                  ),
+                                ),
+                              );
+                            }
                           }
-                          else {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error encountered in creating the ride. Please try again!")));
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Error contacting the server."),
+                              ),
+                            );
                           }
-                        }
-                        catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error contacting the server.")));
                         }
 
                         // For now, just engage the dismissal manually

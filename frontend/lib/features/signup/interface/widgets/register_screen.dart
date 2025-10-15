@@ -28,6 +28,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    // Email validation
+    final email = _emailController.text.trim();
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+
+    if (!emailRegex.hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid email address')),
+      );
+      return;
+    }
+
+    if (!email.endsWith('@student.monash.edu') &&
+        !email.endsWith('@monash.edu')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please use your Monash Uni email address'),
+        ),
+      );
+      return;
+    }
+
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(
         context,
@@ -54,23 +77,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (response.statusCode == 201) {
         // 201 Created - Success!
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registration successful! Please log in.'),
-          ),
-        );
-        Navigator.pushReplacementNamed(context, '/login');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registration successful! Please log in.'),
+            ),
+          );
+          Navigator.pushReplacementNamed(context, '/login');
+        }
       } else {
         // Handle errors from the backend (e.g., 409 Conflict for existing email)
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${response.data}')));
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error: ${response.data}')));
+        }
       }
     } catch (e) {
       // Handle network or other exceptions
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to connect to the server: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to connect to the server: $e')),
+        );
+      }
     } finally {
       setState(() {
         _isLoading = false;
@@ -136,7 +165,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  labelText: 'Email',
+                  labelText: 'Monash Email',
                   labelStyle: const TextStyle(color: Colors.black87),
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 16,
