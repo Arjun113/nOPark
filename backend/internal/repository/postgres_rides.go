@@ -235,7 +235,7 @@ func (p *postgresRidesRepository) GetRideByRequestID(ctx context.Context, reques
 		`SELECT r.id, r.status, r.created_at, r.updated_at
 		 FROM rides r
 		 JOIN proposals p ON r.id = p.ride_id
-		 WHERE p.request_id = $1`,
+		 WHERE p.request_id = $1 AND p.status != 'rejected'`,
 		requestID)
 	if err != nil {
 		return nil, err
@@ -328,4 +328,55 @@ func (p *postgresRidesRepository) GetPreviousRides(ctx context.Context, accountI
 	}
 
 	return rides, nil
+}
+
+func (p *postgresRidesRepository) GetInProgressRidesWithLocations(ctx context.Context) ([]*domain.RideWithLocationsDBModel, error) {
+	query := `
+		SELECT 
+			r.id as ride_id,
+			p.driver_id,
+			driver_acc.current_latitude as driver_latitude,
+			driver_acc.current_longitude as driver_longitude,
+			req.passenger_id,
+			passenger_acc.current_latitude as passenger_latitude,
+			passenger_acc.current_longitude as passenger_longitude,
+			req.pickup_latitude,
+			req.pickup_longitude
+		FROM rides r
+		JOIN proposals p ON p.ride_id = r.id AND p.status = 'accepted'
+		JOIN requests req ON req.id = p.request_id
+		JOIN accounts driver_acc ON driver_acc.id = p.driver_id
+		JOIN accounts passenger_acc ON passenger_acc.id = req.passenger_id
+		WHERE r.status = 'in_progress'`
+
+	rows, err := p.conn.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []*domain.RideWithLocationsDBModel
+	for rows.Next() {
+		var r domain.RideWithLocationsDBModel
+		if err := rows.Scan(
+			&r.RideID,
+			&r.DriverID,
+			&r.DriverLatitude,
+			&r.DriverLongitude,
+			&r.PassengerID,
+			&r.PassengerLatitude,
+			&r.PassengerLongitude,
+			&r.PickupLatitude,
+			&r.PickupLongitude,
+		); err != nil {
+			return nil, err
+		}
+		results = append(results, &r)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }

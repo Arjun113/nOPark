@@ -17,9 +17,9 @@ User testUser = User(
   firstName: "Arjun",
   middleName: "",
   lastName: "Sanghi",
-  monashEmail: "asan0084@student.monash.edu",
+  email: "asan0084@student.monash.edu",
+  type: "driver",
   imageUrl: "https://53.fs1.hubspotusercontent-na1.net/hubfs/53/image8-2.jpg",
-  token: '33939urewjwjdeowpujr3u0f'
 );
 
 Stop stop1 = Stop(
@@ -55,7 +55,7 @@ class MyApp extends StatelessWidget {
           systemOverlayStyle: SystemUiOverlayStyle.light,
         ),
       ),
-      home: DriverHomePage(user: testUser, addresses: []),
+      home: DriverHomePage(),
     );
   }
 }

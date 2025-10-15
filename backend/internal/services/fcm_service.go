@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -69,25 +70,44 @@ func (f *FCMService) SendNotification(ctx context.Context, notification *domain.
 }
 
 func (f *FCMService) createMessageFromNotification(notification *domain.NotificationWithAccountDBModel, fcmToken string) *messaging.Message {
+	// Start with base data fields
+	data := map[string]string{
+		"notification_id":   fmt.Sprintf("%d", notification.ID),
+		"notification_type": notification.NotificationType,
+		"user_name":         fmt.Sprintf("%s %s", notification.AccountFirstName, notification.AccountLastName),
+		"created_at":        notification.CreatedAt,
+	}
+
+	// If payload exists, deserialize and merge it with base data
+	if notification.Payload != nil && *notification.Payload != "" {
+		var payloadData map[string]any
+		if err := json.Unmarshal([]byte(*notification.Payload), &payloadData); err != nil {
+			f.logger.Error("Failed to unmarshal notification payload",
+				zap.Error(err),
+				zap.Int64("notification_id", notification.ID),
+				zap.String("payload", *notification.Payload))
+		} else {
+			// Merge payload data into the data map (converts all values to strings)
+			for key, value := range payloadData {
+				data[key] = fmt.Sprintf("%v", value)
+			}
+		}
+	}
+
 	return &messaging.Message{
 		Token: fcmToken,
 		Notification: &messaging.Notification{
 			Title: f.getNotificationTitle(notification.NotificationType),
 			Body:  notification.NotificationMessage,
 		},
-		Data: map[string]string{
-			"notification_id":   fmt.Sprintf("%d", notification.ID),
-			"notification_type": notification.NotificationType,
-			"user_name":         fmt.Sprintf("%s %s", notification.AccountFirstName, notification.AccountLastName),
-			"created_at":        notification.CreatedAt,
-		},
+		Data:    data,
 		Android: f.getAndroidConfig(notification.NotificationType),
 	}
 }
 
 func (f *FCMService) getNotificationTitle(notificationType string) string {
 	switch notificationType {
-	case domain.NotificationTypeRideRequest:
+	case domain.NotificationTypeRideUpdates:
 		return "🚗 nOPark - Ride Update"
 	case domain.NotificationTypeProximity:
 		return "📍 nOPark - Location Alert"
@@ -112,7 +132,7 @@ func (f *FCMService) getAndroidConfig(notificationType string) *messaging.Androi
 
 func (f *FCMService) getChannelID(notificationType string) string {
 	switch notificationType {
-	case domain.NotificationTypeRideRequest:
+	case domain.NotificationTypeRideUpdates:
 		return "ride_updates"
 	case domain.NotificationTypeProximity:
 		return "location_alerts"

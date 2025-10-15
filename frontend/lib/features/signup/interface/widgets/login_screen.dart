@@ -4,6 +4,7 @@ import 'package:nopark/features/authentications/datasources/local_datastorer.dar
 import 'package:nopark/features/authentications/presentation/screens/otp_entry_screen.dart';
 import 'package:nopark/features/feeds/presentation/screens/driver_home.dart';
 import 'package:nopark/features/feeds/presentation/screens/passenger_home.dart';
+import 'package:nopark/features/trip/entities/user.dart';
 import 'package:nopark/logic/network/dio_client.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -40,6 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       final token = response.data['token'];
       CredentialStorage.setLoginToken(token);
+      CredentialStorage.setUser(User.fromJson(response.data));
       if (response.data.type == "driver" && mounted) {
         Navigator.push(
           context,

@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:nopark/features/trip/entities/user.dart';
 
 class CredentialStorage {
   static Future<bool> doesLoginExist() async {
@@ -26,6 +29,26 @@ class CredentialStorage {
 
     final String? authToken = await storage.read(key: 'authToken');
     return authToken;
+  }
+
+  static Future<void> setUser(User user) async {
+    FlutterSecureStorage storage = FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    );
+
+    final String userJson = jsonEncode(user.toJson());
+    await storage.write(key: 'user', value: userJson);
+  }
+
+  static Future<User?> getUser() async {
+    FlutterSecureStorage storage = FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    );
+    final userJson = await storage.read(key: 'user');
+    if (userJson == null) return null;
+
+    final Map<String, dynamic> userMap = jsonDecode(userJson);
+    return User.fromJson(userMap);
   }
 
   static Future<void> setLoginToken(String token) async {

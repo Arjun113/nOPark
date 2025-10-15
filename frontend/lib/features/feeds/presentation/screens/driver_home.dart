@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:nopark/features/authentications/datasources/local_datastorer.dart';
 import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_scroller.dart';
 import 'package:nopark/features/profiles/presentation/widgets/profile_modal.dart';
@@ -16,10 +17,7 @@ import '../widgets/where_next_overlay.dart';
 import 'overlay_flow.dart';
 
 class DriverHomePage extends StatefulWidget {
-  final User user;
-  final List<Map<String, dynamic>> addresses;
-
-  const DriverHomePage({super.key, required this.user, required this.addresses});
+  const DriverHomePage({super.key});
 
   @override
   State<DriverHomePage> createState() => _DriverHomePageState();
@@ -31,21 +29,45 @@ class _DriverHomePageState extends State<DriverHomePage> {
   final GlobalKey<WhereNextState> whereNextKey = GlobalKey<WhereNextState>();
   final GlobalKey whereNextButtonKey = GlobalKey(); // Key for the button
   final GlobalKey<PricingOverlayState> pricingOverlayKey =
-  GlobalKey<PricingOverlayState>();
+      GlobalKey<PricingOverlayState>();
   final GlobalKey<FullScreenMapState> mapKey = GlobalKey<FullScreenMapState>();
+
+  // User and address data from CredentialStorage
+  User? user;
+  List<Map<String, dynamic>> addresses = [];
+  bool isLoading = true;
 
   get collapse => null;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final loadedUser = await CredentialStorage.getUser();
+    setState(() {
+      user = loadedUser;
+      addresses =
+          loadedUser?.addresses
+              .map((addr) => {'name': addr, 'line1': addr, 'line2': ''})
+              .toList() ??
+          [];
+      isLoading = false;
+    });
+  }
+
   List<AddressCardData> convertListToAddressCard() {
-    return widget.addresses
+    return addresses
         .map(
           (elem) => AddressCardData(
-        name: elem['name'],
-        line1: elem['line1'],
-        line2: elem['line2'],
-        editing: false,
-      ),
-    )
+            name: elem['name'],
+            line1: elem['line1'],
+            line2: elem['line2'],
+            editing: false,
+          ),
+        )
         .toList();
   }
 
@@ -58,7 +80,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
   // Method to get the position and size of the WhereNext button
   (Offset, Size)? _getWhereNextPosition() {
     final renderBox =
-    whereNextButtonKey.currentContext?.findRenderObject() as RenderBox?;
+        whereNextButtonKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return null;
 
     final position = renderBox.localToGlobal(Offset.zero);
@@ -78,44 +100,54 @@ class _DriverHomePageState extends State<DriverHomePage> {
         barrierColor: Colors.transparent,
         pageBuilder:
             (_, __, ___) => OverlayFlow(
-          onClose: () => Navigator.of(context).pop(),
-          stepsBuilder:
-              (controller) => [
-            WhereNextOverlay(
-              user: widget.user,
-              addresses: widget.addresses,
-              onLocationSelected: (lat, lng) async {
-                final List<MapMarker> destinationMarker = [
-                  MapMarker(position: LatLng(lat, lng)),
-                ];
-                final List<LatLng>? route =
-                await RoutingService.getRoute(
-                  mapKey.currentState?.currentLocation,
-                  LatLng(lat, lng),
-                );
-                _updateMap(destinationMarker, route!);
-                controller.next();
-              },
-              onBack: Navigator.of(context).pop,
-              initialPosition: position,
-              initialSize: size,
-            ),
-            RideOptionsScreen(
-                destination: "Caulfield",
-                destinationCode: "CA",
-                onConfirm: (selectedIndices) async {
-                  // TODO: Send the selections to the backend
-                  // For now, mock. Remember to update the map later
+              onClose: () => Navigator.of(context).pop(),
+              stepsBuilder:
+                  (controller) => [
+                    WhereNextOverlay(
+                      user: user!,
+                      addresses: addresses,
+                      onLocationSelected: (lat, lng) async {
+                        final List<MapMarker> destinationMarker = [
+                          MapMarker(position: LatLng(lat, lng)),
+                        ];
+                        final List<LatLng>? route =
+                            await RoutingService.getRoute(
+                              mapKey.currentState?.currentLocation,
+                              LatLng(lat, lng),
+                            );
+                        _updateMap(destinationMarker, route!);
+                        controller.next();
+                      },
+                      onBack: Navigator.of(context).pop,
+                      initialPosition: position,
+                      initialSize: size,
+                    ),
+                    RideOptionsScreen(
+                      destination: "Caulfield",
+                      destinationCode: "CA",
+                      onConfirm: (selectedIndices) async {
+                        // TODO: Send the selections to the backend
+                        // For now, mock. Remember to update the map later
 
-                  controller.next();
-                },
+                        controller.next();
+                      },
+                    ),
+                    PickupSequenceWidget(
+                      pickups: [
+                        PickupInfo(
+                          name: "Lachlan MacPhee",
+                          rating: 4.8,
+                          address: "1341 Dandenong Road",
+                          detourKm: 5,
+                          detourMin: 20,
+                          price: 14.8,
+                          destinationCode: "CA",
+                          destination: "Caulfield",
+                        ),
+                      ],
+                    ),
+                  ],
             ),
-            PickupSequenceWidget(
-                pickups: [
-                  PickupInfo(name: "Lachlan MacPhee", rating: 4.8, address: "1341 Dandenong Road", detourKm: 5, detourMin: 20, price: 14.8, destinationCode: "CA", destination: "Caulfield")]
-            )
-          ],
-        ),
       ),
     );
   }
@@ -127,15 +159,15 @@ class _DriverHomePageState extends State<DriverHomePage> {
         barrierColor: Colors.black.withAlpha(30),
         pageBuilder:
             (_, __, ___) => OverlayFlow(
-          onClose: () => Navigator.of(context).pop(),
-          stepsBuilder:
-              (controller) => [
-            PastRidesOverlay(
-              onBack: () => Navigator.of(context).pop(),
-              trips: [demoTrip],
+              onClose: () => Navigator.of(context).pop(),
+              stepsBuilder:
+                  (controller) => [
+                    PastRidesOverlay(
+                      onBack: () => Navigator.of(context).pop(),
+                      trips: [demoTrip],
+                    ),
+                  ],
             ),
-          ],
-        ),
       ),
     );
   }
@@ -150,6 +182,16 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (user == null) {
+      return const Scaffold(
+        body: Center(child: Text('Failed to load user data')),
+      );
+    }
+
     return Scaffold(
       body: Stack(
         children: [
@@ -245,7 +287,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
               top: 60,
               left: 30,
               child: Text(
-                "Hello ${widget.user.firstName}",
+                "Hello ${user?.firstName ?? 'Guest'}",
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w500,
@@ -258,24 +300,28 @@ class _DriverHomePageState extends State<DriverHomePage> {
               right: 30,
               child: GestureDetector(
                 onTap: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.white,
-                    builder:
-                        (context) => ProfileBottomSheet(
-                      user: widget.user,
-                      userRole: 'Passenger',
-                      emailController: TextEditingController(
-                        text: widget.user.monashEmail,
-                      ),
-                          addresses: [],
-                    ),
-                  );
+                  if (user != null) {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.white,
+                      builder:
+                          (context) => ProfileBottomSheet(
+                            user: user!,
+                            userRole: 'Driver',
+                            emailController: TextEditingController(
+                              text: user!.email,
+                            ),
+                            addresses: [],
+                          ),
+                    );
+                  }
                 },
                 child: CircleAvatar(
                   radius: 24,
-                  backgroundImage: NetworkImage(widget.user.imageUrl),
+                  backgroundImage: NetworkImage(
+                    user?.imageUrl ?? User.defaultImageUrl,
+                  ),
                 ),
               ),
             ),
