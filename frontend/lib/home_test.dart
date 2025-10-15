@@ -19,7 +19,6 @@ User testUser = User(
   lastName: "Sanghi",
   monashEmail: "asan0084@student.monash.edu",
   imageUrl: "https://53.fs1.hubspotusercontent-na1.net/hubfs/53/image8-2.jpg",
-  token: '3723ur9wu9wu9'
 );
 
 Stop stop1 = Stop(

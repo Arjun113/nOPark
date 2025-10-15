@@ -13,7 +13,6 @@ class Driver extends User {
     required super.lastName,
     required super.monashEmail,
     required super.imageUrl,
-    required super.token
   });
 
   factory Driver.fromJson(Map<String, dynamic> json) {
@@ -26,7 +25,6 @@ class Driver extends User {
       imageUrl: baseUser.imageUrl,
       licenseType: json['licenseType'],
       rating: json['rating'],
-      token: json['token']
     );
   }
 
@@ -40,7 +38,6 @@ class Driver extends User {
       'monashEmail': monashEmail,
       'rating': rating,
       'licenseType': licenseType,
-      'token': token
     };
   }
 }

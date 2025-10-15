@@ -10,7 +10,6 @@ class Passenger extends User {
     required super.lastName,
     required super.monashEmail,
     required super.imageUrl,
-    required super.token,
   });
 
   factory Passenger.fromJson(Map<String, dynamic> json) {
@@ -22,7 +21,6 @@ class Passenger extends User {
       monashEmail: baseUser.monashEmail,
       imageUrl: baseUser.imageUrl,
       rating: json['rating'],
-      token: json['token']
     );
   }
 
@@ -35,7 +33,6 @@ class Passenger extends User {
       'imageUrl': imageUrl,
       'monashEmail': monashEmail,
       'rating': rating,
-      'token': token
     };
   }
 }

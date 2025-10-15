@@ -211,7 +211,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         }
 
                         // Wait for FCM notification about prospective ride
-                        RemoteMessage driver_prospectus = await waitForJob("passengerRideProposal");
+                        RemoteMessage driverProspectus = await waitForJob("passengerRideProposal");
 
                         // TODO: Pull the ride proposal and chuck it in the alert dialog
 
@@ -247,7 +247,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                           final response = await DioClient().client.post(
                               '/rides/confirm',
                               data: {
-                                'proposal_id': driver_prospectus
+                                'proposal_id': driverProspectus
                                     .data['proposal_id'],
                                 'confirm': acception == true
                                     ? 'accept'
