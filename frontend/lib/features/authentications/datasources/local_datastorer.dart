@@ -36,6 +36,15 @@ class CredentialStorage {
     storage.write(key: 'authToken', value: token);
   }
 
+  static Future<void> setLoginCredentials(String email, String password) async {
+    FlutterSecureStorage storage = FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    );
+
+    await storage.write(key: 'email', value: email);
+    await storage.write(key: 'password', value: password);
+  }
+
   static Future<void> deleteLoginToken() async {
     FlutterSecureStorage storage = FlutterSecureStorage(
       aOptions: AndroidOptions(encryptedSharedPreferences: true),
