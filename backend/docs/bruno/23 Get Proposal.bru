@@ -1,13 +1,17 @@
 meta {
-  name: 26 Complete Ride
+  name: 23 Get Proposal
   type: http
-  seq: 19
+  seq: 17
 }
 
-post {
-  url: http://localhost:4000/v1/rides/complete
-  body: json
+get {
+  url: http://localhost:4000/v1/rides/proposals?proposal_id
+  body: none
   auth: bearer
+}
+
+params:query {
+  proposal_id: 
 }
 
 auth:bearer {
@@ -16,7 +20,7 @@ auth:bearer {
 
 body:json {
   {
-    "ride_id": 12
+    "request_ids": [1]
   }
 }
 

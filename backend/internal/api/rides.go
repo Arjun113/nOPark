@@ -426,6 +426,135 @@ func (a *api) createRideDraftHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+type GetRideProposalsRequest struct {
+	ProposalID int64 `json:"proposal_id"`
+}
+
+type GetRideProposalResponse struct {
+	ID        int64 `json:"id"`
+	RequestID int64 `json:"request_id"`
+	Status    string
+	DriverID  int64
+	RideID    int64
+	Polyline  string
+	Duration  int64
+	Distance  float64
+	CreatedAt string
+	UpdatedAt string
+}
+
+func (a *api) GetRideProposalsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	// Check permsissions
+	account, err := a.accountsRepo.GetAccountFromSession(r.Context())
+	if err != nil {
+		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("authentication required"))
+		return
+	}
+	if account.Type != "passenger" {
+		a.errorResponse(w, r, http.StatusForbidden, fmt.Errorf("only passengers can view ride proposals"))
+		return
+	}
+
+	// Get from params
+	proposalID, err := utils.IntFromQueryParam(r, "proposal_id", false)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("invalid proposal_id"))
+		return
+	}
+
+	// Validate request input
+	requestParams := GetRideProposalsRequest{
+		ProposalID: *proposalID,
+	}
+	if err := a.validateRequest(requestParams); err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	// Get corresponding proposal and request object
+	proposal, err := a.ridesRepo.GetProposalByID(ctx, requestParams.ProposalID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	request, err := a.ridesRepo.GetRequestByID(ctx, proposal.RequestID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	if request.PassengerID != account.ID {
+		a.errorResponse(w, r, http.StatusForbidden, fmt.Errorf("you are not authorized to view this proposal"))
+		return
+	}
+
+	driver, err := a.accountsRepo.GetAccountByID(ctx, proposal.DriverID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	if driver.CurrentLatitude == nil || driver.CurrentLongitude == nil {
+		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("driver's current location is not available"))
+		return
+	}
+
+	// Gather pickup points
+	_, proposals, err := a.ridesRepo.GetRideAndProposals(ctx, proposal.RideID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	// Add pickup point of all proposals except rejected ones
+	var waypoints []domain.Coordinates
+	for _, prop := range proposals {
+		if prop.Status == "rejected" {
+			continue
+		}
+
+		req, err := a.ridesRepo.GetRequestByID(ctx, prop.RequestID)
+		if err != nil {
+			a.errorResponse(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		waypoints = append(waypoints, domain.Coordinates{
+			Lat: req.PickupLatitude,
+			Lon: req.PickupLongitude,
+		})
+	}
+
+	// Start from driver's location and end at any proposal's dropoff location
+	route, err := a.mapsRepo.GetRouteFromWaypoints(ctx,
+		domain.Coordinates{Lat: *driver.CurrentLatitude, Lon: *driver.CurrentLongitude},
+		waypoints,
+		domain.Coordinates{Lat: request.DropoffLatitude, Lon: request.DropoffLongitude},
+	)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, fmt.Errorf("%s", "error calculating route with waypoints: "+err.Error()))
+		return
+	}
+
+	response := GetRideProposalResponse{
+		ID:        proposal.ID,
+		RequestID: proposal.RequestID,
+		Status:    proposal.Status,
+		DriverID:  proposal.DriverID,
+		RideID:    proposal.RideID,
+		Polyline:  route.Polyline,
+		Duration:  route.Duration,
+		Distance:  route.Distance,
+		CreatedAt: proposal.CreatedAt,
+		UpdatedAt: proposal.UpdatedAt,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
 type ConfirmRideProposalRequest struct {
 	ProposalID int64  `json:"proposal_id" validate:"required"`
 	Confirm    string `json:"confirm" validate:"required,oneof=accept reject"`

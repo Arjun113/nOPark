@@ -86,7 +86,7 @@ func (p *postgresMapsRepository) GetDirectRoute(ctx context.Context, start domai
 }
 
 func (p *postgresMapsRepository) GetMultistopRoute(ctx context.Context, start domain.Coordinates, waypoints []domain.Coordinates, dest domain.Coordinates) (*domain.RouteDBModel, error) {
-
+	// Traverses waypoints in-order
 	if len(waypoints) == 0 {
 		return p.GetDirectRoute(ctx, start, dest)
 	}
@@ -106,6 +106,7 @@ func (p *postgresMapsRepository) GetMultistopRoute(ctx context.Context, start do
 			return nil, err
 		}
 		polylines = append(polylines, legRoute.Polyline)
+
 		totalDistance += legRoute.Distance
 		totalDuration += legRoute.Duration
 	}
@@ -124,5 +125,46 @@ func (p *postgresMapsRepository) GetMultistopRoute(ctx context.Context, start do
 		Duration:       totalDuration,
 		Polyline:       combinedPolyline,
 	}, nil
+}
 
+func (p *postgresMapsRepository) GetRouteFromWaypoints(ctx context.Context, start domain.Coordinates, waypoints []domain.Coordinates, dest domain.Coordinates) (*domain.RouteDBModel, error) {
+	// waypoints are in any-order
+	var bestRoute *domain.RouteDBModel
+
+	// Exhaustive search
+	for _, waypointOrder := range permutations(waypoints) {
+		route, err := p.GetMultistopRoute(ctx, start, waypointOrder, dest)
+		if err != nil {
+			return nil, err
+		}
+		// For simplicity, return the first found route
+
+		if bestRoute == nil || route.Distance < bestRoute.Distance {
+			bestRoute = route
+		}
+	}
+	return bestRoute, nil
+}
+
+func permutations(coords []domain.Coordinates) [][]domain.Coordinates {
+	var res [][]domain.Coordinates
+	var generate func([]domain.Coordinates, int)
+	generate = func(a []domain.Coordinates, n int) {
+		if n == 1 {
+			perm := make([]domain.Coordinates, len(a))
+			copy(perm, a)
+			res = append(res, perm)
+			return
+		}
+		for i := 0; i < n; i++ {
+			generate(a, n-1)
+			if n%2 == 1 {
+				a[0], a[n-1] = a[n-1], a[0]
+			} else {
+				a[i], a[n-1] = a[n-1], a[i]
+			}
+		}
+	}
+	generate(coords, len(coords))
+	return res
 }

@@ -29,6 +29,7 @@ type Coordinates struct {
 type MapsRepository interface {
 	GetDirectRoute(ctx context.Context, start Coordinates, dest Coordinates) (*RouteDBModel, error)
 	GetMultistopRoute(ctx context.Context, start Coordinates, waypoints []Coordinates, dest Coordinates) (*RouteDBModel, error)
+	GetRouteFromWaypoints(ctx context.Context, start Coordinates, waypoints []Coordinates, dest Coordinates) (*RouteDBModel, error)
 }
 
 // ExtractCoordinatesFromGeoJSON parses a GeoJSON LineString and returns [][]float64

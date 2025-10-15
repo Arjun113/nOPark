@@ -67,8 +67,8 @@ BEGIN
         ELSE end_edge.target
     END INTO end_node;
 
-    -- build an automatic bbox: buffer is a fraction of straight-line distance (meters); min 50m
-    buffer_m := GREATEST(50.0, ST_Distance(start_proj::geography, end_proj::geography) * 0.25);
+    -- build an automatic bbox: buffer is a fraction of straight-line distance (meters); min 1000m
+    buffer_m := GREATEST(1000.0, ST_Distance(start_proj::geography, end_proj::geography) * 0.25);
 
     -- compute bbox geometry in PL/pgSQL (geography buffer then envelope back to geometry)
     bbox_geom := ST_Envelope(
