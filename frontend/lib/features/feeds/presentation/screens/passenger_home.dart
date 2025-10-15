@@ -47,6 +47,10 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
   double? initialCompensation;
   String? destinationString;
 
+  // User and address data from CredentialStorage
+  User? user;
+  List<Map<String, dynamic>> addresses = [];
+  bool isLoading = true;
 
   get collapse => null;
 
@@ -311,13 +315,6 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                             );
                           }
                         }
-                                SnackBar(
-                                    content: Text(
-                                        "Error communicating with the server")
-                                )
-                              );
-                            }
-                          }
 
                           // Go back to home if rejected.
 
