@@ -1,8 +1,9 @@
-import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart' hide Location;
 import 'package:latlong2/latlong.dart';
+import 'package:nopark/features/feeds/datamodels/driver/user_data.dart';
+import 'package:nopark/features/feeds/datamodels/passenger/ride_proposal.dart';
 import 'package:nopark/features/feeds/datamodels/passenger/ride_request_response.dart';
 import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_scroller.dart';
@@ -47,6 +48,9 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
   int? prospectiveRideId;
   double? initialCompensation;
   String? destinationString;
+  String? startString;
+  RideProposal? rideProposal;
+  UserResponse? driverData;
 
   // User and address data from CredentialStorage
   User? user;
@@ -132,6 +136,35 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                               LatLng(lat, lng),
                             );
                         _updateMap(destinationMarker, route!);
+                        destination = Location(lat: lat, long: lng);
+
+                        // Get the recommended bid amount
+                        try {
+                          final response = await DioClient().client.post(
+                              '/rides/compensation',
+                              data: {
+                                "start_longitude": mapKey.currentState?.currentLocation?.longitude,
+                                "start_latitude": mapKey.currentState?.currentLocation?.latitude,
+                                "end_longitude": lng,
+                                "end_latitude": lat
+                              }
+                          );
+
+                          if (response.statusCode == 201) {
+                            // All ok
+                            initialCompensation = (response.data['estimated_comp']) as double;
+                          }
+                          else {
+                            return;
+                          }
+                        }
+                        catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error contacting server.")));
+                        }
+
+                        destinationString = (await placemarkFromCoordinates(lat, lng))[0].name;
+                        startString = (await placemarkFromCoordinates(mapKey.currentState!.currentLocation!.latitude, mapKey.currentState!.currentLocation!.longitude))[0].name;
+
                         controller.next();
                       },
                       onBack: Navigator.of(context).pop,
@@ -140,39 +173,22 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                     ),
                     PricingOverlay(
                       onBack: controller.back,
-                      fromAddressName: "Current Location",
+                      fromAddressName: startString!,
                       fromCampusCode: null,
-                      toAddressName: "Woodside",
+                      toAddressName: destinationString!,
                       toCampusCode: null,
-                      recommendedBidAUD: 15,
+                      recommendedBidAUD: initialCompensation!,
                       initialSize: size,
                       initialPosition: position,
                       onSubmit: ((newBid) async {
                         // Engage popup
                         DriverSearchOverlay.show(context);
 
-                        try {
-                          final originCoord = await placemarkFromCoordinates(
-                            mapKey.currentState!.currentLocation!.latitude,
-                            mapKey.currentState!.currentLocation!.longitude,
-                          );
-                          final destCoord = await placemarkFromCoordinates(
-                            mapKey
-                                .currentState!
-                                .destinationMarker[0]
-                                .position
-                                .latitude,
-                            mapKey
-                                .currentState!
-                                .destinationMarker[0]
-                                .position
-                                .longitude,
-                          );
-
+                        try{
                           final response = await DioClient().client.post(
                             '/rides/requests',
                             data: {
-                              "pickup_location": originCoord[0].name,
+                              "pickup_location": startString,
                               "pickup_latitude":
                                   mapKey
                                       .currentState!
@@ -183,19 +199,9 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                                       .currentState!
                                       .currentLocation!
                                       .longitude,
-                              "dropoff_location": destCoord[0].name,
-                              "dropoff_latitude":
-                                  mapKey
-                                      .currentState!
-                                      .destinationMarker[0]
-                                      .position
-                                      .latitude,
-                              "dropoff_longitude":
-                                  mapKey
-                                      .currentState!
-                                      .destinationMarker[0]
-                                      .position
-                                      .longitude,
+                              "dropoff_location": destinationString,
+                              "dropoff_latitude": destination?.lat,
+                              "dropoff_longitude": destination?.long,
                               "compensation": newBid,
                             },
                           );
@@ -240,7 +246,34 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         RemoteMessage driver_prospectus = await waitForJob("ride_created");
 
                         // TODO: Pull the ride proposal and chuck it in the alert dialog
+                        try {
+                          final proposal_data = await DioClient().client.get(
+                            '/rides/proposals',
+                            data: {
+                              "proposal_id": driver_prospectus.data['proposal_id']
+                            }
+                          );
 
+                          if (proposal_data.statusCode != 201) {
+                            return;
+                          }
+
+                          rideProposal = RideProposal.fromJson(proposal_data.data);
+
+                          // Now get driver details
+                          final driver_data = await DioClient().client.get(
+                            '/accounts/${rideProposal!.driverID}'
+                          );
+
+                          if (driver_data.statusCode != 201) {
+                            return;
+                          }
+
+                          driverData = UserResponse.fromJson(driver_data.data);
+                        }
+                        catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error talking to server.")));
+                        }
 
                         // Store the prospective ride ID
                         bool acception = await showDialog(
@@ -252,8 +285,8 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text("Driver name: "),
-                                    Text("Driver rating: "),
+                                    Text("Driver name: ${driverData!.firstName}"),
+                                    Text("Driver rating: ${driverData!.rating} (${driverData!.ratingCount})"),
                                   ],
                                 ),
                                 actions: [
@@ -334,11 +367,12 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                       driverName: "Woo Jun Jian",
                       profileImageUrl:
                           "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.vecteezy.com%2Ffree-vector%2Fprofile-icon&psig=AOvVaw3jdm_m4NfZ0qKHYFgzApd5&ust=1756697553023000&source=images&cd=vfe&opi=89978449&ved=0CBYQjRxqFwoTCJCZv7-OtI8DFQAAAAAdAAAAABAE",
-                      lookForCompletion: (() {
-                        // TODO: Ride completion endpoint
-                        Future.delayed(Duration(seconds: 10), () {
-                          controller.next();
-                        });
+                      lookForCompletion: (() async {
+                        // TODO: Wait for pickup to say yes
+
+                        final rider_picked_up = await waitForJob('proximity');
+
+                        controller.next();
                       }),
                     ),
                     RideCard(
@@ -349,13 +383,12 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                       plateState: "VIC",
                       carImageUrl:
                           "https://www.mercedes-benz.com.au/content/dam/hq/passengercars/cars/c-class/c-class-saloon-w206-pi/modeloverview/06-2022/images/mercedes-benz-c-class-w206-modeloverview-696x392-06-2022.png",
-                      onRideCompleted: (() {
+                      onRideCompleted: (() async {
                         // TODO: Wait for ride to finish
 
-                        // For now, use mock
-                        Future.delayed(Duration(seconds: 10), () {
-                          controller.next();
-                        });
+                        final rider_ride_done = await waitForJob('ride_completed');
+
+                        controller.next();
                       }),
                     ),
                     RideCompletionWidget(
@@ -363,6 +396,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                       price: "14.85",
                       moveToZero: (() {
                         controller.jumpTo(0);
+
                       }),
                     ),
                   ],
