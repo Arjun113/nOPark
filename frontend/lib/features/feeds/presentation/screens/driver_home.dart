@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart' hide Location;
 import 'package:latlong2/latlong.dart';
 import 'package:nopark/features/authentications/datasources/local_datastorer.dart';
 import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart';
@@ -12,6 +13,8 @@ import 'package:nopark/features/trip/unified/trip_scroller.dart';
 import 'package:nopark/home_test.dart';
 import 'package:nopark/logic/routing/basic_two_router.dart';
 
+import '../../../../logic/network/dio_client.dart';
+import '../../../trip/entities/location.dart';
 import '../widgets/base_where_next.dart';
 import '../widgets/where_next_overlay.dart';
 import 'overlay_flow.dart';
@@ -38,6 +41,9 @@ class _DriverHomePageState extends State<DriverHomePage> {
   bool isLoading = true;
 
   get collapse => null;
+
+  Location? destination;
+  String? destinationName;
 
   @override
   void initState() {
@@ -116,6 +122,8 @@ class _DriverHomePageState extends State<DriverHomePage> {
                               LatLng(lat, lng),
                             );
                         _updateMap(destinationMarker, route!);
+                        destination = Location(lat: lat, long: lng);
+                        destinationName = (await placemarkFromCoordinates(lat, lng))[0].name;
                         controller.next();
                       },
                       onBack: Navigator.of(context).pop,
@@ -123,11 +131,29 @@ class _DriverHomePageState extends State<DriverHomePage> {
                       initialSize: size,
                     ),
                     RideOptionsScreen(
-                      destination: "Caulfield",
-                      destinationCode: "CA",
-                      onConfirm: (selectedIndices) async {
+                      destination: destinationName!,
+                      destinationCoords: destination!,
+                      destinationCode: null,
+                      onConfirm: (proposalIndices) async {
                         // TODO: Send the selections to the backend
-                        // For now, mock. Remember to update the map later
+                        try {
+                          // Send the preferences to the backend
+                          final response = await DioClient().client.post(
+                              '/rides',
+                            data: {
+                                'request_ids': proposalIndices,
+                                'destination_lat': destination!.lat,
+                                'destination_lon': destination!.long
+                            }
+                          );
+
+                          if (response.statusCode != 201) {
+                            return;
+                          }
+                        }
+                        catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error communicating with the server")));
+                        }
 
                         controller.next();
                       },

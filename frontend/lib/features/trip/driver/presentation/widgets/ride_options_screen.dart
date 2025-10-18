@@ -1,57 +1,81 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+
+import '../../../../../logic/network/dio_client.dart';
+import '../../../entities/location.dart';
 
 // Data model for Ride Options
 class RideOption {
   final String name;
   final double rating;
   final String address;
+  final Location addressCoords;
   final double detourKm;
   final int detourMin;
   final double price;
+  final int proposalID;
 
-  RideOption({
+  const RideOption({
     required this.name,
     required this.rating,
     required this.address,
+    required this.addressCoords,
     required this.detourKm,
     required this.detourMin,
     required this.price,
+    required this.proposalID
   });
 }
 
-// Mock backend data (replace later with API call)
-Future<List<RideOption>> fetchRideOptions() async {
-  await Future.delayed(const Duration(seconds: 1)); // simulate network delay
-  return [
-    RideOption(
-      name: "Lachlan MacPhee",
-      rating: 4.8,
-      address: "1341 Dandenong Road, Chadstone, VIC",
-      detourKm: 2.7,
-      detourMin: 7,
-      price: 18.04,
-    ),
-    RideOption(
-      name: "Taiyeb M. Radiowala",
-      rating: 4.7,
-      address: "37 Alliance Walk, Clayton, VIC",
-      detourKm: 1.7,
-      detourMin: 7,
-      price: 8.04,
-    ),
-    RideOption(
-      name: "Arjun Sanghi",
-      rating: 4.0,
-      address: "37 Alliance Walk, Clayton, VIC",
-      detourKm: 1.7,
-      detourMin: 7,
-      price: 4.04,
-    ),
-  ];
+Future<List<RideOption>> fetchObjects (Location coords, String destination) async {
+  List<RideOption> possible_rides = [];
+  try {
+    final response = await DioClient().client.get(
+      '/rides/requests',
+      data: {
+        'dropoff_lat': coords.lat,
+        'dropoff_lon': coords.long
+      }
+    );
+
+    if (response.statusCode != 201) {
+      return [];
+    }
+
+    final mainData = response.data['requests'] as List<Map<String, dynamic>>;
+
+    // This has passenger ID; we need passenger name and rating also
+    for (int i = 0; i < mainData.length; i = i + 1) {
+      final passenger_response = await DioClient().client.get(
+        '/accounts/${mainData[i]['passenger_id']}'
+      );
+
+      if (response.statusCode != 201) {
+        return possible_rides;
+      }
+
+      final newRide = RideOption(name: passenger_response.data['first_name'] + passenger_response.data['last_name'],
+          rating: passenger_response.data['rating'],
+          address: destination, addressCoords: coords,
+          detourKm: response.data['detour_km'],
+          detourMin: response.data['detour_min'],
+          price: response.data['compensation'],
+          proposalID: response.data['id']
+      );
+
+      possible_rides.add(newRide);
+    }
+  }
+  catch (e) {
+    // Add context if needed
+  }
+
+  return possible_rides;
 }
 
 class RideOptionsScreen extends StatefulWidget {
   final String destination;
+  final Location destinationCoords;
   final String? destinationCode;
   final ValueChanged<List<int>>? onSelectionChanged;
   final void Function (List<int> selections) onConfirm;
@@ -59,6 +83,7 @@ class RideOptionsScreen extends StatefulWidget {
   const RideOptionsScreen({
     super.key,
     required this.destination,
+    required this.destinationCoords,
     this.destinationCode,
     this.onSelectionChanged,
     required this.onConfirm,
@@ -101,7 +126,7 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
             ],
           ),
           child: FutureBuilder<List<RideOption>>(
-            future: fetchRideOptions(),
+            future: fetchObjects(widget.destinationCoords, widget.destination),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(
@@ -227,7 +252,11 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
                     margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                     child: ElevatedButton(
                       onPressed: () {
-                        widget.onConfirm(selectedIndices);
+                        List<int> proposalIds = [];
+                        for (int i = 0; i < selectedIndices.length; i = i + 1){
+                          proposalIds.add(rides[i].proposalID);
+                        }
+                        widget.onConfirm(proposalIds);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
