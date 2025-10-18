@@ -1,16 +1,26 @@
 import 'package:flutter/material.dart';
 
-class RideCompletionWidget extends StatefulWidget {
+class RideInfo {
   final String riderName;
-  final String price;
-  final double initialRating;
+  final double riderPrice;
+  double rating;
+  String comment;
+
+  RideInfo({
+    required this.riderName,
+    required this.riderPrice,
+    this.rating = 0.0,
+    this.comment = ""
+  });
+}
+
+class RideCompletionWidget extends StatefulWidget {
+  final List<RideInfo> riders;
   final VoidCallback? moveToZero;
 
   const RideCompletionWidget({
     super.key,
-    required this.riderName,
-    required this.price,
-    this.initialRating = 0.0,
+    required this.riders,
     required this.moveToZero,
   });
 
@@ -19,18 +29,36 @@ class RideCompletionWidget extends StatefulWidget {
 }
 
 class _RideCompletionWidgetState extends State<RideCompletionWidget> {
-  double _currentRating = 0.0;
+  late PageController _pageController;
+  int _currentPage = 0;
+  late List<TextEditingController> _commentControllers;
 
   @override
   void initState() {
     super.initState();
-    _currentRating = widget.initialRating;
+    _pageController = PageController();
+    _commentControllers = widget.riders
+        .map((rider) => TextEditingController(text: rider.comment))
+        .toList();
   }
 
-  void _updateRating(double rating) {
+  @override
+  void dispose() {
+    _pageController.dispose();
+    for (var controller in _commentControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _updateRating(int index, double rating) {
     setState(() {
-      _currentRating = rating;
+      widget.riders[index].rating = rating;
     });
+  }
+
+  void _updateComment(int index, String comment) {
+    widget.riders[index].comment = comment;
   }
 
   @override
@@ -39,19 +67,18 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
       alignment: Alignment.center,
       child: Container(
         width: 320,
-        height: 350,
+        height: 480,
         margin: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Title
-              const Text(
+        child: Column(
+          children: [
+            // Title
+            const Padding(
+              padding: EdgeInsets.only(top: 24),
+              child: Text(
                 'Ride Completed',
                 style: TextStyle(
                   fontSize: 24,
@@ -59,59 +86,145 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
                   color: Colors.black87,
                 ),
               ),
-              const SizedBox(height: 20),
+            ),
+            const SizedBox(height: 20),
 
-              // Rider info row
+            // Page indicator dots
+            if (widget.riders.length > 1)
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    widget.riderName,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  widget.riders.length,
+                      (index) => Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _currentPage == index
+                          ? Colors.blue
+                          : Colors.grey.shade300,
                     ),
                   ),
-                  Row(
-                    children: [
-                      Text(
-                        _currentRating.toStringAsFixed(1),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
-                        ),
+                ),
+              ),
+            if (widget.riders.length > 1) const SizedBox(height: 16),
+
+            // Scrollable rider cards
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentPage = index;
+                  });
+                },
+                itemCount: widget.riders.length,
+                itemBuilder: (context, index) {
+                  final rider = widget.riders[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          // Rider info row
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  rider.riderName,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.black87,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Row(
+                                children: [
+                                  Text(
+                                    rider.rating.toStringAsFixed(1),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.star,
+                                      color: Colors.amber, size: 18),
+                                ],
+                              ),
+                            ],
+                          ),
+
+                          // Price
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              rider.riderPrice.toString(),
+                              style: const TextStyle(
+                                  fontSize: 16, color: Colors.black54),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // "How was the ride?" text
+                          const Text(
+                            'How was the ride?',
+                            style:
+                            TextStyle(fontSize: 16, color: Colors.black54),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Star rating
+                          StarRating(
+                            rating: rider.rating,
+                            onRatingChanged: (rating) =>
+                                _updateRating(index, rating),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Comment text field
+                          TextField(
+                            controller: _commentControllers[index],
+                            onChanged: (value) => _updateComment(index, value),
+                            maxLines: 3,
+                            decoration: InputDecoration(
+                              hintText: 'Add a comment (optional)',
+                              hintStyle: TextStyle(color: Colors.grey.shade400),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide:
+                                BorderSide(color: Colors.grey.shade300),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide:
+                                BorderSide(color: Colors.grey.shade300),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(color: Colors.blue),
+                              ),
+                              contentPadding: const EdgeInsets.all(12),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.star, color: Colors.amber, size: 18),
-                    ],
-                  ),
-                ],
+                    ),
+                  );
+                },
               ),
+            ),
 
-              // Price
-              Text(
-                widget.price,
-                style: const TextStyle(fontSize: 16, color: Colors.black54),
-              ),
-              const SizedBox(height: 16),
-
-              // "How was the ride?" text
-              const Text(
-                'How was the ride?',
-                style: TextStyle(fontSize: 16, color: Colors.black54),
-              ),
-              const SizedBox(height: 12),
-
-              // Star rating
-              StarRating(
-                rating: _currentRating,
-                onRatingChanged: _updateRating,
-              ),
-
-              // OK Button
-              SizedBox(
+            // OK Button
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: widget.moveToZero,
@@ -130,8 +243,8 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

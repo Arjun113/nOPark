@@ -1,7 +1,11 @@
+import 'dart:async';
+
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart' hide Location;
 import 'package:latlong2/latlong.dart';
 import 'package:nopark/features/authentications/datasources/local_datastorer.dart';
+import 'package:nopark/features/feeds/datamodels/data_controller.dart';
 import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart';
 import 'package:nopark/features/profiles/presentation/widgets/address_scroller.dart';
 import 'package:nopark/features/profiles/presentation/widgets/profile_modal.dart';
@@ -12,6 +16,7 @@ import 'package:nopark/features/trip/passenger/presentation/widgets/trip_cost_ad
 import 'package:nopark/features/trip/unified/trip_scroller.dart';
 import 'package:nopark/home_test.dart';
 import 'package:nopark/logic/routing/basic_two_router.dart';
+import 'package:nopark/logic/utilities/firebase_notif_waiter.dart';
 
 import '../../../../logic/network/dio_client.dart';
 import '../../../trip/entities/location.dart';
@@ -42,8 +47,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
   get collapse => null;
 
-  Location? destination;
-  String? destinationName;
+  DataController rideDataStore = DataController();
 
   @override
   void initState() {
@@ -122,8 +126,8 @@ class _DriverHomePageState extends State<DriverHomePage> {
                               LatLng(lat, lng),
                             );
                         _updateMap(destinationMarker, route!);
-                        destination = Location(lat: lat, long: lng);
-                        destinationName = (await placemarkFromCoordinates(lat, lng))[0].name;
+                        rideDataStore.setCurrentDestination(Location(lat: lat, long: lng));
+                        rideDataStore.setCurrentDestinationString((await placemarkFromCoordinates(lat, lng))[0].name!);
                         controller.next();
                       },
                       onBack: Navigator.of(context).pop,
@@ -131,8 +135,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                       initialSize: size,
                     ),
                     RideOptionsScreen(
-                      destination: destinationName!,
-                      destinationCoords: destination!,
+                      rideDataStore: rideDataStore,
                       destinationCode: null,
                       onConfirm: (proposalIndices) async {
                         // TODO: Send the selections to the backend
@@ -142,8 +145,8 @@ class _DriverHomePageState extends State<DriverHomePage> {
                               '/rides',
                             data: {
                                 'request_ids': proposalIndices,
-                                'destination_lat': destination!.lat,
-                                'destination_lon': destination!.long
+                                'destination_lat': rideDataStore.getCurrentDestination().lat,
+                                'destination_lon': rideDataStore.getCurrentDestination().long
                             }
                           );
 
@@ -155,22 +158,15 @@ class _DriverHomePageState extends State<DriverHomePage> {
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error communicating with the server")));
                         }
 
+                        // Wait for the Ride ID to be allocated
+                        RemoteMessage message = await waitForJob('ride_confirmed');
+                        rideDataStore.setFinalRideId(message.data['ride_id'] as int);
+
                         controller.next();
                       },
                     ),
                     PickupSequenceWidget(
-                      pickups: [
-                        PickupInfo(
-                          name: "Lachlan MacPhee",
-                          rating: 4.8,
-                          address: "1341 Dandenong Road",
-                          detourKm: 5,
-                          detourMin: 20,
-                          price: 14.8,
-                          destinationCode: "CA",
-                          destination: "Caulfield",
-                        ),
-                      ],
+                      rideID: rideDataStore.getFinalRideId(),
                     ),
                   ],
             ),
@@ -338,7 +334,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                             emailController: TextEditingController(
                               text: user!.email,
                             ),
-                            addresses: [],
+                            addresses: addresses,
                           ),
                     );
                   }

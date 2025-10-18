@@ -1,5 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:nopark/features/feeds/datamodels/data_controller.dart';
 
 import '../../../../../logic/network/dio_client.dart';
 import '../../../entities/location.dart';
@@ -14,6 +15,7 @@ class RideOption {
   final int detourMin;
   final double price;
   final int proposalID;
+  final String polyline;
 
   const RideOption({
     required this.name,
@@ -23,18 +25,19 @@ class RideOption {
     required this.detourKm,
     required this.detourMin,
     required this.price,
-    required this.proposalID
+    required this.proposalID,
+    required this.polyline
   });
 }
 
-Future<List<RideOption>> fetchObjects (Location coords, String destination) async {
+Future<List<RideOption>> fetchObjects (DataController rideDataStore) async {
   List<RideOption> possible_rides = [];
   try {
     final response = await DioClient().client.get(
       '/rides/requests',
       data: {
-        'dropoff_lat': coords.lat,
-        'dropoff_lon': coords.long
+        'dropoff_lat': rideDataStore.getCurrentDestination().lat,
+        'dropoff_lon': rideDataStore.getCurrentDestination().long
       }
     );
 
@@ -56,11 +59,13 @@ Future<List<RideOption>> fetchObjects (Location coords, String destination) asyn
 
       final newRide = RideOption(name: passenger_response.data['first_name'] + passenger_response.data['last_name'],
           rating: passenger_response.data['rating'],
-          address: destination, addressCoords: coords,
+          address: response.data['dropoff_location'],
+          addressCoords: Location(lat: response.data['dropoff_latitude'], long: response.data['dropoff_longitude']),
           detourKm: response.data['detour_km'],
           detourMin: response.data['detour_min'],
           price: response.data['compensation'],
-          proposalID: response.data['id']
+          proposalID: response.data['id'],
+          polyline: response.data['polyline']
       );
 
       possible_rides.add(newRide);
@@ -69,21 +74,19 @@ Future<List<RideOption>> fetchObjects (Location coords, String destination) asyn
   catch (e) {
     // Add context if needed
   }
-
+  rideDataStore.setDriverReceivedProposalDetails(possible_rides);
   return possible_rides;
 }
 
 class RideOptionsScreen extends StatefulWidget {
-  final String destination;
-  final Location destinationCoords;
   final String? destinationCode;
+  final DataController rideDataStore;
   final ValueChanged<List<int>>? onSelectionChanged;
   final void Function (List<int> selections) onConfirm;
 
   const RideOptionsScreen({
     super.key,
-    required this.destination,
-    required this.destinationCoords,
+    required this.rideDataStore,
     this.destinationCode,
     this.onSelectionChanged,
     required this.onConfirm,
@@ -126,7 +129,7 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
             ],
           ),
           child: FutureBuilder<List<RideOption>>(
-            future: fetchObjects(widget.destinationCoords, widget.destination),
+            future: fetchObjects(widget.rideDataStore),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(

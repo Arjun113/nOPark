@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:js_interop';
+
 import 'package:flutter/material.dart';
+import 'package:nopark/logic/network/dio_client.dart';
 
 class PickupInfo {
   final String name;
@@ -23,13 +27,13 @@ class PickupInfo {
 }
 
 class PickupSequenceWidget extends StatefulWidget {
-  final List<PickupInfo> pickups;
+  final int rideID;
   final Stream<int>? locationStream;
   final Function(int)? onLocationReached;
 
   const PickupSequenceWidget({
     super.key,
-    required this.pickups,
+    required this.rideID,
     this.locationStream,
     this.onLocationReached,
   });
@@ -43,9 +47,10 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
   int _currentIndex = 0;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  late List<PickupInfo> pickups;
 
   @override
-  void initState() {
+  void initState() async {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
@@ -56,10 +61,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
     );
     _animationController.forward();
 
-    // Listen to location stream
-    widget.locationStream?.listen((location) {
-      _moveToNext();
-    });
+    // TODO: Populate pickup
   }
 
   @override
@@ -69,7 +71,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
   }
 
   void _moveToNext() {
-    if (_currentIndex < widget.pickups.length - 1) {
+    if (_currentIndex < pickups.length - 1) {
       _animationController.reverse().then((_) {
         setState(() {
           _currentIndex++;
@@ -86,7 +88,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    if (_currentIndex >= widget.pickups.length) {
+    if (_currentIndex >= pickups.length) {
       return SafeArea(
         child: Align(
           alignment: Alignment.bottomCenter,
@@ -119,7 +121,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
       );
     }
 
-    final pickup = widget.pickups[_currentIndex];
+    final pickup = pickups[_currentIndex];
 
     return SafeArea(
       child: Align(
@@ -265,7 +267,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
                   ),
                 ),
 
-                // Debug button (remove in production)
+                // Arrived at pickup point
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: _moveToNext,
@@ -281,7 +283,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
                     ),
                   ),
                   child: const Text(
-                    'Simulate Arrival (Debug)',
+                    'Passenger Picked Up' ,
                     style: TextStyle(fontSize: 16),
                   ),
                 ),
