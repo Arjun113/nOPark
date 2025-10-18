@@ -13,6 +13,7 @@ import 'package:nopark/features/trip/driver/presentation/widgets/passenger_picku
 import 'package:nopark/features/trip/driver/presentation/widgets/ride_options_screen.dart';
 import 'package:nopark/features/trip/entities/user.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_cost_adjust_widget.dart';
+import 'package:nopark/features/trip/passenger/presentation/widgets/trip_over_card_rating.dart';
 import 'package:nopark/features/trip/unified/trip_scroller.dart';
 import 'package:nopark/home_test.dart';
 import 'package:nopark/logic/routing/basic_two_router.dart';
@@ -168,6 +169,11 @@ class _DriverHomePageState extends State<DriverHomePage> {
                     PickupSequenceWidget(
                       rideID: rideDataStore.getFinalRideId(),
                     ),
+                    RideCompletionWidget(riders: rideDataStore.getCurrentRiderInfo('driver'),
+                        moveToZero: (() {
+                          rideDataStore.clearForNextRide();
+                          controller.jumpTo(0);
+                        }))
                   ],
             ),
       ),

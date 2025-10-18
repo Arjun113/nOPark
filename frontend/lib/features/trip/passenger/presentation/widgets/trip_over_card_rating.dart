@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../logic/network/dio_client.dart';
+
 class RideInfo {
   final String riderName;
   final double riderPrice;
+  final int riderID;
   double rating;
   String comment;
 
   RideInfo({
     required this.riderName,
     required this.riderPrice,
+    required this.riderID,
     this.rating = 0.0,
     this.comment = ""
   });
@@ -227,7 +231,28 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: widget.moveToZero,
+                  onPressed: (() async {
+                    // Send all the reviews
+                    try {
+                      for (var rider in widget.riders) {
+                        final response = await DioClient().client.post(
+                          '/accounts/${rider.riderID}/review',
+                          data: {
+                            'stars': rider.rating.floor(),
+                            'comment': rider.comment
+                          }
+                        );
+
+                        if (response.statusCode != 201) {
+                          break;
+                        }
+                      }
+                    }
+                    catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error sending reviews to the server")));
+                    }
+                    widget.moveToZero;
+                  }),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,

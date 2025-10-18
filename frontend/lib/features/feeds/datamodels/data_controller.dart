@@ -89,13 +89,13 @@ class DataController extends ChangeNotifier {
   List<RideInfo> getCurrentRiderInfo (String yourRole) {
     if (yourRole == 'Passenger') {
       // Send the driver's details
-      return [RideInfo(riderName: driverData!.firstName + driverData!.lastName, riderPrice: rideReqResp!.initialCompensation)];
+      return [RideInfo(riderName: driverData!.firstName + driverData!.lastName, riderPrice: rideReqResp!.initialCompensation, riderID: rideProposal!.driverID)];
     }
     else {
       List<RideInfo> passengerInfos = [];
       for (var passenger in driverRideProposals!) {
         if (driverAcceptedProposals!.contains(passenger.proposalID)) {
-          passengerInfos.add(RideInfo(riderName: passenger.name, riderPrice: passenger.price));
+          passengerInfos.add(RideInfo(riderName: passenger.name, riderPrice: passenger.price, riderID: passenger.passengerID));
         }
       }
       return passengerInfos;

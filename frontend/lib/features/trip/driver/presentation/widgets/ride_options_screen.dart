@@ -16,6 +16,7 @@ class RideOption {
   final double price;
   final int proposalID;
   final String polyline;
+  final int passengerID;
 
   const RideOption({
     required this.name,
@@ -26,7 +27,8 @@ class RideOption {
     required this.detourMin,
     required this.price,
     required this.proposalID,
-    required this.polyline
+    required this.polyline,
+    required this.passengerID
   });
 }
 
@@ -65,7 +67,8 @@ Future<List<RideOption>> fetchObjects (DataController rideDataStore) async {
           detourMin: response.data['detour_min'],
           price: response.data['compensation'],
           proposalID: response.data['id'],
-          polyline: response.data['polyline']
+          polyline: response.data['polyline'],
+        passengerID: mainData[i]['passenger_id'] as int
       );
 
       possible_rides.add(newRide);
