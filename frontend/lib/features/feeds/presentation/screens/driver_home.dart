@@ -167,7 +167,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                       },
                     ),
                     PickupSequenceWidget(
-                      rideID: rideDataStore.getFinalRideId(),
+                      rideData: rideDataStore,
                     ),
                     RideCompletionWidget(riders: rideDataStore.getCurrentRiderInfo('driver'),
                         moveToZero: (() {

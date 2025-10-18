@@ -1,7 +1,6 @@
-import 'dart:convert';
-import 'dart:js_interop';
-
 import 'package:flutter/material.dart';
+import 'package:nopark/features/feeds/datamodels/data_controller.dart';
+import 'package:nopark/features/trip/driver/presentation/widgets/ride_options_screen.dart';
 import 'package:nopark/logic/network/dio_client.dart';
 
 class PickupInfo {
@@ -27,13 +26,13 @@ class PickupInfo {
 }
 
 class PickupSequenceWidget extends StatefulWidget {
-  final int rideID;
+  final DataController rideData;
   final Stream<int>? locationStream;
   final Function(int)? onLocationReached;
 
   const PickupSequenceWidget({
     super.key,
-    required this.rideID,
+    required this.rideData,
     this.locationStream,
     this.onLocationReached,
   });
@@ -47,7 +46,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
   int _currentIndex = 0;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  late List<PickupInfo> pickups;
+  late List<RideOption> pickups;
 
   @override
   void initState() async {
@@ -62,6 +61,43 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
     _animationController.forward();
 
     // TODO: Populate pickup
+    final allotted_ride_id = widget.rideData.getFinalRideId();
+    final received_requests = widget.rideData.getDriverReceivedProposalDetails();
+
+    try{
+      // Pull ride data from backend to get proposal IDs
+      final ride_summary_request = await DioClient().client.get(
+          '/rides/summary',
+        data: {
+            'ride_id': allotted_ride_id
+        }
+      );
+
+      if (ride_summary_request.statusCode != 201) {
+        pickups = [];
+        return;
+      }
+
+      // All ok
+      final list_of_rides = ride_summary_request.data['proposals'] as List<Map<String, dynamic>>;
+
+      // Loop through list to counter check proposal IDs
+      for (var ride in list_of_rides) {
+        final ride_status = ride['status'];
+        if (ride_status == "accepted") {
+          for (var ride_request in received_requests) {
+            if (ride_request.proposalID == (ride['id'] as int)) {
+              pickups.add(ride_request);
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error fetching ride details.")));
+    }
   }
 
   @override
@@ -171,7 +207,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            pickup.destinationCode,
+                            "",
                             style: const TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.w900,
@@ -180,7 +216,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          pickup.destination,
+                          pickup.address,
                           style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.w700,
