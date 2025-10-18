@@ -168,6 +168,33 @@ class _DriverHomePageState extends State<DriverHomePage> {
                     ),
                     PickupSequenceWidget(
                       rideData: rideDataStore,
+                      onLocationReached: ((index) async {
+                        if (index < rideDataStore.getDriverAcceptedProposals().length) {
+                          // Tell API to ping passenger
+                          try {
+                            final loc_reached_response = await DioClient().client.post(
+                              '/rides/pickup',
+                              data: {
+                                'ride_id': rideDataStore.getFinalRideId(),
+                                'current_latitude': mapKey.currentState?.currentLocation?.latitude,
+                                'current_longitude': mapKey.currentState?.currentLocation?.longitude
+                              }
+                            );
+
+                            if (loc_reached_response.statusCode != 201) {
+                              return;
+                            }
+                          }
+                          catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error communicating with the server")));
+                          }
+                        }
+
+                        // If this is the last pickup, move to next screen
+                        if (index == rideDataStore.getDriverAcceptedProposals().length - 1) {
+                          controller.next();
+                        }
+                      }),
                     ),
                     RideCompletionWidget(riders: rideDataStore.getCurrentRiderInfo('driver'),
                         moveToZero: (() {
