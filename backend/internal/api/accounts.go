@@ -10,6 +10,7 @@ import (
 
 	"github.com/Arjun113/nOPark/internal/domain"
 	"github.com/Arjun113/nOPark/internal/repository"
+	"github.com/Arjun113/nOPark/internal/utils"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
@@ -868,5 +869,52 @@ func (a *api) createVehicleHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
+}
+
+type GetVehicleRequest struct {
+	UserID int64 `json:"user_id" validate:"required"`
+}
+
+type GetVehicleResponse struct {
+	ID           int64  `json:"id"`
+	Make         string `json:"make"`
+	Model        string `json:"model"`
+	ModelYear    int    `json:"model_year"`
+	Colour       string `json:"colour"`
+	LicensePlate string `json:"license_plate"`
+}
+
+func (a *api) getVehicleHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	userID, err := utils.IntFromQueryParam(r, "user_id", false)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	vehicle, err := a.accountsRepo.GetVehicleByAccountID(ctx, *userID)
+	if err != nil {
+		a.errorResponse(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	if vehicle == nil {
+		a.errorResponse(w, r, http.StatusNotFound, fmt.Errorf("vehicle not found for user"))
+		return
+	}
+
+	response := GetVehicleResponse{
+		ID:           vehicle.ID,
+		Make:         vehicle.Make,
+		Model:        vehicle.Model,
+		ModelYear:    vehicle.ModelYear,
+		Colour:       vehicle.Colour,
+		LicensePlate: vehicle.LicensePlate,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }

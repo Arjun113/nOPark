@@ -1,0 +1,30 @@
+meta {
+  name: 09 Get Vehicle
+  type: http
+  seq: 11
+}
+
+get {
+  url: http://localhost:4000/v1/accounts/vehicle
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: 7k76xhr8iinhgnpi9fkh9j2w.ezzdx357betcd8vr9j2mch3v
+}
+
+body:json {
+  {
+    "make": "Honda",
+    "model": "City",
+    "model_year": 2020,
+    "colour": "Grey",
+    "license_plate": "CDC4000"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
