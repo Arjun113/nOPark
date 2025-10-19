@@ -39,6 +39,7 @@ type AccountsRepository interface {
 	RemoveUnverifiedExpiredAccounts(ctx context.Context) (int64, error)
 	UpdateLocation(ctx context.Context, accountID int64, lat, lon float64) error
 	CreateVehicle(ctx context.Context, vehicle *VehicleDBModel) (*VehicleDBModel, error)
+	GetVehicleByAccountID(ctx context.Context, accountID int64) (*VehicleDBModel, error)
 }
 
 const SessionExpiresInSeconds = 7 * 24 * 60 * 60       // 7 days

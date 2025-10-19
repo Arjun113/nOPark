@@ -343,13 +343,27 @@ func (p *postgresAccountsRepository) UpdateLocation(ctx context.Context, account
 func (p *postgresAccountsRepository) CreateVehicle(ctx context.Context, vehicle *domain.VehicleDBModel) (*domain.VehicleDBModel, error) {
 	var createdVehicle domain.VehicleDBModel
 
+	// Delete if exists
+	vehicleFetched, err := p.GetVehicleByAccountID(ctx, vehicle.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	if vehicleFetched != nil {
+		_, err := p.conn.Exec(ctx,
+			`DELETE FROM vehicles WHERE account_id = $1`,
+			vehicle.AccountID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	row := p.conn.QueryRow(ctx,
 		`INSERT INTO vehicles (make, model, model_year, colour, license_plate, account_id) 
 		 VALUES ($1, $2, $3, $4, $5, $6) 
 		 RETURNING id, make, model, model_year, colour, license_plate, account_id, created_at, updated_at`,
 		vehicle.Make, vehicle.Model, vehicle.ModelYear, vehicle.Colour, vehicle.LicensePlate, vehicle.AccountID)
 
-	err := row.Scan(&createdVehicle.ID, &createdVehicle.Make, &createdVehicle.Model, &createdVehicle.ModelYear,
+	err = row.Scan(&createdVehicle.ID, &createdVehicle.Make, &createdVehicle.Model, &createdVehicle.ModelYear,
 		&createdVehicle.Colour, &createdVehicle.LicensePlate, &createdVehicle.AccountID,
 		&createdVehicle.CreatedAt, &createdVehicle.UpdatedAt)
 	if err != nil {
@@ -357,4 +371,24 @@ func (p *postgresAccountsRepository) CreateVehicle(ctx context.Context, vehicle 
 	}
 
 	return &createdVehicle, nil
+}
+
+func (p *postgresAccountsRepository) GetVehicleByAccountID(ctx context.Context, accountID int64) (*domain.VehicleDBModel, error) {
+	row := p.conn.QueryRow(ctx,
+		`SELECT id, make, model, model_year, colour, license_plate, account_id, created_at, updated_at 
+		 FROM vehicles WHERE account_id = $1`,
+		accountID)
+
+	var vehicle domain.VehicleDBModel
+	err := row.Scan(&vehicle.ID, &vehicle.Make, &vehicle.Model, &vehicle.ModelYear,
+		&vehicle.Colour, &vehicle.LicensePlate, &vehicle.AccountID,
+		&vehicle.CreatedAt, &vehicle.UpdatedAt)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil // Vehicle not found
+		}
+		return nil, err
+	}
+
+	return &vehicle, nil
 }
