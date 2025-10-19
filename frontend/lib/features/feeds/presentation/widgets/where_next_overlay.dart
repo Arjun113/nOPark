@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:nopark/features/trip/entities/user.dart';
 import 'package:nopark/features/feeds/presentation/widgets/top_fold.dart';
 
@@ -161,7 +162,7 @@ class _WhereNextOverlayState extends State<WhereNextOverlay>
                       ),
                       axis: Axis.vertical,
                       child: Container(
-                        height: 100,
+                        height: 300, // Increased height for multiple results
                         decoration: BoxDecoration(
                           color: Colors.grey.shade50,
                           borderRadius: const BorderRadius.only(
@@ -169,16 +170,95 @@ class _WhereNextOverlayState extends State<WhereNextOverlay>
                             bottomRight: Radius.circular(12),
                           ),
                         ),
-                        child: Center(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              if (widget.onLocationSelected != null) {
-                                widget.onLocationSelected!(
-                                    -37.840935, 144.946457); // example lat/lng
-                              }
-                            },
-                            child: const Text("Confirm Location"),
-                          ),
+                        child: FutureBuilder<List<Location>>(
+                          future: locationFromAddress(locText.text),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(child: CircularProgressIndicator());
+                            }
+
+                            if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                              return Center(
+                                child: Text(
+                                  'No locations found for "${locText.text}"',
+                                  style: TextStyle(color: Colors.grey.shade600),
+                                ),
+                              );
+                            }
+
+                            final locations = snapshot.data!.take(4).toList(); // Get up to 4 results
+
+                            return ListView.builder(
+                              padding: const EdgeInsets.all(12),
+                              itemCount: locations.length,
+                              itemBuilder: (context, index) {
+                                final location = locations[index];
+
+                                return FutureBuilder<List<Placemark>>(
+                                  future: placemarkFromCoordinates(
+                                    location.latitude,
+                                    location.longitude,
+                                  ),
+                                  builder: (context, placemarkSnapshot) {
+                                    String displayName = locText.text;
+                                    String subtitle = '${location.latitude.toStringAsFixed(6)}, ${location.longitude.toStringAsFixed(6)}';
+
+                                    if (placemarkSnapshot.hasData && placemarkSnapshot.data!.isNotEmpty) {
+                                      final placemark = placemarkSnapshot.data!.first;
+                                      // Build a nice place name from available data
+                                      displayName = (placemark.name ?? "") + (placemark.street ?? "");
+                                    }
+
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 8),
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          if (widget.onLocationSelected != null) {
+                                            widget.onLocationSelected!(
+                                              location.latitude,
+                                              location.longitude,
+                                            );
+                                          }
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          padding: const EdgeInsets.all(16),
+                                          alignment: Alignment.centerLeft,
+                                          backgroundColor: Colors.white,
+                                          foregroundColor: Colors.black87,
+                                          elevation: 1,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              displayName,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 16,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              subtitle,
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey.shade600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            );
+                          },
                         ),
                       ),
                     ),
