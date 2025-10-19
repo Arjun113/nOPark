@@ -53,7 +53,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
   get collapse => null;
 
   @override
-  void initState() {
+  void initState(){
     super.initState();
     _loadUserData();
   }
@@ -69,6 +69,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
           [];
       isLoading = false;
     });
+    print("User data loaded");
   }
 
   List<AddressCardData> convertListToAddressCard() {
@@ -133,7 +134,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
 
                         // Get the recommended bid amount
                         try {
-                          final response = await DioClient().client.post(
+                          final response = await DioClient().client.get(
                               '/rides/compensation',
                               data: {
                                 "start_longitude": mapKey.currentState?.currentLocation?.longitude,
@@ -143,7 +144,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                               }
                           );
 
-                          if (response.statusCode == 201) {
+                          if (response.statusCode == 200) {
                             // All ok
                             rideDataStore.setCurrentRideInitialCompensation(response.data['estimated_comp'] as double);
                           }
@@ -152,7 +153,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                           }
                         }
                         catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error contacting server.")));
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error contacting server. ${e}")));
                         }
 
                         rideDataStore.setCurrentDestinationString((await placemarkFromCoordinates(lat, lng))[0].name!);
@@ -164,6 +165,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                       initialPosition: position,
                       initialSize: size,
                     ),
+
                     PricingOverlay(
                       onBack: controller.back,
                       fromAddressName: rideDataStore.getCurrentStartingString(),
@@ -193,8 +195,8 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                                       .currentLocation!
                                       .longitude,
                               "dropoff_location": rideDataStore.getCurrentDestinationString(),
-                              "dropoff_latitude": rideDataStore.getCurrentDestination().lat,
-                              "dropoff_longitude": rideDataStore.getCurrentDestination().long,
+                              "dropoff_latitude": rideDataStore.getCurrentDestination()!.lat,
+                              "dropoff_longitude": rideDataStore.getCurrentDestination()!.long,
                               "compensation": newBid,
                             },
                           );
@@ -233,9 +235,6 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         }
 
                         // Wait for FCM notification about prospective ride
-                        RemoteMessage driverProspectus = await waitForJob(
-                          "passengerRideProposal",
-                        );
                         RemoteMessage driver_prospectus = await waitForJob("ride_created");
 
                         // TODO: Pull the ride proposal and chuck it in the alert dialog
@@ -255,7 +254,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
 
                           // Now get driver details
                           final driver_data = await DioClient().client.get(
-                            '/accounts/${rideDataStore.getCurrentPassengerRideProposal().driverID}'
+                            '/accounts/${rideDataStore.getCurrentPassengerRideProposal()!.driverID}'
                           );
 
                           if (driver_data.statusCode != 201) {
@@ -278,8 +277,8 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text("Driver name: ${rideDataStore.getCurrentUserResponse().firstName}"),
-                                    Text("Driver rating: ${rideDataStore.getCurrentUserResponse().rating} (${rideDataStore.getCurrentUserResponse().ratingCount})"),
+                                    Text("Driver name: ${rideDataStore.getCurrentUserResponse()!.firstName}"),
+                                    Text("Driver rating: ${rideDataStore.getCurrentUserResponse()!.rating} (${rideDataStore.getCurrentUserResponse()!.ratingCount})"),
                                   ],
                                 ),
                                 actions: [
@@ -304,7 +303,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                             '/rides/confirm',
                             data: {
                               'proposal_id':
-                                  driverProspectus.data['proposal_id'],
+                                  driver_prospectus.data['proposal_id'],
                               'confirm':
                                   acception == true ? 'accept' : 'reject',
                             },
@@ -350,14 +349,13 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                             rideDataStore.clearForNextRide();
                             controller.jumpTo(0);
                           }
-
                         controller.next();
                       }),
                     ),
+
                     DriverInfoCard(
-                      driverName: "Woo Jun Jian",
-                      profileImageUrl:
-                          "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.vecteezy.com%2Ffree-vector%2Fprofile-icon&psig=AOvVaw3jdm_m4NfZ0qKHYFgzApd5&ust=1756697553023000&source=images&cd=vfe&opi=89978449&ved=0CBYQjRxqFwoTCJCZv7-OtI8DFQAAAAAdAAAAABAE",
+                      driverName: rideDataStore.getCurrentUserResponse(),
+                      profileImageUrl: "",
                       lookForCompletion: (() async {
                         // TODO: Wait for pickup to say yes
 
@@ -366,6 +364,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         controller.next();
                       }),
                     ),
+
                     RideCard(
                       title: "Trip in Progress",
                       carName: "Mercedes C200",
@@ -382,8 +381,9 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         controller.next();
                       }),
                     ),
+
                     RideCompletionWidget(
-                      riders: [],
+                      riders: rideDataStore.getCurrentRiderInfo('passenger'),
                       moveToZero: (() {
                         rideDataStore.clearForNextRide();
                         controller.jumpTo(0);

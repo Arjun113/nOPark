@@ -19,17 +19,17 @@ class DataController extends ChangeNotifier {
   int? finalRideId;
   List<RideOption>? driverRideProposals;
 
-  Location getCurrentDestination() => destination!;
-  RideRequestResponse getRideReqResp() => rideReqResp!;
-  int getCurrentRideProposalID() => rideProposalId!;
-  double getCurrentRideInitialCompensation() => initialCompensation!;
-  String getCurrentDestinationString() => destinationString!;
-  String getCurrentStartingString() => startingString!;
-  RideProposal getCurrentPassengerRideProposal() => rideProposal!;
-  UserResponse getCurrentUserResponse() => driverData!;
-  List<int> getDriverAcceptedProposals() => driverAcceptedProposals!;
-  int getFinalRideId() => finalRideId!;
-  List<RideOption> getDriverReceivedProposalDetails() => driverRideProposals!;
+  Location? getCurrentDestination() => destination;
+  RideRequestResponse? getRideReqResp() => rideReqResp;
+  int? getCurrentRideProposalID() => rideProposalId;
+  double? getCurrentRideInitialCompensation() => initialCompensation;
+  String? getCurrentDestinationString() => destinationString;
+  String? getCurrentStartingString() => startingString;
+  RideProposal? getCurrentPassengerRideProposal() => rideProposal;
+  UserResponse? getCurrentUserResponse() => driverData;
+  List<int>? getDriverAcceptedProposals() => driverAcceptedProposals;
+  int? getFinalRideId() => finalRideId;
+  List<RideOption>? getDriverReceivedProposalDetails() => driverRideProposals;
 
   void setCurrentDestination (Location destination) {
     this.destination = destination;
@@ -86,16 +86,37 @@ class DataController extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<RideInfo> getCurrentRiderInfo (String yourRole) {
+  List<RideInfo>? getCurrentRiderInfo(String yourRole) {
     if (yourRole == 'Passenger') {
+      // Check if required data exists
+      if (driverData == null || rideReqResp == null || rideProposal == null) {
+        return null;
+      }
+
       // Send the driver's details
-      return [RideInfo(riderName: driverData!.firstName + driverData!.lastName, riderPrice: rideReqResp!.initialCompensation, riderID: rideProposal!.driverID)];
-    }
-    else {
+      return [
+        RideInfo(
+          riderName: driverData!.firstName + driverData!.lastName,
+          riderPrice: rideReqResp!.initialCompensation,
+          riderID: rideProposal!.driverID,
+        )
+      ];
+    } else {
+      // Check if required data exists
+      if (driverRideProposals == null || driverAcceptedProposals == null) {
+        return null;
+      }
+
       List<RideInfo> passengerInfos = [];
       for (var passenger in driverRideProposals!) {
         if (driverAcceptedProposals!.contains(passenger.proposalID)) {
-          passengerInfos.add(RideInfo(riderName: passenger.name, riderPrice: passenger.price, riderID: passenger.passengerID));
+          passengerInfos.add(
+            RideInfo(
+              riderName: passenger.name,
+              riderPrice: passenger.price,
+              riderID: passenger.passengerID,
+            ),
+          );
         }
       }
       return passengerInfos;

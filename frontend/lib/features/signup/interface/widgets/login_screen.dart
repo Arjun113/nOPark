@@ -71,6 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
       if (mounted) {
+        print(e);
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Failed to login')));

@@ -38,8 +38,8 @@ Future<List<RideOption>> fetchObjects (DataController rideDataStore) async {
     final response = await DioClient().client.get(
       '/rides/requests',
       data: {
-        'dropoff_lat': rideDataStore.getCurrentDestination().lat,
-        'dropoff_lon': rideDataStore.getCurrentDestination().long
+        'dropoff_lat': rideDataStore.getCurrentDestination()!.lat,
+        'dropoff_lon': rideDataStore.getCurrentDestination()!.long
       }
     );
 

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:nopark/features/feeds/datamodels/driver/user_data.dart';
 
 class DriverInfoCard extends StatefulWidget {
-  final String driverName;
-  final String profileImageUrl;
+  final UserResponse? driverName;
+  final String? profileImageUrl;
   final VoidCallback? onCancelRide;
   final VoidCallback? onSendMessage;
   final VoidCallback? onCall;
@@ -34,6 +35,13 @@ class _DriverInfoCardState extends State<DriverInfoCard> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if required data is available
+    if (widget.driverName == null || widget.profileImageUrl == null) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     return SafeArea(
       child: Align(
         alignment: Alignment.bottomCenter,
@@ -68,7 +76,7 @@ class _DriverInfoCardState extends State<DriverInfoCard> {
                       ),
                       child: ClipOval(
                         child: Image.network(
-                          widget.profileImageUrl,
+                          widget.profileImageUrl!,
                           width: 80,
                           height: 80,
                           fit: BoxFit.cover,
@@ -87,7 +95,7 @@ class _DriverInfoCardState extends State<DriverInfoCard> {
 
                     // Driver name
                     Text(
-                      widget.driverName,
+                      widget.driverName!.firstName + widget.driverName!.lastName,
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w500,

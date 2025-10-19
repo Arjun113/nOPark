@@ -19,7 +19,7 @@ class RideInfo {
 }
 
 class RideCompletionWidget extends StatefulWidget {
-  final List<RideInfo> riders;
+  final List<RideInfo>? riders;
   final VoidCallback? moveToZero;
 
   const RideCompletionWidget({
@@ -41,7 +41,7 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
   void initState() {
     super.initState();
     _pageController = PageController();
-    _commentControllers = widget.riders
+    _commentControllers = (widget.riders ?? [])
         .map((rider) => TextEditingController(text: rider.comment))
         .toList();
   }
@@ -57,16 +57,23 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
 
   void _updateRating(int index, double rating) {
     setState(() {
-      widget.riders[index].rating = rating;
+      widget.riders![index].rating = rating;
     });
   }
 
   void _updateComment(int index, String comment) {
-    widget.riders[index].comment = comment;
+    widget.riders![index].comment = comment;
   }
 
   @override
   Widget build(BuildContext context) {
+    // Check if required data is available
+    if (widget.riders == null || widget.riders!.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     return Align(
       alignment: Alignment.center,
       child: Container(
@@ -94,11 +101,11 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
             const SizedBox(height: 20),
 
             // Page indicator dots
-            if (widget.riders.length > 1)
+            if (widget.riders!.length > 1)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
-                  widget.riders.length,
+                  widget.riders!.length,
                       (index) => Container(
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                     width: 8,
@@ -112,7 +119,7 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
                   ),
                 ),
               ),
-            if (widget.riders.length > 1) const SizedBox(height: 16),
+            if (widget.riders!.length > 1) const SizedBox(height: 16),
 
             // Scrollable rider cards
             Expanded(
@@ -123,9 +130,9 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
                     _currentPage = index;
                   });
                 },
-                itemCount: widget.riders.length,
+                itemCount: widget.riders!.length,
                 itemBuilder: (context, index) {
-                  final rider = widget.riders[index];
+                  final rider = widget.riders![index];
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: SingleChildScrollView(
@@ -234,13 +241,13 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
                   onPressed: (() async {
                     // Send all the reviews
                     try {
-                      for (var rider in widget.riders) {
+                      for (var rider in widget.riders!) {
                         final response = await DioClient().client.post(
-                          '/accounts/${rider.riderID}/review',
-                          data: {
-                            'stars': rider.rating.floor(),
-                            'comment': rider.comment
-                          }
+                            '/accounts/${rider.riderID}/review',
+                            data: {
+                              'stars': rider.rating.floor(),
+                              'comment': rider.comment
+                            }
                         );
 
                         if (response.statusCode != 201) {
@@ -251,7 +258,7 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
                     catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error sending reviews to the server")));
                     }
-                    widget.moveToZero;
+                    widget.moveToZero?.call();
                   }),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,

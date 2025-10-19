@@ -28,8 +28,8 @@ class LocationService {
       await DioClient().client.put(
         '/accounts/location',
         data: {
-          'latitude': position.latitude,
-          'longitude': position.longitude,
+          'lat': position.latitude,
+          'lon': position.longitude,
         },
       );
       print('Location sent: ${position.latitude}, ${position.longitude}');

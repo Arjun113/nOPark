@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:nopark/constants/monash_campus_locs.dart';
 
 class PricingOverlay extends StatefulWidget {
-  final String fromAddressName;
+  final String? fromAddressName;
   final MonashCampusCodes? fromCampusCode;
-  final String toAddressName;
+  final String? toAddressName;
   final MonashCampusCodes? toCampusCode;
-  final double recommendedBidAUD;
+  final double? recommendedBidAUD;
   final Offset initialPosition;
   final Size initialSize;
 
@@ -40,9 +40,9 @@ class PricingOverlayState extends State<PricingOverlay> {
   @override
   void initState() {
     super.initState();
-    modifiedTripCost = widget.recommendedBidAUD;
+    modifiedTripCost = widget.recommendedBidAUD ?? 0.0;
     controller = TextEditingController(
-      text: widget.recommendedBidAUD.toStringAsFixed(2),
+      text: (widget.recommendedBidAUD ?? 0.0).toStringAsFixed(2),
     );
   }
 
@@ -71,6 +71,15 @@ class PricingOverlayState extends State<PricingOverlay> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if required data is available
+    if (widget.fromAddressName == null ||
+        widget.toAddressName == null ||
+        widget.recommendedBidAUD == null) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     return SafeArea(
       child: Align(
         alignment: Alignment.topCenter,
@@ -98,48 +107,48 @@ class PricingOverlayState extends State<PricingOverlay> {
                   // From address
                   widget.fromCampusCode == null
                       ? Text(
-                        widget.fromAddressName,
+                    widget.fromAddressName!,
+                    style: const TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                      fontFamily: 'B612',
+                    ),
+                    textAlign: TextAlign.center,
+                  )
+                      : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        widget.fromCampusCode
+                            .toString()
+                            .split('.')
+                            .last
+                            .toUpperCase(),
                         style: const TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 40,
+                          fontWeight: FontWeight.w700,
                           color: Colors.black,
+                          letterSpacing: 2,
                           fontFamily: 'B612',
                         ),
-                        textAlign: TextAlign.center,
-                      )
-                      : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            widget.fromCampusCode
-                                .toString()
-                                .split('.')
-                                .last
-                                .toUpperCase(),
-                            style: const TextStyle(
-                              fontSize: 40,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black,
-                              letterSpacing: 2,
-                              fontFamily: 'B612',
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              widget.fromAddressName,
-                              style: const TextStyle(
-                                fontSize: 30,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black,
-                                fontFamily: 'B612',
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
                       ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          widget.fromAddressName!,
+                          style: const TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                            fontFamily: 'B612',
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
 
                   const SizedBox(height: 8),
 
@@ -154,48 +163,48 @@ class PricingOverlayState extends State<PricingOverlay> {
                   // To address
                   widget.toCampusCode == null
                       ? Text(
-                        widget.toAddressName,
+                    widget.toAddressName!,
+                    style: const TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                      fontFamily: 'B612',
+                    ),
+                    textAlign: TextAlign.center,
+                  )
+                      : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        widget.toCampusCode
+                            .toString()
+                            .split('.')
+                            .last
+                            .toUpperCase(),
                         style: const TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 40,
+                          fontWeight: FontWeight.w700,
                           color: Colors.black,
+                          letterSpacing: 2,
                           fontFamily: 'B612',
                         ),
-                        textAlign: TextAlign.center,
-                      )
-                      : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            widget.toCampusCode
-                                .toString()
-                                .split('.')
-                                .last
-                                .toUpperCase(),
-                            style: const TextStyle(
-                              fontSize: 40,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black,
-                              letterSpacing: 2,
-                              fontFamily: 'B612',
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              widget.toAddressName,
-                              style: const TextStyle(
-                                fontSize: 30,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black,
-                                fontFamily: 'B612',
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
                       ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          widget.toAddressName!,
+                          style: const TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                            fontFamily: 'B612',
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
 
                   const SizedBox(height: 15),
 
@@ -227,9 +236,9 @@ class PricingOverlayState extends State<PricingOverlay> {
                         ),
                         child: IconButton(
                           onPressed:
-                              modifiedTripCost > 0.5
-                                  ? () => adjustBidAmount(false)
-                                  : null,
+                          modifiedTripCost > 0.5
+                              ? () => adjustBidAmount(false)
+                              : null,
                           icon: const Icon(
                             Icons.remove,
                             color: Colors.black54,

@@ -85,7 +85,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
       for (var ride in list_of_rides) {
         final ride_status = ride['status'];
         if (ride_status == "accepted") {
-          for (var ride_request in received_requests) {
+          for (var ride_request in received_requests!) {
             if (ride_request.proposalID == (ride['id'] as int)) {
               pickups.add(ride_request);
               break;

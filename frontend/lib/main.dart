@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'package:firebase_core/firebase_core.dart';
+import 'package:nopark/firebase_options.dart';
 import 'features/signup/interface/widgets/login_screen.dart';
 import 'features/signup/interface/widgets/register_screen.dart';
 
@@ -12,6 +13,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Firebase.initializeApp(name: 'com.example.nopark', options: DefaultFirebaseOptions.android);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'nOPark App',

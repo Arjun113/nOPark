@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 class RideCard extends StatefulWidget {
-  final String title;
-  final String carName;
-  final String carColor;
-  final String plateNumber;
-  final String plateState;
-  final String carImageUrl;
-  final VoidCallback onRideCompleted;
+  final String? title;
+  final String? carName;
+  final String? carColor;
+  final String? plateNumber;
+  final String? plateState;
+  final String? carImageUrl;
+  final VoidCallback? onRideCompleted;
 
   const RideCard({
     super.key,
@@ -32,12 +32,24 @@ class RideCardState extends State<RideCard> {
   void initState() {
     super.initState();
     if (mounted) {
-      widget.onRideCompleted.call();
+      widget.onRideCompleted?.call();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Check if required data is available
+    if (widget.title == null ||
+        widget.carName == null ||
+        widget.carColor == null ||
+        widget.plateNumber == null ||
+        widget.plateState == null ||
+        widget.carImageUrl == null) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     return SafeArea(
         child: Align(
           alignment: Alignment.bottomCenter,
@@ -59,20 +71,20 @@ class RideCardState extends State<RideCard> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  widget.title,
+                  widget.title!,
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 14),
-                Image.network(widget.carImageUrl, height: 120),
+                Image.network(widget.carImageUrl!, height: 120),
                 const SizedBox(height: 10),
                 Text(
-                  widget.carName,
+                  widget.carName!,
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  widget.carColor,
+                  widget.carColor!,
                   style: const TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 const SizedBox(height: 13),
@@ -85,7 +97,7 @@ class RideCardState extends State<RideCard> {
                   child: Column(
                     children: [
                       Text(
-                        widget.plateNumber,
+                        widget.plateNumber!,
                         style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
@@ -93,7 +105,7 @@ class RideCardState extends State<RideCard> {
                         ),
                       ),
                       Text(
-                        widget.plateState,
+                        widget.plateState!,
                         style: const TextStyle(fontSize: 12, color: Colors.black54),
                       ),
                     ],
