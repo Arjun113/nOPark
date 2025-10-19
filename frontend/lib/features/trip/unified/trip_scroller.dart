@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:nopark/features/trip/driver/presentation/widgets/ride_options_screen.dart';
 import 'package:nopark/logic/network/dio_client.dart';
+
 import '../entities/trip_stops.dart';
 
 class PastRidesOverlay extends StatefulWidget {
@@ -22,47 +22,60 @@ class _PastRidesOverlayState extends State<PastRidesOverlay> {
     // Fetch from backend
 
     try {
-      final trip_history_full = await DioClient().client.get(
+      final tripHistoryFull = await DioClient().client.get(
         '/rides/history',
-        data: {}
+        data: {},
       );
 
-      if (trip_history_full.statusCode != 201) {
+      if (tripHistoryFull.statusCode != 201) {
         pastRides = [];
         return;
       }
 
-      final trip_history_list = trip_history_full.data['rides'];
+      final tripHistoryList = tripHistoryFull.data['rides'];
 
-      for (var trip_history in trip_history_list) {
+      for (var tripHistory in tripHistoryList) {
         // No errors, now proceed
-        final indiv_trips = trip_history.data['requests'] as List<Map<String, dynamic>>;
-        List<Stop> trip_stops = [];
-        for (var trip in indiv_trips) {
-          final distance_est = await DioClient().client.get(
-              '/maps/route',
-              data: {
-                'start_lat': double.parse(trip['pickup_latitude']),
-                'start_lng': double.parse(trip['pickup_longitude']),
-                'end_lat': double.parse(trip['dropoff_latitude']),
-                'end_lng': double.parse(trip['dropoff_longitude'])
-              }
+        final indivTrips =
+            tripHistory.data['requests'] as List<Map<String, dynamic>>;
+        List<Stop> tripStops = [];
+        for (var trip in indivTrips) {
+          final distanceEst = await DioClient().client.get(
+            '/maps/route',
+            data: {
+              'start_lat': double.parse(trip['pickup_latitude']),
+              'start_lng': double.parse(trip['pickup_longitude']),
+              'end_lat': double.parse(trip['dropoff_latitude']),
+              'end_lng': double.parse(trip['dropoff_longitude']),
+            },
           );
 
-          if (distance_est.statusCode != 201){
+          if (distanceEst.statusCode != 201) {
             return;
           }
 
-          final new_stop = Stop(label: trip['pickup_location'], time: DateTime.parse(trip['updated_at']), distanceKm: double.parse(distance_est.data['distance']), duration: Duration(minutes: int.parse(distance_est.data['duration'])));
-          trip_stops.add(new_stop);
+          final newStop = Stop(
+            label: trip['pickup_location'],
+            time: DateTime.parse(trip['updated_at']),
+            distanceKm: double.parse(distanceEst.data['distance']),
+            duration: Duration(
+              minutes: int.parse(distanceEst.data['duration']),
+            ),
+          );
+          tripStops.add(newStop);
         }
-        final new_trip = Trip(from: trip_stops[0].label, to: trip_history['dropoff_location'], startTime: trip_history['updated_at'], stops: trip_stops);
-        pastRides.add(new_trip);
+        final newTrip = Trip(
+          from: tripStops[0].label,
+          to: tripHistory['dropoff_location'],
+          startTime: tripHistory['updated_at'],
+          stops: tripStops,
+        );
+        pastRides.add(newTrip);
       }
-
-    }
-    catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error fetching past rides")));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error fetching past rides")));
     }
   }
 

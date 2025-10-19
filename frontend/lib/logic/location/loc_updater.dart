@@ -27,14 +27,10 @@ class LocationService {
     try {
       await DioClient().client.put(
         '/accounts/location',
-        data: {
-          'lat': position.latitude,
-          'lon': position.longitude,
-        },
+        data: {'lat': position.latitude, 'lon': position.longitude},
       );
-      print('Location sent: ${position.latitude}, ${position.longitude}');
     } catch (e) {
-      print('Error sending location: $e');
+      // We would ideally handle the error here
     }
   }
 

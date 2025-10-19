@@ -14,7 +14,7 @@ class RideInfo {
     required this.riderPrice,
     required this.riderID,
     this.rating = 0.0,
-    this.comment = ""
+    this.comment = "",
   });
 }
 
@@ -41,9 +41,10 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
   void initState() {
     super.initState();
     _pageController = PageController();
-    _commentControllers = (widget.riders ?? [])
-        .map((rider) => TextEditingController(text: rider.comment))
-        .toList();
+    _commentControllers =
+        (widget.riders ?? [])
+            .map((rider) => TextEditingController(text: rider.comment))
+            .toList();
   }
 
   @override
@@ -69,9 +70,7 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
   Widget build(BuildContext context) {
     // Check if required data is available
     if (widget.riders == null || widget.riders!.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     return Align(
@@ -106,15 +105,16 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
                   widget.riders!.length,
-                      (index) => Container(
+                  (index) => Container(
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: _currentPage == index
-                          ? Colors.blue
-                          : Colors.grey.shade300,
+                      color:
+                          _currentPage == index
+                              ? Colors.blue
+                              : Colors.grey.shade300,
                     ),
                   ),
                 ),
@@ -165,8 +165,11 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
                                     ),
                                   ),
                                   const SizedBox(width: 4),
-                                  const Icon(Icons.star,
-                                      color: Colors.amber, size: 18),
+                                  const Icon(
+                                    Icons.star,
+                                    color: Colors.amber,
+                                    size: 18,
+                                  ),
                                 ],
                               ),
                             ],
@@ -178,7 +181,9 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
                             child: Text(
                               rider.riderPrice.toString(),
                               style: const TextStyle(
-                                  fontSize: 16, color: Colors.black54),
+                                fontSize: 16,
+                                color: Colors.black54,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -186,16 +191,18 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
                           // "How was the ride?" text
                           const Text(
                             'How was the ride?',
-                            style:
-                            TextStyle(fontSize: 16, color: Colors.black54),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.black54,
+                            ),
                           ),
                           const SizedBox(height: 12),
 
                           // Star rating
                           StarRating(
                             rating: rider.rating,
-                            onRatingChanged: (rating) =>
-                                _updateRating(index, rating),
+                            onRatingChanged:
+                                (rating) => _updateRating(index, rating),
                           ),
                           const SizedBox(height: 20),
 
@@ -209,17 +216,21 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
                               hintStyle: TextStyle(color: Colors.grey.shade400),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide:
-                                BorderSide(color: Colors.grey.shade300),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide:
-                                BorderSide(color: Colors.grey.shade300),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide: const BorderSide(color: Colors.blue),
+                                borderSide: const BorderSide(
+                                  color: Colors.blue,
+                                ),
                               ),
                               contentPadding: const EdgeInsets.all(12),
                             ),
@@ -243,20 +254,23 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
                     try {
                       for (var rider in widget.riders!) {
                         final response = await DioClient().client.post(
-                            '/accounts/${rider.riderID}/review',
-                            data: {
-                              'stars': rider.rating.floor(),
-                              'comment': rider.comment
-                            }
+                          '/accounts/${rider.riderID}/review',
+                          data: {
+                            'stars': rider.rating.floor(),
+                            'comment': rider.comment,
+                          },
                         );
 
                         if (response.statusCode != 201) {
                           break;
                         }
                       }
-                    }
-                    catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error sending reviews to the server")));
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("Error sending reviews to the server"),
+                        ),
+                      );
                     }
                     widget.moveToZero?.call();
                   }),

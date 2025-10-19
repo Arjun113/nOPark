@@ -15,7 +15,6 @@ import 'package:nopark/features/trip/entities/user.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_cost_adjust_widget.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_over_card_rating.dart';
 import 'package:nopark/features/trip/unified/trip_scroller.dart';
-import 'package:nopark/home_test.dart';
 import 'package:nopark/logic/routing/basic_two_router.dart';
 import 'package:nopark/logic/utilities/firebase_notif_waiter.dart';
 
@@ -148,8 +147,12 @@ class _DriverHomePageState extends State<DriverHomePage> {
                         }
 
                         _updateMap(destinationMarker, route!);
-                        rideDataStore.setCurrentDestination(Location(lat: lat, long: lng));
-                        rideDataStore.setCurrentDestinationString((await placemarkFromCoordinates(lat, lng))[0].name!);
+                        rideDataStore.setCurrentDestination(
+                          Location(lat: lat, long: lng),
+                        );
+                        rideDataStore.setCurrentDestinationString(
+                          (await placemarkFromCoordinates(lat, lng))[0].name!,
+                        );
                         controller.next();
                       },
                       onBack: Navigator.of(context).pop,
@@ -165,25 +168,38 @@ class _DriverHomePageState extends State<DriverHomePage> {
                         try {
                           // Send the preferences to the backend
                           final response = await DioClient().client.post(
-                              '/rides',
+                            '/rides',
                             data: {
-                                'request_ids': proposalIndices,
-                                'destination_lat': rideDataStore.getCurrentDestination()!.lat,
-                                'destination_lon': rideDataStore.getCurrentDestination()!.long
-                            }
+                              'request_ids': proposalIndices,
+                              'destination_lat':
+                                  rideDataStore.getCurrentDestination()!.lat,
+                              'destination_lon':
+                                  rideDataStore.getCurrentDestination()!.long,
+                            },
                           );
 
                           if (response.statusCode != 201) {
                             return;
                           }
-                        }
-                        catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error communicating with the server")));
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "Error communicating with the server",
+                                ),
+                              ),
+                            );
+                          }
                         }
 
                         // Wait for the Ride ID to be allocated
-                        RemoteMessage message = await waitForJob('ride_confirmed');
-                        rideDataStore.setFinalRideId(message.data['ride_id'] as int);
+                        RemoteMessage message = await waitForJob(
+                          'ride_confirmed',
+                        );
+                        rideDataStore.setFinalRideId(
+                          message.data['ride_id'] as int,
+                        );
 
                         controller.next();
                       },
@@ -192,39 +208,60 @@ class _DriverHomePageState extends State<DriverHomePage> {
                     PickupSequenceWidget(
                       rideData: rideDataStore,
                       onLocationReached: ((index) async {
-                        if (index < rideDataStore.getDriverAcceptedProposals()!.length) {
+                        if (index <
+                            rideDataStore
+                                .getDriverAcceptedProposals()!
+                                .length) {
                           // Tell API to ping passenger
                           try {
-                            final loc_reached_response = await DioClient().client.post(
-                              '/rides/pickup',
-                              data: {
-                                'ride_id': rideDataStore.getFinalRideId(),
-                                'current_latitude': mapKey.currentState?.currentLocation?.latitude,
-                                'current_longitude': mapKey.currentState?.currentLocation?.longitude
-                              }
-                            );
+                            final locReachedResponse = await DioClient().client
+                                .post(
+                                  '/rides/pickup',
+                                  data: {
+                                    'ride_id': rideDataStore.getFinalRideId(),
+                                    'current_latitude':
+                                        mapKey
+                                            .currentState
+                                            ?.currentLocation
+                                            ?.latitude,
+                                    'current_longitude':
+                                        mapKey
+                                            .currentState
+                                            ?.currentLocation
+                                            ?.longitude,
+                                  },
+                                );
 
-                            if (loc_reached_response.statusCode != 201) {
+                            if (locReachedResponse.statusCode != 201) {
                               return;
                             }
-                          }
-                          catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error communicating with the server")));
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "Error communicating with the server",
+                                ),
+                              ),
+                            );
                           }
                         }
 
                         // If this is the last pickup, move to next screen
-                        if (index == rideDataStore.getDriverAcceptedProposals()!.length - 1) {
+                        if (index ==
+                            rideDataStore.getDriverAcceptedProposals()!.length -
+                                1) {
                           controller.next();
                         }
                       }),
                     ),
 
-                    RideCompletionWidget(riders: rideDataStore.getCurrentRiderInfo('driver'),
-                        moveToZero: (() {
-                          rideDataStore.clearForNextRide();
-                          controller.jumpTo(0);
-                        }))
+                    RideCompletionWidget(
+                      riders: rideDataStore.getCurrentRiderInfo('driver'),
+                      moveToZero: (() {
+                        rideDataStore.clearForNextRide();
+                        controller.jumpTo(0);
+                      }),
+                    ),
                   ],
             ),
       ),
@@ -241,9 +278,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
               onClose: () => Navigator.of(context).pop(),
               stepsBuilder:
                   (controller) => [
-                    PastRidesOverlay(
-                      onBack: () => Navigator.of(context).pop(),
-                    ),
+                    PastRidesOverlay(onBack: () => Navigator.of(context).pop()),
                   ],
             ),
       ),

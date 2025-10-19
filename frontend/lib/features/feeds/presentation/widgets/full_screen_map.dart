@@ -6,11 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:nopark/constants/api_uris.dart';
-import 'package:nopark/features/feeds/datamodels/data_controller.dart';
 import 'package:nopark/logic/location/loc_perms.dart';
 import 'package:nopark/logic/location/loc_stream.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:nopark/logic/location/loc_updater.dart';
 import 'package:nopark/logic/map/polyline_decoder.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -178,11 +177,11 @@ class FullScreenMapState extends State<FullScreenMap> {
     });
   }
 
-  void setPolyLine (String polyline) {
+  void setPolyLine(String polyline) {
     // Decode polyline
-    final points_list = decodePolyline(polyline);
+    final pointsList = decodePolyline(polyline);
     setState(() {
-      routePoints = points_list;
+      routePoints = pointsList;
     });
   }
 

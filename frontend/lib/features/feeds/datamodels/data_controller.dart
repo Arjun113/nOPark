@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nopark/features/feeds/datamodels/passenger/ride_proposal.dart';
 import 'package:nopark/features/feeds/datamodels/passenger/ride_request_response.dart';
+
 import '../../trip/driver/presentation/widgets/ride_options_screen.dart';
 import '../../trip/entities/location.dart';
 import '../../trip/passenger/presentation/widgets/trip_over_card_rating.dart';
@@ -31,57 +32,58 @@ class DataController extends ChangeNotifier {
   int? getFinalRideId() => finalRideId;
   List<RideOption>? getDriverReceivedProposalDetails() => driverRideProposals;
 
-  void setCurrentDestination (Location destination) {
+  void setCurrentDestination(Location destination) {
     this.destination = destination;
     notifyListeners();
   }
 
-  void setRideReqResp (RideRequestResponse rideResponse) {
+  void setRideReqResp(RideRequestResponse rideResponse) {
     rideReqResp = rideResponse;
     notifyListeners();
   }
 
-  void setCurrentRideProposalID (int rideProposalID) {
+  void setCurrentRideProposalID(int rideProposalID) {
+    // ignore: unnecessary_this
     this.rideProposalId = rideProposalID;
     notifyListeners();
   }
 
-  void setCurrentRideInitialCompensation (double newInitialCompensation) {
+  void setCurrentRideInitialCompensation(double newInitialCompensation) {
     initialCompensation = newInitialCompensation;
     notifyListeners();
   }
 
-  void setCurrentDestinationString (String newDestinationString) {
+  void setCurrentDestinationString(String newDestinationString) {
     destinationString = newDestinationString;
     notifyListeners();
   }
 
-  void setCurrentStartingString (String newStartingString) {
+  void setCurrentStartingString(String newStartingString) {
     startingString = newStartingString;
     notifyListeners();
   }
 
-  void setCurrentPassengerRideProposal (RideProposal newProposal) {
+  void setCurrentPassengerRideProposal(RideProposal newProposal) {
     rideProposal = newProposal;
     notifyListeners();
   }
 
-  void setCurrentUserResponse (UserResponse newResponse) {
+  void setCurrentUserResponse(UserResponse newResponse) {
     driverData = newResponse;
     notifyListeners();
   }
 
-  void setDriverAcceptedProposals (List <int> proposals) {
+  void setDriverAcceptedProposals(List<int> proposals) {
     driverAcceptedProposals = proposals;
     notifyListeners();
   }
 
-  void setFinalRideId (int newRideId) {
+  void setFinalRideId(int newRideId) {
     finalRideId = newRideId;
     notifyListeners();
   }
 
-  void setDriverReceivedProposalDetails (List<RideOption> newProposalSet) {
+  void setDriverReceivedProposalDetails(List<RideOption> newProposalSet) {
     driverRideProposals = newProposalSet;
     notifyListeners();
   }
@@ -99,7 +101,7 @@ class DataController extends ChangeNotifier {
           riderName: driverData!.firstName + driverData!.lastName,
           riderPrice: rideReqResp!.initialCompensation,
           riderID: rideProposal!.driverID,
-        )
+        ),
       ];
     } else {
       // Check if required data exists
@@ -123,7 +125,7 @@ class DataController extends ChangeNotifier {
     }
   }
 
-  void clearForNextRide () {
+  void clearForNextRide() {
     driverRideProposals = null;
     driverAcceptedProposals = null;
     driverData = null;
