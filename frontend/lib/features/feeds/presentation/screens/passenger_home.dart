@@ -16,7 +16,6 @@ import 'package:nopark/features/trip/passenger/presentation/widgets/trip_cost_ad
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_over_card_rating.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_search_animation.dart';
 import 'package:nopark/features/trip/unified/trip_scroller.dart';
-import 'package:nopark/home_test.dart';
 import 'package:nopark/logic/network/dio_client.dart';
 import 'package:nopark/logic/routing/basic_two_router.dart';
 import 'package:nopark/logic/utilities/firebase_notif_waiter.dart';
@@ -53,7 +52,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
   get collapse => null;
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
     _loadUserData();
   }
@@ -69,7 +68,6 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
           [];
       isLoading = false;
     });
-    print("User data loaded");
   }
 
   List<AddressCardData> convertListToAddressCard() {
@@ -130,34 +128,57 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                               LatLng(lat, lng),
                             );
                         _updateMap(destinationMarker, route!);
-                        rideDataStore.setCurrentDestination(Location(lat: lat, long: lng));
+                        rideDataStore.setCurrentDestination(
+                          Location(lat: lat, long: lng),
+                        );
 
                         // Get the recommended bid amount
                         try {
                           final response = await DioClient().client.get(
-                              '/rides/compensation',
-                              data: {
-                                "start_longitude": mapKey.currentState?.currentLocation?.longitude,
-                                "start_latitude": mapKey.currentState?.currentLocation?.latitude,
-                                "end_longitude": lng,
-                                "end_latitude": lat
-                              }
+                            '/rides/compensation',
+                            data: {
+                              "start_longitude":
+                                  mapKey
+                                      .currentState
+                                      ?.currentLocation
+                                      ?.longitude,
+                              "start_latitude":
+                                  mapKey
+                                      .currentState
+                                      ?.currentLocation
+                                      ?.latitude,
+                              "end_longitude": lng,
+                              "end_latitude": lat,
+                            },
                           );
 
                           if (response.statusCode == 200) {
                             // All ok
-                            rideDataStore.setCurrentRideInitialCompensation(response.data['estimated_comp'] as double);
-                          }
-                          else {
+                            rideDataStore.setCurrentRideInitialCompensation(
+                              response.data['estimated_comp'] as double,
+                            );
+                          } else {
                             return;
                           }
-                        }
-                        catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error contacting server. ${e}")));
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Error contacting server. $e"),
+                              ),
+                            );
+                          }
                         }
 
-                        rideDataStore.setCurrentDestinationString((await placemarkFromCoordinates(lat, lng))[0].name!);
-                        rideDataStore.setCurrentStartingString((await placemarkFromCoordinates(mapKey.currentState!.currentLocation!.latitude, mapKey.currentState!.currentLocation!.longitude))[0].name!);
+                        rideDataStore.setCurrentDestinationString(
+                          (await placemarkFromCoordinates(lat, lng))[0].name!,
+                        );
+                        rideDataStore.setCurrentStartingString(
+                          (await placemarkFromCoordinates(
+                            mapKey.currentState!.currentLocation!.latitude,
+                            mapKey.currentState!.currentLocation!.longitude,
+                          ))[0].name!,
+                        );
 
                         controller.next();
                       },
@@ -170,20 +191,23 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                       onBack: controller.back,
                       fromAddressName: rideDataStore.getCurrentStartingString(),
                       fromCampusCode: null,
-                      toAddressName: rideDataStore.getCurrentDestinationString(),
+                      toAddressName:
+                          rideDataStore.getCurrentDestinationString(),
                       toCampusCode: null,
-                      recommendedBidAUD: rideDataStore.getCurrentRideInitialCompensation(),
+                      recommendedBidAUD:
+                          rideDataStore.getCurrentRideInitialCompensation(),
                       initialSize: size,
                       initialPosition: position,
                       onSubmit: ((newBid) async {
                         // Engage popup
                         DriverSearchOverlay.show(context);
 
-                        try{
+                        try {
                           final response = await DioClient().client.post(
                             '/rides/requests',
                             data: {
-                              "pickup_location": rideDataStore.getCurrentStartingString(),
+                              "pickup_location":
+                                  rideDataStore.getCurrentStartingString(),
                               "pickup_latitude":
                                   mapKey
                                       .currentState!
@@ -194,9 +218,12 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                                       .currentState!
                                       .currentLocation!
                                       .longitude,
-                              "dropoff_location": rideDataStore.getCurrentDestinationString(),
-                              "dropoff_latitude": rideDataStore.getCurrentDestination()!.lat,
-                              "dropoff_longitude": rideDataStore.getCurrentDestination()!.long,
+                              "dropoff_location":
+                                  rideDataStore.getCurrentDestinationString(),
+                              "dropoff_latitude":
+                                  rideDataStore.getCurrentDestination()!.lat,
+                              "dropoff_longitude":
+                                  rideDataStore.getCurrentDestination()!.long,
                               "compensation": newBid,
                             },
                           );
@@ -208,9 +235,9 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                                   content: Text("Ride created successfully!"),
                                 ),
                               );
-                              rideDataStore.setRideReqResp(RideRequestResponse.fromJson(
-                                response.data,
-                              ));
+                              rideDataStore.setRideReqResp(
+                                RideRequestResponse.fromJson(response.data),
+                              );
                             }
                           } else {
                             if (mounted) {
@@ -235,36 +262,47 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         }
 
                         // Wait for FCM notification about prospective ride
-                        RemoteMessage driver_prospectus = await waitForJob("ride_created");
+                        RemoteMessage driverProspectus = await waitForJob(
+                          "ride_created",
+                        );
 
-                        // TODO: Pull the ride proposal and chuck it in the alert dialog
                         try {
-                          final proposal_data = await DioClient().client.get(
+                          final proposalData = await DioClient().client.get(
                             '/rides/proposals',
                             data: {
-                              "proposal_id": driver_prospectus.data['proposal_id']
-                            }
+                              "proposal_id":
+                                  driverProspectus.data['proposal_id'],
+                            },
                           );
 
-                          if (proposal_data.statusCode != 201) {
+                          if (proposalData.statusCode != 201) {
                             return;
                           }
 
-                          rideDataStore.setCurrentPassengerRideProposal(RideProposal.fromJson(proposal_data.data));
+                          rideDataStore.setCurrentPassengerRideProposal(
+                            RideProposal.fromJson(proposalData.data),
+                          );
 
                           // Now get driver details
-                          final driver_data = await DioClient().client.get(
-                            '/accounts/${rideDataStore.getCurrentPassengerRideProposal()!.driverID}'
+                          final driverData = await DioClient().client.get(
+                            '/accounts/${rideDataStore.getCurrentPassengerRideProposal()!.driverID}',
                           );
 
-                          if (driver_data.statusCode != 201) {
+                          if (driverData.statusCode != 201) {
                             return;
                           }
 
-                          rideDataStore.setCurrentUserResponse(UserResponse.fromJson(driver_data.data));
-                        }
-                        catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error talking to server.")));
+                          rideDataStore.setCurrentUserResponse(
+                            UserResponse.fromJson(driverData.data),
+                          );
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Error talking to server."),
+                              ),
+                            );
+                          }
                         }
 
                         // Store the prospective ride ID
@@ -277,8 +315,12 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text("Driver name: ${rideDataStore.getCurrentUserResponse()!.firstName}"),
-                                    Text("Driver rating: ${rideDataStore.getCurrentUserResponse()!.rating} (${rideDataStore.getCurrentUserResponse()!.ratingCount})"),
+                                    Text(
+                                      "Driver name: ${rideDataStore.getCurrentUserResponse()!.firstName}",
+                                    ),
+                                    Text(
+                                      "Driver rating: ${rideDataStore.getCurrentUserResponse()!.rating} (${rideDataStore.getCurrentUserResponse()!.ratingCount})",
+                                    ),
                                   ],
                                 ),
                                 actions: [
@@ -303,7 +345,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                             '/rides/confirm',
                             data: {
                               'proposal_id':
-                                  driver_prospectus.data['proposal_id'],
+                                  driverProspectus.data['proposal_id'],
                               'confirm':
                                   acception == true ? 'accept' : 'reject',
                             },
@@ -343,12 +385,12 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                           }
                         }
 
-                          // Go back to home if rejected.
+                        // Go back to home if rejected.
 
-                          if (acception == false) {
-                            rideDataStore.clearForNextRide();
-                            controller.jumpTo(0);
-                          }
+                        if (acception == false) {
+                          rideDataStore.clearForNextRide();
+                          controller.jumpTo(0);
+                        }
                         controller.next();
                       }),
                     ),
@@ -359,7 +401,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                       lookForCompletion: (() async {
                         // TODO: Wait for pickup to say yes
 
-                        final rider_picked_up = await waitForJob('proximity');
+                        final riderPickedUp = await waitForJob('proximity');
 
                         controller.next();
                       }),
@@ -376,7 +418,9 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                       onRideCompleted: (() async {
                         // TODO: Wait for ride to finish
 
-                        final rider_ride_done = await waitForJob('ride_completed');
+                        final riderRideDone = await waitForJob(
+                          'ride_completed',
+                        );
 
                         controller.next();
                       }),
@@ -405,9 +449,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
               onClose: () => Navigator.of(context).pop(),
               stepsBuilder:
                   (controller) => [
-                    PastRidesOverlay(
-                      onBack: () => Navigator.of(context).pop(),
-                    ),
+                    PastRidesOverlay(onBack: () => Navigator.of(context).pop()),
                   ],
             ),
       ),
@@ -557,27 +599,33 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                             addresses: addresses,
                             onLogOut: (() async {
                               try {
-                                // TODO: Lachlan and Taiyeb: clear cred store
                                 final response = await DioClient().client.post(
-                                    '/accounts/logout',
-                                    data: {}
+                                  '/accounts/logout',
                                 );
 
                                 if (response.statusCode == 201) {
+                                  CredentialStorage.deleteLoginToken();
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text("Successfully Logged Out"))
+                                    SnackBar(
+                                      content: Text("Successfully Logged Out"),
+                                    ),
                                   );
-                                  Navigator.pushReplacementNamed(context, '/login');
-                                }
-                                else {
+                                  Navigator.pushReplacementNamed(
+                                    context,
+                                    '/login',
+                                  );
+                                } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text("Unable to log out."))
+                                    SnackBar(
+                                      content: Text("Unable to log out."),
+                                    ),
                                   );
                                 }
-                              }
-                              catch (e) {
+                              } catch (e) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text("Unable to contact server."))
+                                  SnackBar(
+                                    content: Text("Unable to contact server."),
+                                  ),
                                 );
                               }
                             }),

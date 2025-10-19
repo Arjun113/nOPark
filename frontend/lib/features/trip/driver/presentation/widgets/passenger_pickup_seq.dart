@@ -75,18 +75,17 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
     }
 
     try {
-      final allotted_ride_id = widget.rideData!.getFinalRideId();
-      final received_requests = widget.rideData!.getDriverReceivedProposalDetails();
+      final allottedRideId = widget.rideData!.getFinalRideId();
+      final receivedRequests =
+          widget.rideData!.getDriverReceivedProposalDetails();
 
       // Pull ride data from backend to get proposal IDs
-      final ride_summary_request = await DioClient().client.get(
-          '/rides/summary',
-          data: {
-            'ride_id': allotted_ride_id
-          }
+      final rideSummaryRequest = await DioClient().client.get(
+        '/rides/summary',
+        data: {'ride_id': allottedRideId},
       );
 
-      if (ride_summary_request.statusCode != 201) {
+      if (rideSummaryRequest.statusCode != 201) {
         if (mounted) {
           setState(() {
             pickups = [];
@@ -98,16 +97,16 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
       }
 
       // All ok
-      final list_of_rides = ride_summary_request.data['proposals'] as List<dynamic>;
+      final listOfRides = rideSummaryRequest.data['proposals'] as List<dynamic>;
       List<RideOption> tempPickups = [];
 
       // Loop through list to counter check proposal IDs
-      for (var ride in list_of_rides) {
-        final ride_status = ride['status'];
-        if (ride_status == "accepted") {
-          for (var ride_request in received_requests!) {
-            if (ride_request.proposalID == (ride['id'] as int)) {
-              tempPickups.add(ride_request);
+      for (var ride in listOfRides) {
+        final rideStatus = ride['status'];
+        if (rideStatus == "accepted") {
+          for (var rideRequest in receivedRequests!) {
+            if (rideRequest.proposalID == (ride['id'] as int)) {
+              tempPickups.add(rideRequest);
               break;
             }
           }
@@ -126,9 +125,9 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
           _isLoading = false;
           _errorMessage = "Error fetching ride details: $e";
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Error fetching ride details."))
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error fetching ride details.")));
       }
     }
   }
@@ -159,16 +158,12 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
   Widget build(BuildContext context) {
     // Check if required data is available
     if (widget.rideData == null) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     // Show loading state while initializing
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     // Show error state if initialization failed
@@ -193,10 +188,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
             child: Text(
               _errorMessage ?? 'Failed to load pickup data',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.red,
-              ),
+              style: const TextStyle(fontSize: 16, color: Colors.red),
             ),
           ),
         ),

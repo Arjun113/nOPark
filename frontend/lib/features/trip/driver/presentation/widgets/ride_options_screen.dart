@@ -1,4 +1,3 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:nopark/features/feeds/datamodels/data_controller.dart';
 
@@ -28,19 +27,19 @@ class RideOption {
     required this.price,
     required this.proposalID,
     required this.polyline,
-    required this.passengerID
+    required this.passengerID,
   });
 }
 
-Future<List<RideOption>> fetchObjects (DataController rideDataStore) async {
-  List<RideOption> possible_rides = [];
+Future<List<RideOption>> fetchObjects(DataController rideDataStore) async {
+  List<RideOption> possibleRides = [];
   try {
     final response = await DioClient().client.get(
       '/rides/requests',
       data: {
         'dropoff_lat': rideDataStore.getCurrentDestination()!.lat,
-        'dropoff_lon': rideDataStore.getCurrentDestination()!.long
-      }
+        'dropoff_lon': rideDataStore.getCurrentDestination()!.long,
+      },
     );
 
     if (response.statusCode != 201) {
@@ -51,41 +50,46 @@ Future<List<RideOption>> fetchObjects (DataController rideDataStore) async {
 
     // This has passenger ID; we need passenger name and rating also
     for (int i = 0; i < mainData.length; i = i + 1) {
-      final passenger_response = await DioClient().client.get(
-        '/accounts/${mainData[i]['passenger_id']}'
+      final passengerResponse = await DioClient().client.get(
+        '/accounts/${mainData[i]['passenger_id']}',
       );
 
       if (response.statusCode != 201) {
-        return possible_rides;
+        return possibleRides;
       }
 
-      final newRide = RideOption(name: passenger_response.data['first_name'] + passenger_response.data['last_name'],
-          rating: passenger_response.data['rating'],
-          address: response.data['dropoff_location'],
-          addressCoords: Location(lat: response.data['dropoff_latitude'], long: response.data['dropoff_longitude']),
-          detourKm: response.data['detour_km'],
-          detourMin: response.data['detour_min'],
-          price: response.data['compensation'],
-          proposalID: response.data['id'],
-          polyline: response.data['polyline'],
-        passengerID: mainData[i]['passenger_id'] as int
+      final newRide = RideOption(
+        name:
+            passengerResponse.data['first_name'] +
+            passengerResponse.data['last_name'],
+        rating: passengerResponse.data['rating'],
+        address: response.data['dropoff_location'],
+        addressCoords: Location(
+          lat: response.data['dropoff_latitude'],
+          long: response.data['dropoff_longitude'],
+        ),
+        detourKm: response.data['detour_km'],
+        detourMin: response.data['detour_min'],
+        price: response.data['compensation'],
+        proposalID: response.data['id'],
+        polyline: response.data['polyline'],
+        passengerID: mainData[i]['passenger_id'] as int,
       );
 
-      possible_rides.add(newRide);
+      possibleRides.add(newRide);
     }
-  }
-  catch (e) {
+  } catch (e) {
     // Add context if needed
   }
-  rideDataStore.setDriverReceivedProposalDetails(possible_rides);
-  return possible_rides;
+  rideDataStore.setDriverReceivedProposalDetails(possibleRides);
+  return possibleRides;
 }
 
 class RideOptionsScreen extends StatefulWidget {
   final String? destinationCode;
   final DataController? rideDataStore;
   final ValueChanged<List<int>>? onSelectionChanged;
-  final void Function (List<int> selections) onConfirm;
+  final void Function(List<int> selections) onConfirm;
 
   const RideOptionsScreen({
     super.key,
@@ -117,9 +121,7 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
   Widget build(BuildContext context) {
     // Check if required data is available
     if (widget.rideDataStore == null) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     return SafeArea(
@@ -182,13 +184,15 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: isSelected
-                                  ? Colors.blue[100]
-                                  : Colors.grey[200],
+                              color:
+                                  isSelected
+                                      ? Colors.blue[100]
+                                      : Colors.grey[200],
                               borderRadius: BorderRadius.circular(12),
-                              border: isSelected
-                                  ? Border.all(color: Colors.blue, width: 2)
-                                  : null,
+                              border:
+                                  isSelected
+                                      ? Border.all(color: Colors.blue, width: 2)
+                                      : null,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,7 +200,7 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
                                 // Name + Rating
                                 Row(
                                   mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       ride.name,
@@ -266,7 +270,7 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
                     child: ElevatedButton(
                       onPressed: () {
                         List<int> proposalIds = [];
-                        for (int i = 0; i < selectedIndices.length; i = i + 1){
+                        for (int i = 0; i < selectedIndices.length; i = i + 1) {
                           proposalIds.add(rides[i].proposalID);
                         }
                         widget.onConfirm(proposalIds);
