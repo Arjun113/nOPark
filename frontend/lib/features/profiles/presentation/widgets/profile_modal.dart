@@ -352,16 +352,17 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                   child: GestureDetector(
                     onTap: (() async {
                       final newAddress = await showAddressPopup(context);
+                      print(widget.addresses.length);
 
                       try {
                         final response = await DioClient().client.post(
                           '/accounts/addresses',
                           data: {
                             'address_name':
-                            newAddress?.addressNameController.text,
+                            newAddress!.addressNameController.text,
                             'address_line':
                             newAddress!.addressLine1Controller.text +
-                                newAddress.addressLine2Controller.text,
+                                newAddress!.addressLine2Controller.text,
                           },
                         );
 

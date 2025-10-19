@@ -256,7 +256,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text("Error contacting the server."),
+                                content: Text("Error contacting the server. $e"),
                               ),
                             );
                           }

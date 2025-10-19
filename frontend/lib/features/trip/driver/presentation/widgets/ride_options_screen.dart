@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:nopark/features/feeds/datamodels/data_controller.dart';
 
@@ -35,26 +37,25 @@ Future<List<RideOption>> fetchObjects(DataController rideDataStore) async {
   List<RideOption> possibleRides = [];
   try {
     final response = await DioClient().client.get(
-      '/rides/requests',
-      data: {
-        'dropoff_lat': rideDataStore.getCurrentDestination()!.lat,
-        'dropoff_lon': rideDataStore.getCurrentDestination()!.long,
-      },
+      '/rides/requests?dropoff_lat=${rideDataStore.getCurrentDestination()!.lat}&dropoff_lon=${rideDataStore.getCurrentDestination()!.long}',
+      data: {}
     );
 
-    if (response.statusCode != 201) {
+    if (response.statusCode != 200) {
       return [];
     }
 
-    final mainData = response.data['requests'] as List<Map<String, dynamic>>;
+
+    final mainData = response.data['requests'];
 
     // This has passenger ID; we need passenger name and rating also
     for (int i = 0; i < mainData.length; i = i + 1) {
+      print(mainData[i]);
       final passengerResponse = await DioClient().client.get(
         '/accounts/${mainData[i]['passenger_id']}',
       );
 
-      if (response.statusCode != 201) {
+      if (response.statusCode != 200) {
         return possibleRides;
       }
 
@@ -62,24 +63,25 @@ Future<List<RideOption>> fetchObjects(DataController rideDataStore) async {
         name:
             passengerResponse.data['first_name'] +
             passengerResponse.data['last_name'],
-        rating: passengerResponse.data['rating'],
-        address: response.data['dropoff_location'],
+        rating: passengerResponse.data['rating'] ?? 0,
+        address: mainData[i]['dropoff_location'],
         addressCoords: Location(
-          lat: response.data['dropoff_latitude'],
-          long: response.data['dropoff_longitude'],
+          lat: double.parse(mainData[i]['dropoff_latitude']),
+          long: double.parse(mainData[i]['dropoff_longitude']),
         ),
-        detourKm: response.data['detour_km'],
-        detourMin: response.data['detour_min'],
-        price: response.data['compensation'],
-        proposalID: response.data['id'],
-        polyline: response.data['polyline'],
-        passengerID: mainData[i]['passenger_id'] as int,
+        detourKm: 0.0,
+        detourMin: 0,
+        price: double.parse(mainData[i]['compensation']),
+        proposalID: int.parse(mainData[i]['id']),
+        polyline: mainData[i]['polyline'],
+        passengerID: int.parse(mainData[i]['passenger_id']),
       );
 
       possibleRides.add(newRide);
     }
   } catch (e) {
     // Add context if needed
+    print("error fetching things");
   }
   rideDataStore.setDriverReceivedProposalDetails(possibleRides);
   return possibleRides;
@@ -120,7 +122,7 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
   @override
   Widget build(BuildContext context) {
     // Check if required data is available
-    if (widget.rideDataStore == null) {
+    if (widget.rideDataStore!.getCurrentDestination() == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
