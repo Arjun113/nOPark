@@ -26,7 +26,7 @@ class PickupInfo {
 }
 
 class PickupSequenceWidget extends StatefulWidget {
-  final DataController rideData;
+  final DataController? rideData;
   final Stream<int>? locationStream;
   final Function(int)? onLocationReached;
 
@@ -46,10 +46,12 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
   int _currentIndex = 0;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  late List<RideOption> pickups;
+  List<RideOption>? pickups;
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
-  void initState() async {
+  void initState() {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
@@ -60,26 +62,44 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
     );
     _animationController.forward();
 
-    // TODO: Populate pickup
-    final allotted_ride_id = widget.rideData.getFinalRideId();
-    final received_requests = widget.rideData.getDriverReceivedProposalDetails();
+    // Start the async initialization
+    _initializePickups();
+  }
 
-    try{
+  Future<void> _initializePickups() async {
+    // Wait for required data to be available
+    while (widget.rideData?.getFinalRideId() == null ||
+        widget.rideData?.getDriverReceivedProposalDetails() == null) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (!mounted) return;
+    }
+
+    try {
+      final allotted_ride_id = widget.rideData!.getFinalRideId();
+      final received_requests = widget.rideData!.getDriverReceivedProposalDetails();
+
       // Pull ride data from backend to get proposal IDs
       final ride_summary_request = await DioClient().client.get(
           '/rides/summary',
-        data: {
+          data: {
             'ride_id': allotted_ride_id
-        }
+          }
       );
 
       if (ride_summary_request.statusCode != 201) {
-        pickups = [];
+        if (mounted) {
+          setState(() {
+            pickups = [];
+            _isLoading = false;
+            _errorMessage = "Failed to fetch ride summary";
+          });
+        }
         return;
       }
 
       // All ok
-      final list_of_rides = ride_summary_request.data['proposals'] as List<Map<String, dynamic>>;
+      final list_of_rides = ride_summary_request.data['proposals'] as List<dynamic>;
+      List<RideOption> tempPickups = [];
 
       // Loop through list to counter check proposal IDs
       for (var ride in list_of_rides) {
@@ -87,16 +107,29 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
         if (ride_status == "accepted") {
           for (var ride_request in received_requests!) {
             if (ride_request.proposalID == (ride['id'] as int)) {
-              pickups.add(ride_request);
+              tempPickups.add(ride_request);
               break;
             }
           }
         }
       }
-    }
 
-    catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error fetching ride details.")));
+      if (mounted) {
+        setState(() {
+          pickups = tempPickups;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = "Error fetching ride details: $e";
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error fetching ride details."))
+        );
+      }
     }
   }
 
@@ -107,7 +140,9 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
   }
 
   void _moveToNext() {
-    if (_currentIndex < pickups.length - 1) {
+    if (pickups == null || pickups!.isEmpty) return;
+
+    if (_currentIndex < pickups!.length - 1) {
       _animationController.reverse().then((_) {
         setState(() {
           _currentIndex++;
@@ -122,9 +157,55 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
 
   @override
   Widget build(BuildContext context) {
+    // Check if required data is available
+    if (widget.rideData == null) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    // Show loading state while initializing
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    // Show error state if initialization failed
+    if (_errorMessage != null || pickups == null) {
+      return SafeArea(
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Text(
+              _errorMessage ?? 'Failed to load pickup data',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.red,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     final screenWidth = MediaQuery.of(context).size.width;
 
-    if (_currentIndex >= pickups.length) {
+    if (_currentIndex >= pickups!.length) {
       return SafeArea(
         child: Align(
           alignment: Alignment.bottomCenter,
@@ -157,7 +238,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
       );
     }
 
-    final pickup = pickups[_currentIndex];
+    final pickup = pickups![_currentIndex];
 
     return SafeArea(
       child: Align(
@@ -319,7 +400,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
                     ),
                   ),
                   child: const Text(
-                    'Passenger Picked Up' ,
+                    'Passenger Picked Up',
                     style: TextStyle(fontSize: 16),
                   ),
                 ),

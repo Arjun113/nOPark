@@ -83,7 +83,7 @@ Future<List<RideOption>> fetchObjects (DataController rideDataStore) async {
 
 class RideOptionsScreen extends StatefulWidget {
   final String? destinationCode;
-  final DataController rideDataStore;
+  final DataController? rideDataStore;
   final ValueChanged<List<int>>? onSelectionChanged;
   final void Function (List<int> selections) onConfirm;
 
@@ -115,6 +115,13 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if required data is available
+    if (widget.rideDataStore == null) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     return SafeArea(
       child: Align(
         alignment: Alignment.topCenter,
@@ -132,7 +139,7 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
             ],
           ),
           child: FutureBuilder<List<RideOption>>(
-            future: fetchObjects(widget.rideDataStore),
+            future: fetchObjects(widget.rideDataStore!),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(

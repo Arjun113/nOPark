@@ -111,120 +111,101 @@ class _DriverHomePageState extends State<DriverHomePage> {
         barrierColor: Colors.transparent,
         pageBuilder:
             (_, __, ___) => OverlayFlow(
-          onClose: () => Navigator.of(context).pop(),
-          stepsBuilder:
-              (controller) => [
-            WhereNextOverlay(
-              user: user!,
-              addresses: addresses,
-              onLocationSelected: (lat, lng) async {
-                final List<MapMarker> destinationMarker = [
-                  MapMarker(position: LatLng(lat, lng)),
-                ];
-                final List<LatLng>? route =
-                await RoutingService.getRoute(
-                  mapKey.currentState?.currentLocation,
-                  LatLng(lat, lng),
-                );
-                _updateMap(destinationMarker, route!);
-                rideDataStore.setCurrentDestination(Location(lat: lat, long: lng));
-                rideDataStore.setCurrentDestinationString((await placemarkFromCoordinates(lat, lng))[0].name!);
-                controller.next();
-              },
-              onBack: Navigator.of(context).pop,
-              initialPosition: position,
-              initialSize: size,
-            ),
+              onClose: () => Navigator.of(context).pop(),
+              stepsBuilder:
+                  (controller) => [
+                    WhereNextOverlay(
+                      user: user!,
+                      addresses: addresses,
+                      onLocationSelected: (lat, lng) async {
+                        final List<MapMarker> destinationMarker = [
+                          MapMarker(position: LatLng(lat, lng)),
+                        ];
+                        final List<LatLng>? route =
+                            await RoutingService.getRoute(
+                              mapKey.currentState?.currentLocation,
+                              LatLng(lat, lng),
+                            );
+                        _updateMap(destinationMarker, route!);
+                        rideDataStore.setCurrentDestination(Location(lat: lat, long: lng));
+                        rideDataStore.setCurrentDestinationString((await placemarkFromCoordinates(lat, lng))[0].name!);
+                        controller.next();
+                      },
+                      onBack: Navigator.of(context).pop,
+                      initialPosition: position,
+                      initialSize: size,
+                    ),
 
-            if (rideDataStore.getCurrentDestination() != null)
-              Builder(
-                builder: (context) {
-                  final destination = rideDataStore.getCurrentDestination()!;
-                  return RideOptionsScreen(
-                    rideDataStore: rideDataStore,
-                    destinationCode: null,
-                    onConfirm: (proposalIndices) async {
-                      // TODO: Send the selections to the backend
-                      try {
-                        // Send the preferences to the backend
-                        final response = await DioClient().client.post(
-                            '/rides',
-                            data: {
-                              'request_ids': proposalIndices,
-                              'destination_lat': rideDataStore.getCurrentDestination()!.lat,
-                              'destination_lon': rideDataStore.getCurrentDestination()!.long
-                            }
-                        );
-
-                        if (response.statusCode != 201) {
-                          return;
-                        }
-                      }
-                      catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error communicating with the server")));
-                      }
-
-                      // Wait for the Ride ID to be allocated
-                      RemoteMessage message = await waitForJob('ride_confirmed');
-                      rideDataStore.setFinalRideId(message.data['ride_id'] as int);
-
-                      controller.next();
-                    },
-                  );
-                },
-              ),
-
-            if (rideDataStore.getDriverAcceptedProposals() != null)
-              Builder(
-                builder: (context) {
-                  return PickupSequenceWidget(
-                    rideData: rideDataStore,
-                    onLocationReached: ((index) async {
-                      if (index < rideDataStore.getDriverAcceptedProposals()!.length) {
-                        // Tell API to ping passenger
+                    RideOptionsScreen(
+                      rideDataStore: rideDataStore,
+                      destinationCode: null,
+                      onConfirm: (proposalIndices) async {
+                        // TODO: Send the selections to the backend
                         try {
-                          final loc_reached_response = await DioClient().client.post(
-                              '/rides/pickup',
-                              data: {
-                                'ride_id': rideDataStore.getFinalRideId(),
-                                'current_latitude': mapKey.currentState?.currentLocation?.latitude,
-                                'current_longitude': mapKey.currentState?.currentLocation?.longitude
-                              }
+                          // Send the preferences to the backend
+                          final response = await DioClient().client.post(
+                              '/rides',
+                            data: {
+                                'request_ids': proposalIndices,
+                                'destination_lat': rideDataStore.getCurrentDestination()!.lat,
+                                'destination_lon': rideDataStore.getCurrentDestination()!.long
+                            }
                           );
 
-                          if (loc_reached_response.statusCode != 201) {
+                          if (response.statusCode != 201) {
                             return;
                           }
                         }
                         catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error communicating with the server")));
                         }
-                      }
 
-                      // If this is the last pickup, move to next screen
-                      if (index == rideDataStore.getDriverAcceptedProposals()!.length - 1) {
+                        // Wait for the Ride ID to be allocated
+                        RemoteMessage message = await waitForJob('ride_confirmed');
+                        rideDataStore.setFinalRideId(message.data['ride_id'] as int);
+
                         controller.next();
-                      }
-                    }),
-                  );
-                },
-              ),
+                      },
+                    ),
 
-            if (rideDataStore.getCurrentRiderInfo('driver') != null)
-              Builder(
-                builder: (context) {
-                  final riders = rideDataStore.getCurrentRiderInfo('driver')!;
-                  return RideCompletionWidget(
-                    riders: riders,
-                    moveToZero: (() {
-                      rideDataStore.clearForNextRide();
-                      controller.jumpTo(0);
-                    }),
-                  );
-                },
-              ),
-          ],
-        ),
+                    PickupSequenceWidget(
+                      rideData: rideDataStore,
+                      onLocationReached: ((index) async {
+                        if (index < rideDataStore.getDriverAcceptedProposals()!.length) {
+                          // Tell API to ping passenger
+                          try {
+                            final loc_reached_response = await DioClient().client.post(
+                              '/rides/pickup',
+                              data: {
+                                'ride_id': rideDataStore.getFinalRideId(),
+                                'current_latitude': mapKey.currentState?.currentLocation?.latitude,
+                                'current_longitude': mapKey.currentState?.currentLocation?.longitude
+                              }
+                            );
+
+                            if (loc_reached_response.statusCode != 201) {
+                              return;
+                            }
+                          }
+                          catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error communicating with the server")));
+                          }
+                        }
+
+                        // If this is the last pickup, move to next screen
+                        if (index == rideDataStore.getDriverAcceptedProposals()!.length - 1) {
+                          controller.next();
+                        }
+                      }),
+                    ),
+
+                    RideCompletionWidget(riders: rideDataStore.getCurrentRiderInfo('driver'),
+                        moveToZero: (() {
+                          rideDataStore.clearForNextRide();
+                          controller.jumpTo(0);
+                        }))
+                  ],
+            ),
       ),
     );
   }
