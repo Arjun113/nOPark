@@ -11,6 +11,7 @@ import 'package:nopark/features/feeds/datamodels/data_controller.dart';
 import 'package:nopark/logic/location/loc_perms.dart';
 import 'package:nopark/logic/location/loc_stream.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:nopark/logic/location/loc_updater.dart';
 import 'package:nopark/logic/map/polyline_decoder.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -73,6 +74,8 @@ class FullScreenMapState extends State<FullScreenMap> {
     if (widget.showUserLocation) {
       _startLocationTracking();
     }
+
+    LocationService().startLocationUpdates();
   }
 
   void _startLocationTracking() {
