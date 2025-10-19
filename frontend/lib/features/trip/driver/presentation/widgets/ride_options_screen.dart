@@ -60,28 +60,26 @@ Future<List<RideOption>> fetchObjects(DataController rideDataStore) async {
       }
 
       final newRide = RideOption(
-        name:
-            passengerResponse.data['first_name'] +
-            passengerResponse.data['last_name'],
+        name: '${passengerResponse.data['first_name'] ?? ''}${passengerResponse.data['last_name'] ?? ''}',
         rating: passengerResponse.data['rating'] ?? 0,
-        address: mainData[i]['dropoff_location'],
+        address: mainData[i]['dropoff_location'] ?? '', // Add ?? ''
         addressCoords: Location(
-          lat: double.parse(mainData[i]['dropoff_latitude']),
-          long: double.parse(mainData[i]['dropoff_longitude']),
+          lat: (mainData[i]['dropoff_latitude'] as num?)?.toDouble() ?? 0.0,
+          long: (mainData[i]['dropoff_longitude'] as num?)?.toDouble() ?? 0.0,
         ),
         detourKm: 0.0,
         detourMin: 0,
-        price: double.parse(mainData[i]['compensation']),
-        proposalID: int.parse(mainData[i]['id']),
-        polyline: mainData[i]['polyline'],
-        passengerID: int.parse(mainData[i]['passenger_id']),
+        price: (mainData[i]['compensation'] as num?)?.toDouble() ?? 0.0,
+        proposalID: mainData[i]['id'] as int? ?? 0,
+        polyline: mainData[i]['polyline'] ?? '', // Add ?? ''
+        passengerID: mainData[i]['passenger_id'] as int? ?? 0,
       );
 
       possibleRides.add(newRide);
     }
   } catch (e) {
     // Add context if needed
-    print("error fetching things");
+    print(e);
   }
   rideDataStore.setDriverReceivedProposalDetails(possibleRides);
   return possibleRides;

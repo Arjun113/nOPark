@@ -178,8 +178,9 @@ class _DriverHomePageState extends State<DriverHomePage> {
                         // TODO: Send the selections to the backend
                         try {
                           // Send the preferences to the backend
+                          print(proposalIndices);
                           final response = await DioClient().client.post(
-                            '/rides',
+                            '/rides/',
                             data: {
                               'request_ids': proposalIndices,
                               'destination_lat':
@@ -197,7 +198,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  "Error communicating with the server",
+                                  e.toString(),
                                 ),
                               ),
                             );
