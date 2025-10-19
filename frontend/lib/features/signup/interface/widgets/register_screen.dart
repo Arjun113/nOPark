@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:nopark/features/authentications/presentation/screens/otp_entry_screen.dart';
 import 'package:nopark/logic/network/dio_client.dart';
@@ -72,7 +74,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           'email': _emailController.text.trim(),
           'password': _passwordController.text.trim(),
           'type': _userType,
-          "fcm_token": "test-token",
+          "fcm_token": (await FirebaseMessaging.instance.getToken()),
         },
       );
 
