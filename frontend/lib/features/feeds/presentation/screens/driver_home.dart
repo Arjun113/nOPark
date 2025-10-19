@@ -19,6 +19,7 @@ import 'package:nopark/home_test.dart';
 import 'package:nopark/logic/routing/basic_two_router.dart';
 import 'package:nopark/logic/utilities/firebase_notif_waiter.dart';
 
+import '../../../../logic/map/polyline_decoder.dart';
 import '../../../../logic/network/dio_client.dart';
 import '../../../trip/entities/location.dart';
 import '../widgets/base_where_next.dart';
@@ -121,11 +122,31 @@ class _DriverHomePageState extends State<DriverHomePage> {
                         final List<MapMarker> destinationMarker = [
                           MapMarker(position: LatLng(lat, lng)),
                         ];
-                        final List<LatLng>? route =
-                            await RoutingService.getRoute(
-                              mapKey.currentState?.currentLocation,
-                              LatLng(lat, lng),
-                            );
+                        // Get the route from server
+                        List<LatLng>? route;
+                        try {
+                          final polyline_getter = await DioClient().client.post(
+                              '/maps/route',
+                              data: {
+                                'start_lat': mapKey.currentState?.currentLocation?.latitude,
+                                'start_lng': mapKey.currentState?.currentLocation?.longitude,
+                                'end_lat': lat,
+                                'end_lng': lng
+                              }
+                          );
+
+                          if (polyline_getter.statusCode != 200) {
+                            route = [];
+                          }
+                          else {
+                            // Get the route
+                            route = decodePolyline(polyline_getter.data['polyline']);
+                          }
+                        }
+                        catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error getting route details")));
+                        }
+
                         _updateMap(destinationMarker, route!);
                         rideDataStore.setCurrentDestination(Location(lat: lat, long: lng));
                         rideDataStore.setCurrentDestinationString((await placemarkFromCoordinates(lat, lng))[0].name!);
