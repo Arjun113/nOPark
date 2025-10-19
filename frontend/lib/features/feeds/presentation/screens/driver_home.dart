@@ -15,7 +15,6 @@ import 'package:nopark/features/trip/entities/user.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_cost_adjust_widget.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_over_card_rating.dart';
 import 'package:nopark/features/trip/unified/trip_scroller.dart';
-import 'package:nopark/logic/routing/basic_two_router.dart';
 import 'package:nopark/logic/utilities/firebase_notif_waiter.dart';
 
 import '../../../../logic/map/polyline_decoder.dart';
@@ -124,26 +123,38 @@ class _DriverHomePageState extends State<DriverHomePage> {
                         // Get the route from server
                         List<LatLng>? route;
                         try {
-                          final polyline_getter = await DioClient().client.post(
-                              '/maps/route',
-                              data: {
-                                'start_lat': mapKey.currentState?.currentLocation?.latitude,
-                                'start_lng': mapKey.currentState?.currentLocation?.longitude,
-                                'end_lat': lat,
-                                'end_lng': lng
-                              }
+                          final polylineGetter = await DioClient().client.post(
+                            '/maps/route',
+                            data: {
+                              'start_lat':
+                                  mapKey
+                                      .currentState
+                                      ?.currentLocation
+                                      ?.latitude,
+                              'start_lng':
+                                  mapKey
+                                      .currentState
+                                      ?.currentLocation
+                                      ?.longitude,
+                              'end_lat': lat,
+                              'end_lng': lng,
+                            },
                           );
 
-                          if (polyline_getter.statusCode != 200) {
+                          if (polylineGetter.statusCode != 200) {
                             route = [];
-                          }
-                          else {
+                          } else {
                             // Get the route
-                            route = decodePolyline(polyline_getter.data['polyline']);
+                            route = decodePolyline(
+                              polylineGetter.data['polyline'],
+                            );
                           }
-                        }
-                        catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error getting route details")));
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Error getting route details"),
+                            ),
+                          );
                         }
 
                         _updateMap(destinationMarker, route!);
@@ -397,19 +408,36 @@ class _DriverHomePageState extends State<DriverHomePage> {
           // Greeting + profile picture (hidden when expanded to avoid overlap)
           if (!isExpanded) ...[
             Positioned(
-              top: 60,
+              top: 58,
               left: 30,
-              child: Text(
-                "Hello ${user?.firstName ?? 'Guest'}",
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'Roboto',
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(10),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  "Hello, ${user?.firstName ?? 'Guest'}",
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Roboto',
+                  ),
                 ),
               ),
             ),
             Positioned(
-              top: 55,
+              top: 58,
               right: 30,
               child: GestureDetector(
                 onTap: () {
@@ -430,10 +458,23 @@ class _DriverHomePageState extends State<DriverHomePage> {
                     );
                   }
                 },
-                child: CircleAvatar(
-                  radius: 24,
-                  backgroundImage: NetworkImage(
-                    user?.imageUrl ?? User.defaultImageUrl,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(10),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: CircleAvatar(
+                    radius: 24,
+                    backgroundImage: NetworkImage(
+                      user?.imageUrl ?? User.defaultImageUrl,
+                    ),
                   ),
                 ),
               ),

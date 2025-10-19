@@ -43,12 +43,12 @@ class _LoginScreenState extends State<LoginScreen> {
       CredentialStorage.setLoginToken(token);
       CredentialStorage.setUser(User.fromJson(response.data));
       if (response.data["type"] == "driver" && mounted) {
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const DriverHomePage()),
         );
       } else if (mounted) {
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const PassengerHomePage()),
         );

@@ -16,10 +16,8 @@ import 'package:nopark/features/trip/passenger/presentation/widgets/trip_cost_ad
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_over_card_rating.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_search_animation.dart';
 import 'package:nopark/features/trip/unified/trip_scroller.dart';
-import 'package:nopark/home_test.dart';
 import 'package:nopark/logic/map/polyline_decoder.dart';
 import 'package:nopark/logic/network/dio_client.dart';
-import 'package:nopark/logic/routing/basic_two_router.dart';
 import 'package:nopark/logic/utilities/firebase_notif_waiter.dart';
 
 import '../../../authentications/datasources/local_datastorer.dart';
@@ -54,7 +52,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
   get collapse => null;
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
     _loadUserData();
   }
@@ -129,57 +127,90 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         // Get the route from server
                         List<LatLng>? route;
                         try {
-                          final polyline_getter = await DioClient().client.post(
+                          final polylineGetter = await DioClient().client.post(
                             '/maps/route',
                             data: {
-                              'start_lat': mapKey.currentState?.currentLocation?.latitude,
-                              'start_lng': mapKey.currentState?.currentLocation?.longitude,
+                              'start_lat':
+                                  mapKey
+                                      .currentState
+                                      ?.currentLocation
+                                      ?.latitude,
+                              'start_lng':
+                                  mapKey
+                                      .currentState
+                                      ?.currentLocation
+                                      ?.longitude,
                               'end_lat': lat,
-                              'end_lng': lng
-                            }
+                              'end_lng': lng,
+                            },
                           );
 
-                          if (polyline_getter.statusCode != 200) {
+                          if (polylineGetter.statusCode != 200) {
                             route = [];
-                          }
-                          else {
+                          } else {
                             // Get the route
-                            route = decodePolyline(polyline_getter.data['polyline']);
+                            route = decodePolyline(
+                              polylineGetter.data['polyline'],
+                            );
                           }
-                        }
-                        catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error getting route details")));
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Error getting route details"),
+                            ),
+                          );
                         }
 
                         _updateMap(destinationMarker, route!);
-                        rideDataStore.setCurrentDestination(Location(lat: lat, long: lng));
+                        rideDataStore.setCurrentDestination(
+                          Location(lat: lat, long: lng),
+                        );
 
                         // Get the recommended bid amount
                         try {
                           final response = await DioClient().client.get(
-                              '/rides/compensation',
-                              data: {
-                                "start_longitude": mapKey.currentState?.currentLocation?.longitude,
-                                "start_latitude": mapKey.currentState?.currentLocation?.latitude,
-                                "end_longitude": lng,
-                                "end_latitude": lat
-                              }
+                            '/rides/compensation',
+                            data: {
+                              "start_longitude":
+                                  mapKey
+                                      .currentState
+                                      ?.currentLocation
+                                      ?.longitude,
+                              "start_latitude":
+                                  mapKey
+                                      .currentState
+                                      ?.currentLocation
+                                      ?.latitude,
+                              "end_longitude": lng,
+                              "end_latitude": lat,
+                            },
                           );
 
                           if (response.statusCode == 200) {
                             // All ok
-                            rideDataStore.setCurrentRideInitialCompensation(response.data['estimated_comp'] as double);
-                          }
-                          else {
+                            rideDataStore.setCurrentRideInitialCompensation(
+                              response.data['estimated_comp'] as double,
+                            );
+                          } else {
                             return;
                           }
-                        }
-                        catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error contacting server. ${e}")));
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Error contacting server. $e"),
+                            ),
+                          );
                         }
 
-                        rideDataStore.setCurrentDestinationString((await placemarkFromCoordinates(lat, lng))[0].name!);
-                        rideDataStore.setCurrentStartingString((await placemarkFromCoordinates(mapKey.currentState!.currentLocation!.latitude, mapKey.currentState!.currentLocation!.longitude))[0].name!);
+                        rideDataStore.setCurrentDestinationString(
+                          (await placemarkFromCoordinates(lat, lng))[0].name!,
+                        );
+                        rideDataStore.setCurrentStartingString(
+                          (await placemarkFromCoordinates(
+                            mapKey.currentState!.currentLocation!.latitude,
+                            mapKey.currentState!.currentLocation!.longitude,
+                          ))[0].name!,
+                        );
 
                         controller.next();
                       },
@@ -569,19 +600,36 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
           // Greeting + profile picture (hidden when expanded to avoid overlap)
           if (!isExpanded) ...[
             Positioned(
-              top: 60,
+              top: 58,
               left: 30,
-              child: Text(
-                "Hello ${user?.firstName ?? 'Guest'}",
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'Roboto',
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(10),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  "Hello, ${user?.firstName ?? 'Guest'}",
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Roboto',
+                  ),
                 ),
               ),
             ),
             Positioned(
-              top: 55,
+              top: 58,
               right: 30,
               child: GestureDetector(
                 onTap: () {
@@ -634,10 +682,23 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                     );
                   }
                 },
-                child: CircleAvatar(
-                  radius: 24,
-                  backgroundImage: NetworkImage(
-                    user?.imageUrl ?? User.defaultImageUrl,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(10),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: CircleAvatar(
+                    radius: 24,
+                    backgroundImage: NetworkImage(
+                      user?.imageUrl ?? User.defaultImageUrl,
+                    ),
                   ),
                 ),
               ),

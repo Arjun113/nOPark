@@ -90,9 +90,9 @@ class FullScreenMapState extends State<FullScreenMap> {
         }
       },
       onError: (error) {
-        // Handle location stream errors
         debugPrint('Location stream error: $error');
       },
+      cancelOnError: false, // Keep the stream active even after errors
     );
   }
 

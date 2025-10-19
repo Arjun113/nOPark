@@ -65,7 +65,7 @@ class OTPEntryScreenState extends State<OTPEntryScreen> {
                     _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
                         : const Text(
-                          'Log In',
+                          'Verify',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
