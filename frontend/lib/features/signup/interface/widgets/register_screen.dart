@@ -173,6 +173,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
                 decoration: InputDecoration(
                   labelText: 'Monash Email',
                   labelStyle: const TextStyle(color: Colors.black87),
