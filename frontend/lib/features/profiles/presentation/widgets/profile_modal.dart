@@ -301,31 +301,46 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                   ),
                 ),
                 const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Lachlan\'s Home',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '1341 Dandenong Road\nClayton VIC 3168',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                      ),
-                    ],
+
+                // Horizontally scrollable addresses
+                SizedBox(
+                  height: 80, // Adjust based on your content height
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: widget.addresses.map((address) {
+                        return Container(
+                          margin: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                address['name'],
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                address['line1'],
+                                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
+
                 const SizedBox(height: 12),
                 Container(
                   width: double.infinity,
@@ -343,9 +358,9 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                           '/accounts/addresses',
                           data: {
                             'address_name':
-                                newAddress?.addressNameController.text,
+                            newAddress?.addressNameController.text,
                             'address_line':
-                                newAddress!.addressLine1Controller.text +
+                            newAddress!.addressLine1Controller.text +
                                 newAddress.addressLine2Controller.text,
                           },
                         );
@@ -355,6 +370,14 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text("Address Added!")),
                             );
+                            // Add the new address to the list
+                            setState(() {
+                              widget.addresses.add({
+                                'name': newAddress.addressNameController.text,
+                                'line1': newAddress.addressLine1Controller.text,
+                                'line2': newAddress.addressLine2Controller.text
+                              });
+                            });
                           }
                         } else {
                           if (mounted) {

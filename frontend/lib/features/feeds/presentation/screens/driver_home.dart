@@ -219,7 +219,6 @@ class _DriverHomePageState extends State<DriverHomePage> {
                   (controller) => [
                     PastRidesOverlay(
                       onBack: () => Navigator.of(context).pop(),
-                      trips: [demoTrip],
                     ),
                   ],
             ),

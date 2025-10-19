@@ -407,7 +407,6 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                   (controller) => [
                     PastRidesOverlay(
                       onBack: () => Navigator.of(context).pop(),
-                      trips: [demoTrip],
                     ),
                   ],
             ),

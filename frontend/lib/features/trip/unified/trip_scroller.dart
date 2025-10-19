@@ -1,18 +1,71 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:nopark/features/trip/driver/presentation/widgets/ride_options_screen.dart';
+import 'package:nopark/logic/network/dio_client.dart';
 import '../entities/trip_stops.dart';
 
 class PastRidesOverlay extends StatefulWidget {
-  final List<Trip> trips;
   final VoidCallback? onBack;
 
-  const PastRidesOverlay({super.key, required this.trips, this.onBack});
+  const PastRidesOverlay({super.key, this.onBack});
 
   @override
   State<PastRidesOverlay> createState() => _PastRidesOverlayState();
 }
 
 class _PastRidesOverlayState extends State<PastRidesOverlay> {
+  late List<Trip> pastRides;
+  @override
+  void initState() async {
+    // TODO: implement initState
+    super.initState();
+    // Fetch from backend
+
+    try {
+      final trip_history_full = await DioClient().client.get(
+        '/rides/history',
+        data: {}
+      );
+
+      if (trip_history_full.statusCode != 201) {
+        pastRides = [];
+        return;
+      }
+
+      final trip_history_list = trip_history_full.data['rides'];
+
+      for (var trip_history in trip_history_list) {
+        // No errors, now proceed
+        final indiv_trips = trip_history.data['requests'] as List<Map<String, dynamic>>;
+        List<Stop> trip_stops = [];
+        for (var trip in indiv_trips) {
+          final distance_est = await DioClient().client.get(
+              '/maps/route',
+              data: {
+                'start_lat': double.parse(trip['pickup_latitude']),
+                'start_lng': double.parse(trip['pickup_longitude']),
+                'end_lat': double.parse(trip['dropoff_latitude']),
+                'end_lng': double.parse(trip['dropoff_longitude'])
+              }
+          );
+
+          if (distance_est.statusCode != 201){
+            return;
+          }
+
+          final new_stop = Stop(label: trip['pickup_location'], time: DateTime.parse(trip['updated_at']), distanceKm: double.parse(distance_est.data['distance']), duration: Duration(minutes: int.parse(distance_est.data['duration'])));
+          trip_stops.add(new_stop);
+        }
+        final new_trip = Trip(from: trip_stops[0].label, to: trip_history['dropoff_location'], startTime: trip_history['updated_at'], stops: trip_stops);
+        pastRides.add(new_trip);
+      }
+
+    }
+    catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error fetching past rides")));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,12 +92,12 @@ class _PastRidesOverlayState extends State<PastRidesOverlay> {
                 height: 700, // Constrained height
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: widget.trips.length,
+                  itemCount: pastRides.length,
                   padding: const EdgeInsets.all(16),
                   itemBuilder: (context, index) {
                     return Padding(
                       padding: const EdgeInsets.only(right: 16),
-                      child: TripCard(trip: widget.trips[index]),
+                      child: TripCard(trip: pastRides[index]),
                     );
                   },
                 ),
