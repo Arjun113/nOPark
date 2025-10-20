@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:nopark/features/authentications/datasources/local_datastorer.dart';
 import 'package:nopark/features/authentications/presentation/screens/otp_entry_screen.dart';
@@ -37,6 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
         data: {
           'email': _emailController.text.trim(),
           'password': _passwordController.text.trim(),
+          'fcm_token': (await FirebaseMessaging.instance.getToken())
         },
       );
       final token = response.data['token'];
