@@ -249,7 +249,7 @@ func (p *postgresRidesRepository) GetRideByRequestID(ctx context.Context, reques
 	rides := make([]*domain.RideDBModel, 0)
 	for rows.Next() {
 		var ride domain.RideDBModel
-		if err := rows.Scan(&ride.ID, &ride.Status, &ride.CreatedAt, &ride.UpdatedAt); err != nil {
+		if err := rows.Scan(&ride.ID, &ride.Status, &ride.DestinationLatitude, &ride.DestinationLongitude, &ride.CreatedAt, &ride.UpdatedAt); err != nil {
 			return nil, err
 		}
 		rides = append(rides, &ride)

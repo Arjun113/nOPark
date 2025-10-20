@@ -391,7 +391,7 @@ func (a *api) createRideDraftHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		notificationPayload := fmt.Sprintf(`{"proposal_id": %d, "notification": %s}`, proposal.ID, domain.NotificationRideCreated)
+		notificationPayload := fmt.Sprintf(`{"proposal_id": %d, "notification": "%s"}`, proposal.ID, domain.NotificationRideCreated)
 		notification := &domain.NotificationDBModel{
 			NotificationType: domain.NotificationTypeRideUpdates,
 			NotificationMessage: fmt.Sprintf("New ride proposal from %s %s for your request: %s to %s",
@@ -651,7 +651,7 @@ func (a *api) confirmRideProposalHandler(w http.ResponseWriter, r *http.Request)
 					zap.Int64("driver_id", proposal.DriverID))
 			} else {
 				// Notification to driver about accepted ride
-				notificationPayload := fmt.Sprintf(`{"ride_id": %d, "notification": %s}`, ride.ID, domain.NotificationRideFinalized)
+				notificationPayload := fmt.Sprintf(`{"ride_id": %d, "notification": "%s"}`, ride.ID, domain.NotificationRideFinalized)
 				notification := &domain.NotificationDBModel{
 					NotificationType:    domain.NotificationTypeRideUpdates,
 					NotificationMessage: "Your ride trip has been accepted!",
@@ -678,7 +678,7 @@ func (a *api) confirmRideProposalHandler(w http.ResponseWriter, r *http.Request)
 							continue
 						}
 
-						notificationPayload := fmt.Sprintf(`{"ride_id": %d, "notification": %s}`, ride.ID, domain.NotificationRideFinalized)
+						notificationPayload := fmt.Sprintf(`{"ride_id": %d, "notification": "%s"}`, ride.ID, domain.NotificationRideFinalized)
 						notification := &domain.NotificationDBModel{
 							NotificationType: domain.NotificationTypeRideUpdates,
 							NotificationMessage: fmt.Sprintf("Your ride has been confirmed! Driver %s %s will be picking you up.",
@@ -706,7 +706,7 @@ func (a *api) confirmRideProposalHandler(w http.ResponseWriter, r *http.Request)
 				zap.Int64("driver_id", proposal.DriverID))
 		} else {
 			// Notification to driver about rejected ride
-			notificationPayload := fmt.Sprintf(`{"ride_id": %d, "notification": %s}`, ride.ID, domain.NotificationRideFinalized)
+			notificationPayload := fmt.Sprintf(`{"ride_id": %d, "notification": "%s"}`, ride.ID, domain.NotificationRideFinalized)
 			notification := &domain.NotificationDBModel{
 				NotificationType:    domain.NotificationTypeRideUpdates,
 				NotificationMessage: "Your planned ride has been rejected.",
@@ -1029,7 +1029,7 @@ func (a *api) completeRideHandler(w http.ResponseWriter, r *http.Request) {
 					continue
 				}
 
-				notificationPayload := fmt.Sprintf(`{"ride_id": %d, "notification": %s}`, ride.ID, domain.NotificationRideCompleted)
+				notificationPayload := fmt.Sprintf(`{"ride_id": %d, "notification": "%s"}`, ride.ID, domain.NotificationRideCompleted)
 				notification := &domain.NotificationDBModel{
 					NotificationType:    domain.NotificationTypeRideUpdates,
 					NotificationMessage: "Your ride has been completed! We hope you had a great experience.",

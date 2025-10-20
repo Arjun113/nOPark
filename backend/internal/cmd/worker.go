@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/go-co-op/gocron"
@@ -92,8 +93,18 @@ func WorkerCmd(ctx context.Context) *cobra.Command {
 			}
 
 			// Schedule notification processing job every 3 seconds
+			var processingMutex sync.Mutex
 			_, err = s.Every(3).Seconds().Do(func() {
-				err := processNotifications(ctx, logger, notificationRepo, fcmService)
+				if !processingMutex.TryLock() {
+					logger.Warn("previous notification processing still running, skipping this run")
+					return
+				}
+				defer processingMutex.Unlock()
+
+				local_ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+
+				err := processNotifications(local_ctx, logger, notificationRepo, fcmService)
 				if err != nil {
 					logger.Error("error processing notifications", zap.Error(err))
 				}
@@ -145,7 +156,7 @@ func createNotificationsForNewRideRequests(ctx context.Context, logger *zap.Logg
 	for _, request := range newRequests {
 		requestNotificationsCreated := 0
 		for _, driver := range drivers {
-			notificationPayload := fmt.Sprintf(`{"notification": %s}`, domain.NotificationRequestCreated)
+			notificationPayload := fmt.Sprintf(`{"notification": "%s"}`, domain.NotificationRequestCreated)
 			notification := &domain.NotificationDBModel{
 				NotificationType:    domain.NotificationTypeRideUpdates,
 				NotificationMessage: fmt.Sprintf("New ride request: %s to %s (Compensation: $%.2f)", request.PickupLocation, request.DropoffLocation, request.Compensation),
