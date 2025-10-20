@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:nopark/features/feeds/datamodels/data_controller.dart';
 
@@ -38,13 +36,12 @@ Future<List<RideOption>> fetchObjects(DataController rideDataStore) async {
   try {
     final response = await DioClient().client.get(
       '/rides/requests?dropoff_lat=${rideDataStore.getCurrentDestination()!.lat}&dropoff_lon=${rideDataStore.getCurrentDestination()!.long}',
-      data: {}
+      data: {},
     );
 
     if (response.statusCode != 200) {
       return [];
     }
-
 
     final mainData = response.data['requests'];
 
@@ -60,7 +57,8 @@ Future<List<RideOption>> fetchObjects(DataController rideDataStore) async {
       }
 
       final newRide = RideOption(
-        name: '${passengerResponse.data['first_name'] ?? ''}${passengerResponse.data['last_name'] ?? ''}',
+        name:
+            '${passengerResponse.data['first_name'] ?? ''}${passengerResponse.data['last_name'] ?? ''}',
         rating: passengerResponse.data['rating'] ?? 0,
         address: mainData[i]['dropoff_location'] ?? '', // Add ?? ''
         addressCoords: Location(
@@ -161,6 +159,34 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
               }
 
               final rides = snapshot.data ?? [];
+
+              // Show empty state if no rides available
+              if (rides.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.all(40),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.search_off, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        "No ride requests available",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        "Check back later for new requests",
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                );
+              }
 
               return Column(
                 mainAxisSize: MainAxisSize.min,
@@ -268,13 +294,22 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
                     width: double.infinity,
                     margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                     child: ElevatedButton(
-                      onPressed: () {
-                        List<int> proposalIds = [];
-                        for (int i = 0; i < selectedIndices.length; i = i + 1) {
-                          proposalIds.add(rides[i].proposalID);
-                        }
-                        widget.onConfirm(proposalIds);
-                      },
+                      onPressed:
+                          selectedIndices.isEmpty
+                              ? null
+                              : () {
+                                List<int> proposalIds = [];
+                                for (
+                                  int i = 0;
+                                  i < selectedIndices.length;
+                                  i = i + 1
+                                ) {
+                                  proposalIds.add(
+                                    rides[selectedIndices[i]].proposalID,
+                                  );
+                                }
+                                widget.onConfirm(proposalIds);
+                              },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
                         foregroundColor: Colors.white,
@@ -287,7 +322,7 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
                         ),
                       ),
                       child: Text(
-                        'Confirm Selection${selectedIndices.isEmpty ? '' : ' (${selectedIndices.length})'}',
+                        'Confirm Selection ${selectedIndices.isEmpty ? '' : '(${selectedIndices.length})'}',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
