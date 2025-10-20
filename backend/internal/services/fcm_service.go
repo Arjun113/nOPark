@@ -51,23 +51,12 @@ func (f *FCMService) SendNotification(ctx context.Context, notification *domain.
 
 	message := f.createMessageFromNotification(notification, fcmToken)
 
-	msgJSON, err := json.MarshalIndent(message, "", "  ")
-	if err != nil {
-		payloadStr := ""
-		if notification.Payload != nil {
-			payloadStr = *notification.Payload
-		}
-		f.logger.Warn("Failed to marshal entire FCM message for logging",
-			zap.Error(err),
-			zap.Int64("notification_id", notification.ID),
-			zap.String("recipient", notification.AccountEmail),
-			zap.String("payload", payloadStr))
-	} else {
-		f.logger.Info("FCM message full dump",
-			zap.Int64("notification_id", notification.ID),
-			zap.String("recipient", notification.AccountEmail),
-			zap.String("full_message_json", string(msgJSON)))
+	f.logger.Info("FCM message created", zap.Any("message_struct", message))
+	payloadStr := ""
+	if notification.Payload != nil {
+		payloadStr = *notification.Payload
 	}
+	f.logger.Info("Official Payload", zap.String("official_payload", payloadStr))
 
 	response, err := f.client.Send(ctx, message)
 	if err != nil {
@@ -87,7 +76,17 @@ func (f *FCMService) SendNotification(ctx context.Context, notification *domain.
 	return nil
 }
 
-func (f *FCMService) createMessageFromNotification(notification *domain.NotificationWithAccountDBModel, fcmToken string) *messaging.Message {
+func (f *FCMService) createMessageFromNotification(origNotification *domain.NotificationWithAccountDBModel, fcmToken string) *messaging.Message {
+	// Make a copy of the notification to avoid pointer races
+	notification := *origNotification
+
+	// Copy payload locally
+	payloadCopy := ""
+	if notification.Payload != nil {
+		payloadCopy = *notification.Payload
+	}
+	notification.Payload = &payloadCopy
+
 	// Start with base data fields
 	data := map[string]string{
 		"notification_id":   fmt.Sprintf("%d", notification.ID),
@@ -105,7 +104,7 @@ func (f *FCMService) createMessageFromNotification(notification *domain.Notifica
 				zap.Int64("notification_id", notification.ID),
 				zap.String("payload", *notification.Payload))
 		} else {
-			// Merge payload data into the data map (converts all values to strings)
+			// Merge payload data into the data map (convert all values to strings)
 			for key, value := range payloadData {
 				data[key] = fmt.Sprintf("%v", value)
 			}
