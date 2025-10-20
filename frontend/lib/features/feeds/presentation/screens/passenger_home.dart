@@ -383,7 +383,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                             },
                           );
 
-                          if (response.statusCode == 201) {
+                          if (response.statusCode == 200) {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
