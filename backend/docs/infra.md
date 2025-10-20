@@ -84,12 +84,16 @@ cd nOPark/backend
 git fetch --all
 git reset --hard origin/main
 docker compose down --volumes --remove-orphans
+pkill -f "nOPark"
+sleep 5
 docker compose up --detach --build --force-recreate
 sleep 5
 go mod download
 make build
 make migrate-up
 mkdir -p logs
+caddy stop
+caddy start
 nohup ./bin/nOPark api > logs/api.log 2>&1 &
 nohup ./bin/nOPark worker > logs/worker.log 2>&1 &
 ```
