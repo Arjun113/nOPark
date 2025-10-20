@@ -18,7 +18,7 @@ class UserResponse {
         firstName: json['first_name'],
         middleName: json['middle_name'],
         lastName: json['last_name'],
-        rating: (json['rating']) as double,
+        rating: (json['rating'] ?? 0).toDouble(),
         ratingCount: (json['number_of_ratings']) as int
     );
   }
