@@ -206,8 +206,9 @@ class _DriverHomePageState extends State<DriverHomePage> {
                           'ride_finalized',
                         );
                         rideDataStore.setFinalRideId(
-                          message.data['ride_id'] as int,
+                          int.parse(message.data['ride_id']),
                         );
+                        rideDataStore.setDriverAcceptedProposals(proposalIndices);
 
                         controller.next();
                       },
@@ -247,7 +248,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  "Error communicating with the server",
+                                  "Error communicating with the server: $e",
                                 ),
                               ),
                             );

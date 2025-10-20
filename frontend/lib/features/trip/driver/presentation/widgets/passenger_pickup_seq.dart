@@ -3,6 +3,8 @@ import 'package:nopark/features/feeds/datamodels/data_controller.dart';
 import 'package:nopark/features/trip/driver/presentation/widgets/ride_options_screen.dart';
 import 'package:nopark/logic/network/dio_client.dart';
 
+import '../../../entities/location.dart';
+
 class PickupInfo {
   final String name;
   final double rating;
@@ -47,6 +49,8 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   List<RideOption>? pickups;
+  List<String>? pickupAddresses;
+  List<Location>? pickupAddressCoords;
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -81,14 +85,16 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
 
       // Pull ride data from backend to get proposal IDs
       final rideSummaryRequest = await DioClient().client.get(
-        '/rides/summary',
-        data: {'ride_id': allottedRideId},
+        '/rides/summary?ride_id=$allottedRideId',
+        data: {},
       );
 
-      if (rideSummaryRequest.statusCode != 201) {
+      if (rideSummaryRequest.statusCode != 200) {
         if (mounted) {
           setState(() {
             pickups = [];
+            pickupAddressCoords = [];
+            pickupAddresses = [];
             _isLoading = false;
             _errorMessage = "Failed to fetch ride summary";
           });
@@ -99,6 +105,8 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
       // All ok
       final listOfRides = rideSummaryRequest.data['proposals'] as List<dynamic>;
       List<RideOption> tempPickups = [];
+      List<String> tempPickupAddresses = [];
+      List<Location> tempPickupAddressesCoords = [];
 
       // Loop through list to counter check proposal IDs
       for (var ride in listOfRides) {
@@ -107,7 +115,8 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
           for (var rideRequest in receivedRequests!) {
             if (rideRequest.proposalID == (ride['id'] as int)) {
               tempPickups.add(rideRequest);
-              break;
+              tempPickupAddresses.add(ride['request']['pickup_location']);
+              tempPickupAddressesCoords.add(Location(lat: ride['request']['pickup_latitude'], long: ride['request']['pickup_longitude']));
             }
           }
         }
@@ -116,6 +125,8 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
       if (mounted) {
         setState(() {
           pickups = tempPickups;
+          pickupAddressCoords = tempPickupAddressesCoords;
+          pickupAddresses = tempPickupAddresses;
           _isLoading = false;
         });
       }
@@ -231,6 +242,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
     }
 
     final pickup = pickups![_currentIndex];
+    final pickup_address = pickupAddresses![_currentIndex];
 
     return SafeArea(
       child: Align(
@@ -289,7 +301,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          pickup.address,
+                          pickup_address,
                           style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.w700,
