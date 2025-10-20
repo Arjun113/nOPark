@@ -46,7 +46,7 @@ func WorkerCmd(ctx context.Context) *cobra.Command {
 
 			// Setup scheduler
 			s := gocron.NewScheduler(time.UTC)
-			s.SetMaxConcurrentJobs(4, gocron.WaitMode)
+			s.SetMaxConcurrentJobs(1, gocron.RescheduleMode)
 
 			// Schedule notification creation job every 5 seconds
 			_, err = s.Every(5).Seconds().Do(func() {
@@ -101,7 +101,8 @@ func WorkerCmd(ctx context.Context) *cobra.Command {
 				}
 				defer processingMutex.Unlock()
 
-				local_ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				// extend timeout so SendNotification retry/backoff has time to complete
+				local_ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 				defer cancel()
 
 				err := processNotifications(local_ctx, logger, notificationRepo, fcmService)
@@ -202,7 +203,8 @@ func createNotificationsForNewRideRequests(ctx context.Context, logger *zap.Logg
 }
 
 func processNotifications(ctx context.Context, logger *zap.Logger, notificationRepo domain.NotificationsRepository, fcmService *services.FCMService) error {
-	pendingNotifications, err := notificationRepo.GetPendingNotifications(ctx, 20)
+	// fetch smaller batches to avoid bursts and allow sequential sending
+	pendingNotifications, err := notificationRepo.GetPendingNotifications(ctx, 5)
 	if err != nil {
 		return fmt.Errorf("failed to fetch pending notifications: %w", err)
 	}
@@ -237,6 +239,9 @@ func processNotifications(ctx context.Context, logger *zap.Logger, notificationR
 			failureCount++
 			continue
 		}
+
+		// small pause between sends to avoid rate spikes
+		time.Sleep(150 * time.Millisecond)
 
 		err = notificationRepo.MarkNotificationAsSent(ctx, notification.ID)
 		if err != nil {

@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
+	"sync"
+	"time"
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/messaging"
@@ -17,6 +20,8 @@ import (
 type FCMService struct {
 	client *messaging.Client
 	logger *zap.Logger
+	// serialize sends to avoid client-internal races under high concurrency
+	sendMu sync.Mutex
 }
 
 func NewFCMService(ctx context.Context, logger *zap.Logger) (*FCMService, error) {
@@ -49,29 +54,51 @@ func NewFCMService(ctx context.Context, logger *zap.Logger) (*FCMService, error)
 func (f *FCMService) SendNotification(ctx context.Context, notification *domain.NotificationWithAccountDBModel) error {
 	fcmToken := notification.AccountFCMToken
 
+	if notification.Payload == nil {
+		f.logger.Info("Notification db model has no payload", zap.Int64("notification_id", notification.ID))
+	}
+
+	if strings.TrimSpace(fcmToken) == "" {
+		f.logger.Error("empty FCM token; cannot send", zap.Int64("notification_id", notification.ID), zap.String("recipient", notification.AccountEmail))
+		return fmt.Errorf("empty fcm token for notification %d", notification.ID)
+	}
+
 	message := f.createMessageFromNotification(notification, fcmToken)
 
-	if notification.Payload == nil {
-		f.logger.Info("Notification db model has no payload")
+	// Log a token preview and data keys for debugging (do not log full token)
+	tokenPreview := fcmToken
+	if len(tokenPreview) > 8 {
+		tokenPreview = tokenPreview[:8] + "..."
+	}
+	f.logger.Info("sending fcm notification", zap.Int64("notification_id", notification.ID), zap.String("token_preview", tokenPreview), zap.Any("data_keys", keysOfMap(message.Data)))
+
+	// Serialize sends to avoid client races and rate spikes
+	f.sendMu.Lock()
+	defer f.sendMu.Unlock()
+
+	var lastErr error
+	var resp string
+	maxAttempts := 3
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
+		resp, lastErr = f.client.Send(ctx, message)
+		if lastErr == nil {
+			f.logger.Info("📱 FCM notification sent successfully", zap.String("message_id", resp), zap.Int64("notification_id", notification.ID), zap.String("recipient", notification.AccountEmail), zap.String("type", notification.NotificationType))
+			return nil
+		}
+
+		// Log and backoff then retry
+		f.logger.Warn("send attempt failed; will retry if attempts remain", zap.Int("attempt", attempt), zap.Int64("notification_id", notification.ID), zap.Error(lastErr))
+		time.Sleep(time.Duration(attempt*200) * time.Millisecond)
 	}
 
-	response, err := f.client.Send(ctx, message)
-	if err != nil {
-		f.logger.Error("Failed to send FCM notification",
-			zap.Error(err),
-			zap.Int64("notification_id", notification.ID),
-			zap.String("recipient", notification.AccountEmail))
-		return fmt.Errorf("failed to send FCM notification: %w", err)
-	}
-
-	f.logger.Info("📱 FCM notification sent successfully",
-		zap.String("message_id", response),
-		zap.Int64("notification_id", notification.ID),
-		zap.String("recipient", notification.AccountEmail),
-		zap.String("type", notification.NotificationType),
-		zap.Any("message_struct", message),
-	)
-	return nil
+	f.logger.Error("failed to send notification after retries", zap.Int64("notification_id", notification.ID), zap.Error(lastErr))
+	return fmt.Errorf("failed to send FCM notification after %d attempts: %w", maxAttempts, lastErr)
 }
 
 func (f *FCMService) createMessageFromNotification(
@@ -116,9 +143,17 @@ func (f *FCMService) createMessageFromNotification(
 		Data:    data,
 		Android: f.getAndroidConfig(notification.NotificationType),
 	}
-
-	f.logger.Info("FCM message created", zap.Any("message_struct", message))
+	f.logger.Debug("FCM message created", zap.Any("message_struct", message))
 	return message
+}
+
+// keysOfMap returns the keys of a map as []string
+func keysOfMap(m map[string]string) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	return out
 }
 
 func (f *FCMService) getNotificationTitle(notificationType string) string {
