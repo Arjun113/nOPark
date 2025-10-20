@@ -340,6 +340,13 @@ func (p *postgresAccountsRepository) UpdateLocation(ctx context.Context, account
 	return err
 }
 
+func (p *postgresAccountsRepository) UpdateFCMToken(ctx context.Context, accountID int64, fcmToken string) error {
+	_, err := p.conn.Exec(ctx,
+		"UPDATE accounts SET fcm_token = $1 WHERE id = $2",
+		fcmToken, accountID)
+	return err
+}
+
 func (p *postgresAccountsRepository) CreateVehicle(ctx context.Context, vehicle *domain.VehicleDBModel) (*domain.VehicleDBModel, error) {
 	var createdVehicle domain.VehicleDBModel
 
