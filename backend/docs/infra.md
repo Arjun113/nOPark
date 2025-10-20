@@ -100,7 +100,7 @@ To check service status:
 
 ```sh
 # Check if services are running
-pgrep -f "nOPark"
+pgrep -f -l "nOPark"
 
 # View logs
 tail -f logs/api.log
