@@ -96,12 +96,15 @@ func WorkerCmd(ctx context.Context) *cobra.Command {
 			var processingMutex sync.Mutex
 			_, err = s.Every(3).Seconds().Do(func() {
 				if !processingMutex.TryLock() {
-					logger.Warn("previous notification processing job still running, skipping this run")
+					logger.Warn("previous notification processing still running, skipping this run")
 					return
 				}
 				defer processingMutex.Unlock()
 
-				err := processNotifications(ctx, logger, notificationRepo, fcmService)
+				local_ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+
+				err := processNotifications(local_ctx, logger, notificationRepo, fcmService)
 				if err != nil {
 					logger.Error("error processing notifications", zap.Error(err))
 				}

@@ -53,10 +53,15 @@ func (f *FCMService) SendNotification(ctx context.Context, notification *domain.
 
 	msgJSON, err := json.MarshalIndent(message, "", "  ")
 	if err != nil {
+		payloadStr := ""
+		if notification.Payload != nil {
+			payloadStr = *notification.Payload
+		}
 		f.logger.Warn("Failed to marshal entire FCM message for logging",
 			zap.Error(err),
 			zap.Int64("notification_id", notification.ID),
-			zap.String("recipient", notification.AccountEmail))
+			zap.String("recipient", notification.AccountEmail),
+			zap.String("payload", payloadStr))
 	} else {
 		f.logger.Info("FCM message full dump",
 			zap.Int64("notification_id", notification.ID),
