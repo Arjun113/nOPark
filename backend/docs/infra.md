@@ -71,14 +71,18 @@ Installed golang with [this guide](https://www.cherryservers.com/blog/install-go
 
 ## Deployment
 
+First, reboot the VM:
+
+```sh
+sudo reboot
+```
+
 Copy-paste all of the commands below at once and hit enter.
 
 ```sh
 cd nOPark/backend
 git fetch --all
 git reset --hard origin/main
-pkill -f "bin/nOPark" || true
-sleep 2
 docker compose down --volumes --remove-orphans
 docker compose up --detach --build --force-recreate
 sleep 5
@@ -88,7 +92,6 @@ make migrate-up
 mkdir -p logs
 nohup ./bin/nOPark api > logs/api.log 2>&1 &
 nohup ./bin/nOPark worker > logs/worker.log 2>&1 &
-echo "Services started in background. Check logs in logs/ directory."
 ```
 
 ### Managing Services
@@ -97,7 +100,7 @@ To check service status:
 
 ```sh
 # Check if services are running
-pgrep -f "bin/nOPark"
+pgrep -f "nOPark"
 
 # View logs
 tail -f logs/api.log
@@ -108,5 +111,5 @@ To stop services:
 
 ```sh
 # Stop all nOPark processes
-pkill -f "bin/nOPark"
+pkill -f "nOPark"
 ```
