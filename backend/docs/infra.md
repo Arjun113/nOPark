@@ -71,13 +71,30 @@ Installed golang with [this guide](https://www.cherryservers.com/blog/install-go
 
 ## Deployment
 
-First, reboot the VM:
+You may want to reboot the VM if nothing is working.
 
 ```sh
 sudo reboot
 ```
 
-Copy-paste all of the commands below at once and hit enter.
+If you just want to update the code, run the below:
+
+```sh
+cd nOPark/backend
+git fetch --all
+git reset --hard origin/main
+pkill -f "bin/nOPark" # this may be wrong, but we don't want to stop the docker processes!
+go mod download
+make build
+make migrate-up
+mkdir -p logs
+caddy stop
+nohup ./bin/nOPark api > logs/api.log 2>&1 &
+nohup ./bin/nOPark worker > logs/worker.log 2>&1 &
+caddy start
+```
+
+If you want to reset everything, copy-paste all of the commands below at once and hit enter.
 
 ```sh
 cd nOPark/backend
@@ -93,9 +110,9 @@ make build
 make migrate-up
 mkdir -p logs
 caddy stop
-caddy start
 nohup ./bin/nOPark api > logs/api.log 2>&1 &
 nohup ./bin/nOPark worker > logs/worker.log 2>&1 &
+caddy start
 ```
 
 ### Managing Services
