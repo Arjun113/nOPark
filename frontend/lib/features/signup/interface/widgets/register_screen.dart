@@ -64,56 +64,59 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _isLoading = true;
     });
 
-    try {
-      final response = await DioClient().client.post(
-        '/accounts',
-        data: {
-          'first_name': _firstNameController.text.trim(),
-          'last_name': _lastNameController.text.trim(),
-          'email': _emailController.text.trim(),
-          'password': _passwordController.text.trim(),
-          'type': _userType,
-          "fcm_token": (await FirebaseMessaging.instance.getToken()),
-        },
-      );
+    // Get the token
+    FirebaseMessaging.instance.getToken().then((token) async {
+      try {
+        final response = await DioClient().client.post(
+          '/accounts',
+          data: {
+            'first_name': _firstNameController.text.trim(),
+            'last_name': _lastNameController.text.trim(),
+            'email': _emailController.text.trim(),
+            'password': _passwordController.text.trim(),
+            'type': _userType,
+            "fcm_token": token,
+          },
+        );
 
-      if (response.statusCode == 201) {
-        // 201 Created - Success!
+        if (response.statusCode == 201) {
+          // 201 Created - Success!
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Registration successful! Please log in.'),
+              ),
+            );
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) {
+                  return OTPEntryScreen(email: _emailController.text.trim());
+                },
+              ),
+            );
+          }
+        } else {
+          // Handle errors from the backend (e.g., 409 Conflict for existing email)
+          if (mounted) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('Error: ${response.data}')));
+          }
+        }
+      } catch (e) {
+        // Handle network or other exceptions
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Registration successful! Please log in.'),
-            ),
-          );
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) {
-                return OTPEntryScreen(email: _emailController.text.trim());
-              },
-            ),
+            SnackBar(content: Text('Failed to connect to the server: $e')),
           );
         }
-      } else {
-        // Handle errors from the backend (e.g., 409 Conflict for existing email)
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Error: ${response.data}')));
-        }
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
-    } catch (e) {
-      // Handle network or other exceptions
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to connect to the server: $e')),
-        );
-      }
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    });
   }
 
   OutlineInputBorder _customBorder(Color color) {

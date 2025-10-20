@@ -74,18 +74,13 @@ func (f *FCMService) SendNotification(ctx context.Context, notification *domain.
 	return nil
 }
 
-func (f *FCMService) createMessageFromNotification(origNotification *domain.NotificationWithAccountDBModel, fcmToken string) *messaging.Message {
-	// Make a copy of the notification to avoid pointer races
-	notification := *origNotification
+func (f *FCMService) createMessageFromNotification(
+	origNotification *domain.NotificationWithAccountDBModel,
+	fcmToken string,
+) *messaging.Message {
+	notification := *origNotification // copy to avoid pointer races
 
-	// Copy payload locally
-	payloadCopy := ""
-	if notification.Payload != nil {
-		payloadCopy = *notification.Payload
-	}
-	notification.Payload = &payloadCopy
-
-	// Start with base data fields
+	// Base data fields (never overridden)
 	data := map[string]string{
 		"notification_id":   fmt.Sprintf("%d", notification.ID),
 		"notification_type": notification.NotificationType,
@@ -93,23 +88,26 @@ func (f *FCMService) createMessageFromNotification(origNotification *domain.Noti
 		"created_at":        notification.CreatedAt,
 	}
 
-	// If payload exists, deserialize and merge it with base data
+	// Merge payload safely into data (without touching NotificationType or core fields)
 	if notification.Payload != nil && *notification.Payload != "" {
 		var payloadData map[string]any
 		if err := json.Unmarshal([]byte(*notification.Payload), &payloadData); err != nil {
-			f.logger.Error("Failed to unmarshal notification payload",
+			f.logger.Error("Failed to unmarshal payload",
 				zap.Error(err),
 				zap.Int64("notification_id", notification.ID),
 				zap.String("payload", *notification.Payload))
 		} else {
-			// Merge payload data into the data map (convert all values to strings)
 			for key, value := range payloadData {
+				if key == "notification_id" || key == "notification_type" || key == "user_name" || key == "created_at" {
+					continue
+				}
 				data[key] = fmt.Sprintf("%v", value)
 			}
 		}
 	}
 
-	return &messaging.Message{
+	// Build message
+	message := &messaging.Message{
 		Token: fcmToken,
 		Notification: &messaging.Notification{
 			Title: f.getNotificationTitle(notification.NotificationType),
@@ -118,6 +116,9 @@ func (f *FCMService) createMessageFromNotification(origNotification *domain.Noti
 		Data:    data,
 		Android: f.getAndroidConfig(notification.NotificationType),
 	}
+
+	f.logger.Info("FCM message created", zap.Any("message_struct", message))
+	return message
 }
 
 func (f *FCMService) getNotificationTitle(notificationType string) string {

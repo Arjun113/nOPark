@@ -14,44 +14,45 @@ class PastRidesOverlay extends StatefulWidget {
 }
 
 class _PastRidesOverlayState extends State<PastRidesOverlay> {
-  late List<Trip> pastRides;
+  List<Trip>? pastRides;
   @override
-  void initState() async {
-    // TODO: implement initState
+  void initState() {
     super.initState();
-    // Fetch from backend
+    _loadPastRides();
+  }
 
+  Future<void> _loadPastRides() async {
     try {
       final tripHistoryFull = await DioClient().client.get(
         '/rides/history',
         data: {},
       );
 
-      if (tripHistoryFull.statusCode != 201) {
-        pastRides = [];
+      if (tripHistoryFull.statusCode != 200) {
+        setState(() {
+          pastRides = [];
+        });
         return;
       }
 
       final tripHistoryList = tripHistoryFull.data['rides'];
 
+      List<Trip> loadedRides = [];
+
       for (var tripHistory in tripHistoryList) {
-        // No errors, now proceed
-        final indivTrips =
-            tripHistory.data['requests'] as List<Map<String, dynamic>>;
+        final indivTrips = (tripHistory['requests'] as List)
+            .cast<Map<String, dynamic>>();
+
         List<Stop> tripStops = [];
+
         for (var trip in indivTrips) {
           final distanceEst = await DioClient().client.get(
-            '/maps/route',
-            data: {
-              'start_lat': double.parse(trip['pickup_latitude']),
-              'start_lng': double.parse(trip['pickup_longitude']),
-              'end_lat': double.parse(trip['dropoff_latitude']),
-              'end_lng': double.parse(trip['dropoff_longitude']),
-            },
+            '/maps/route?start_lat=${trip['pickup_latitude']}&start_lng=${trip['pickup_longitude']}&end_lat=${trip['dropoff_latitude']}&end_lng=${trip['dropoff_longitude']}',
+            data: {},
           );
 
-          if (distanceEst.statusCode != 201) {
-            return;
+          if (distanceEst.statusCode != 200) {
+            continue; // skip this stop but continue processing
           }
 
           final newStop = Stop(
@@ -64,23 +65,34 @@ class _PastRidesOverlayState extends State<PastRidesOverlay> {
           );
           tripStops.add(newStop);
         }
-        final newTrip = Trip(
-          from: tripStops[0].label,
-          to: tripHistory['dropoff_location'],
-          startTime: tripHistory['updated_at'],
-          stops: tripStops,
-        );
-        pastRides.add(newTrip);
+
+        if (tripStops.isNotEmpty) {
+          final newTrip = Trip(
+            from: tripStops[0].label,
+            to: tripHistory['dropoff_location'],
+            startTime: tripHistory['updated_at'],
+            stops: tripStops,
+          );
+          loadedRides.add(newTrip);
+        }
       }
+
+      setState(() {
+        pastRides = loadedRides;
+      });
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error fetching past rides")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error fetching past rides")),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (pastRides == null) {
+      return const Center(child: CircularProgressIndicator(),);
+    }
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
@@ -105,12 +117,12 @@ class _PastRidesOverlayState extends State<PastRidesOverlay> {
                 height: 700, // Constrained height
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: pastRides.length,
+                  itemCount: pastRides!.length,
                   padding: const EdgeInsets.all(16),
                   itemBuilder: (context, index) {
                     return Padding(
                       padding: const EdgeInsets.only(right: 16),
-                      child: TripCard(trip: pastRides[index]),
+                      child: TripCard(trip: pastRides![index]),
                     );
                   },
                 ),
