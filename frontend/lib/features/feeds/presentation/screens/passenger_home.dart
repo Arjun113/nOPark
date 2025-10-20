@@ -377,7 +377,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                             '/rides/confirm',
                             data: {
                               'proposal_id':
-                                  driverProspectus.data['proposal_id'],
+                                  int.parse(driverProspectus.data['proposal_id']),
                               'confirm':
                                   acception == true ? 'accept' : 'reject',
                             },
