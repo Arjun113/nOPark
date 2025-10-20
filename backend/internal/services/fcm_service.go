@@ -51,12 +51,9 @@ func (f *FCMService) SendNotification(ctx context.Context, notification *domain.
 
 	message := f.createMessageFromNotification(notification, fcmToken)
 
-	f.logger.Info("FCM message created", zap.Any("message_struct", message))
-	payloadStr := ""
-	if notification.Payload != nil {
-		payloadStr = *notification.Payload
+	if notification.Payload == nil {
+		f.logger.Info("Notification db model has no payload")
 	}
-	f.logger.Info("Official Payload", zap.String("official_payload", payloadStr))
 
 	response, err := f.client.Send(ctx, message)
 	if err != nil {
@@ -71,8 +68,9 @@ func (f *FCMService) SendNotification(ctx context.Context, notification *domain.
 		zap.String("message_id", response),
 		zap.Int64("notification_id", notification.ID),
 		zap.String("recipient", notification.AccountEmail),
-		zap.String("type", notification.NotificationType))
-
+		zap.String("type", notification.NotificationType),
+		zap.Any("message_struct", message),
+	)
 	return nil
 }
 
