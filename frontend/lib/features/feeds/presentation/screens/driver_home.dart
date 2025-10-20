@@ -203,7 +203,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
                         // Wait for the Ride ID to be allocated
                         RemoteMessage message = await waitForJob(
-                          'ride_finalised',
+                          'ride_finalized',
                         );
                         rideDataStore.setFinalRideId(
                           message.data['ride_id'] as int,
