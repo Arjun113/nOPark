@@ -196,18 +196,14 @@ class _DriverHomePageState extends State<DriverHomePage> {
                         } catch (e) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  e.toString(),
-                                ),
-                              ),
+                              SnackBar(content: Text(e.toString())),
                             );
                           }
                         }
 
                         // Wait for the Ride ID to be allocated
                         RemoteMessage message = await waitForJob(
-                          'ride_confirmed',
+                          'ride_finalised',
                         );
                         rideDataStore.setFinalRideId(
                           message.data['ride_id'] as int,
