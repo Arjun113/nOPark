@@ -287,7 +287,9 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text("Error contacting the server. $e"),
+                                content: Text(
+                                  "Error contacting the server. $e",
+                                ),
                               ),
                             );
                           }
@@ -326,17 +328,15 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         } catch (e) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(e.toString()),
-                              ),
+                              SnackBar(content: Text(e.toString())),
                             );
                           }
                         }
-                        
+
                         while (rideDataStore.getCurrentUserResponse() == null) {
                           await Future.delayed(Duration(milliseconds: 100));
                         }
-                        
+
                         // Store the prospective ride ID
                         bool acception = await showDialog(
                           context: context,
@@ -422,10 +422,14 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         if (acception == false) {
                           rideDataStore.clearForNextRide();
                           controller.jumpTo(0);
-                        }
-
-                        else {
-                          DriverSearchOverlay.updateDriverFound(rideDataStore.getCurrentUserResponse()!.firstName + rideDataStore.getCurrentUserResponse()!.lastName, "");
+                        } else {
+                          DriverSearchOverlay.updateDriverFound(
+                            rideDataStore.getCurrentUserResponse()!.firstName +
+                                rideDataStore
+                                    .getCurrentUserResponse()!
+                                    .lastName,
+                            "",
+                          );
                         }
                         controller.next();
                       }),
@@ -663,9 +667,9 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                                       content: Text("Successfully Logged Out"),
                                     ),
                                   );
-                                  Navigator.pushReplacementNamed(
-                                    context,
+                                  Navigator.of(context).pushNamedAndRemoveUntil(
                                     '/login',
+                                    (Route<dynamic> route) => false,
                                   );
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
