@@ -145,7 +145,7 @@ func createNotificationsForNewRideRequests(ctx context.Context, logger *zap.Logg
 	for _, request := range newRequests {
 		requestNotificationsCreated := 0
 		for _, driver := range drivers {
-			notificationPayload := fmt.Sprintf(`{"notification": %s}`, domain.NotificationRequestCreated)
+			notificationPayload := fmt.Sprintf(`{"notification": "%s"}`, domain.NotificationRequestCreated)
 			notification := &domain.NotificationDBModel{
 				NotificationType:    domain.NotificationTypeRideUpdates,
 				NotificationMessage: fmt.Sprintf("New ride request: %s to %s (Compensation: $%.2f)", request.PickupLocation, request.DropoffLocation, request.Compensation),
