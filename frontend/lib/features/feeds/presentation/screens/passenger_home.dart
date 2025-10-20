@@ -358,14 +358,14 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                                 actions: [
                                   TextButton(
                                     onPressed:
-                                        (() => Navigator.of(context).pop(true)),
-                                    child: Text("Accept Ride"),
-                                  ),
-                                  TextButton(
-                                    onPressed:
                                         (() =>
                                             Navigator.of(context).pop(false)),
                                     child: Text("Reject Ride"),
+                                  ),
+                                  TextButton(
+                                    onPressed:
+                                        (() => Navigator.of(context).pop(true)),
+                                    child: Text("Accept Ride"),
                                   ),
                                 ],
                               ),
