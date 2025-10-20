@@ -38,6 +38,7 @@ type AccountsRepository interface {
 	DeleteFavouriteAddress(ctx context.Context, accountID int64, addressID int64) error
 	RemoveUnverifiedExpiredAccounts(ctx context.Context) (int64, error)
 	UpdateLocation(ctx context.Context, accountID int64, lat, lon float64) error
+	UpdateFCMToken(ctx context.Context, accountID int64, fcmToken string) error
 	CreateVehicle(ctx context.Context, vehicle *VehicleDBModel) (*VehicleDBModel, error)
 	GetVehicleByAccountID(ctx context.Context, accountID int64) (*VehicleDBModel, error)
 }

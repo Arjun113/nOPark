@@ -119,6 +119,7 @@ func (a *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 type LoginRequest struct {
 	Email    string `json:"email" validate:"required,email,monash_email"`
 	Password string `json:"password" validate:"required"`
+	FCMToken string `json:"fcm_token"`
 }
 
 type LoginResponse struct {
@@ -162,6 +163,14 @@ func (a *api) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 	if !account.EmailVerified {
 		a.errorResponse(w, r, http.StatusUnauthorized, fmt.Errorf("email not verified"))
 		return
+	}
+
+	// Update FCM token if provided
+	if req.FCMToken != "" {
+		err = a.accountsRepo.UpdateFCMToken(ctx, account.ID, req.FCMToken)
+		if err != nil {
+			a.logger.Warn("Failed to update FCM token during login", zap.Error(err))
+		}
 	}
 
 	id, token, secretHash := domain.GenerateSession()
