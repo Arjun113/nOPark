@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/go-co-op/gocron"
@@ -92,7 +93,14 @@ func WorkerCmd(ctx context.Context) *cobra.Command {
 			}
 
 			// Schedule notification processing job every 3 seconds
+			var processingMutex sync.Mutex
 			_, err = s.Every(3).Seconds().Do(func() {
+				if !processingMutex.TryLock() {
+					logger.Warn("previous notification processing job still running, skipping this run")
+					return
+				}
+				defer processingMutex.Unlock()
+
 				err := processNotifications(ctx, logger, notificationRepo, fcmService)
 				if err != nil {
 					logger.Error("error processing notifications", zap.Error(err))

@@ -51,6 +51,19 @@ func (f *FCMService) SendNotification(ctx context.Context, notification *domain.
 
 	message := f.createMessageFromNotification(notification, fcmToken)
 
+	msgJSON, err := json.MarshalIndent(message, "", "  ")
+	if err != nil {
+		f.logger.Warn("Failed to marshal entire FCM message for logging",
+			zap.Error(err),
+			zap.Int64("notification_id", notification.ID),
+			zap.String("recipient", notification.AccountEmail))
+	} else {
+		f.logger.Info("FCM message full dump",
+			zap.Int64("notification_id", notification.ID),
+			zap.String("recipient", notification.AccountEmail),
+			zap.String("full_message_json", string(msgJSON)))
+	}
+
 	response, err := f.client.Send(ctx, message)
 	if err != nil {
 		f.logger.Error("Failed to send FCM notification",
