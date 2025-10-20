@@ -297,17 +297,13 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         RemoteMessage driverProspectus = await waitForJob(
                           "ride_created",
                         );
-
                         try {
                           final proposalData = await DioClient().client.get(
-                            '/rides/proposals',
-                            data: {
-                              "proposal_id":
-                                  driverProspectus.data['proposal_id'],
-                            },
+                            '/rides/proposals?proposal_id=${driverProspectus.data['proposal_id']}',
+                            data: {},
                           );
 
-                          if (proposalData.statusCode != 201) {
+                          if (proposalData.statusCode != 200) {
                             return;
                           }
 
@@ -320,7 +316,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                             '/accounts/${rideDataStore.getCurrentPassengerRideProposal()!.driverID}',
                           );
 
-                          if (driverData.statusCode != 201) {
+                          if (driverData.statusCode != 200) {
                             return;
                           }
 
@@ -331,12 +327,16 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text("Error talking to server."),
+                                content: Text(e.toString()),
                               ),
                             );
                           }
                         }
-
+                        
+                        while (rideDataStore.getCurrentUserResponse() == null) {
+                          await Future.delayed(Duration(milliseconds: 100));
+                        }
+                        
                         // Store the prospective ride ID
                         bool acception = await showDialog(
                           context: context,
@@ -422,6 +422,10 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         if (acception == false) {
                           rideDataStore.clearForNextRide();
                           controller.jumpTo(0);
+                        }
+
+                        else {
+                          DriverSearchOverlay.updateDriverFound(rideDataStore.getCurrentUserResponse()!.firstName + rideDataStore.getCurrentUserResponse()!.lastName, "");
                         }
                         controller.next();
                       }),

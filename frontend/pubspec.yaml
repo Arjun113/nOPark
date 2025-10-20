@@ -30,6 +30,7 @@ dependencies:
   firebase_core:
   firebase_messaging:
   geocoding:
+  flutter_local_notifications:
 
 dev_dependencies:
   flutter_test:
