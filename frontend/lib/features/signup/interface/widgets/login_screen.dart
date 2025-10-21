@@ -43,13 +43,15 @@ class _LoginScreenState extends State<LoginScreen> {
         },
       );
 
-      // Get car details
+      // Get car details for driver
       // If no car: throw to Vehicle Login
       // Else: go to driver/passenger screen
-      final car_details = await DioClient().client.get(
-        '/accounts/vehicle?user_id=${response.data['id']}',
-        data: {}
-      );
+      if (response.data['type'] == 'driver') {
+        final car_details = await DioClient().client.get(
+            '/accounts/vehicle?user_id=${response.data['id']}',
+            data: {}
+        );
+      }
 
       final token = response.data['token'];
       CredentialStorage.setLoginToken(token);
