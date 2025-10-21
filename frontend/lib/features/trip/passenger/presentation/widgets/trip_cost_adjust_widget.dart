@@ -5,7 +5,7 @@ class PricingOverlay extends StatefulWidget {
   final String? fromAddressName;
   final MonashCampusCodes? fromCampusCode;
   final String? toAddressName;
-  final MonashCampusCodes? toCampusCode;
+  final String? toCampusCode;
   final double? recommendedBidAUD;
   final Offset initialPosition;
   final Size initialSize;

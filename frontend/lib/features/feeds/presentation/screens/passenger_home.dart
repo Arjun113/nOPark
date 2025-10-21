@@ -224,7 +224,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                       fromCampusCode: null,
                       toAddressName:
                           rideDataStore.getCurrentDestinationString(),
-                      toCampusCode: null,
+                      toCampusCode: rideDataStore.getRideDestinationCode(),
                       recommendedBidAUD:
                           rideDataStore.getCurrentRideInitialCompensation(),
                       initialSize: size,
@@ -298,6 +298,15 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         RemoteMessage driverProspectus = await waitForRideUpdates(
                           "ride_created",
                         );
+
+                        DriverSearchOverlay.updateDriverFound(
+                          rideDataStore.getCurrentUserResponse()!.firstName +
+                              rideDataStore
+                                  .getCurrentUserResponse()!
+                                  .lastName,
+                          "");
+
+
                         try {
                           final proposalData = await DioClient().client.get(
                             '/rides/proposals?proposal_id=${driverProspectus.data['proposal_id']}',
@@ -339,36 +348,34 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         // Store the prospective ride ID
                         bool acception = await showDialog(
                           context: context,
-                          builder:
-                              (context) => AlertDialog(
-                                title: Text("Please confirm the ride."),
-                                content: Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Driver name: ${rideDataStore.getCurrentUserResponse()!.firstName}",
-                                    ),
-                                    Text(
-                                      "Driver rating: ${rideDataStore.getCurrentUserResponse()!.rating} (${rideDataStore.getCurrentUserResponse()!.ratingCount})",
-                                    ),
-                                  ],
+                          builder: (context) => AlertDialog(
+                            title: const Text("Please confirm the ride."),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min, // <-- Make column shrink to content
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Driver name: ${rideDataStore.getCurrentUserResponse()!.firstName}",
                                 ),
-                                actions: [
-                                  TextButton(
-                                    onPressed:
-                                        (() =>
-                                            Navigator.of(context).pop(false)),
-                                    child: Text("Reject Ride"),
-                                  ),
-                                  TextButton(
-                                    onPressed:
-                                        (() => Navigator.of(context).pop(true)),
-                                    child: Text("Accept Ride"),
-                                  ),
-                                ],
+                                const SizedBox(height: 8),
+                                Text(
+                                  "Driver rating: ${rideDataStore.getCurrentUserResponse()!.rating} (${rideDataStore.getCurrentUserResponse()!.ratingCount})",
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text("Reject Ride"),
                               ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                child: const Text("Accept Ride"),
+                              ),
+                            ],
+                          ),
                         );
+
 
                         // Send server yes or no
                         try {
@@ -421,14 +428,6 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         if (acception == false) {
                           rideDataStore.clearForNextRide();
                           controller.jumpTo(0);
-                        } else {
-                          DriverSearchOverlay.updateDriverFound(
-                            rideDataStore.getCurrentUserResponse()!.firstName +
-                                rideDataStore
-                                    .getCurrentUserResponse()!
-                                    .lastName,
-                            "",
-                          );
                         }
 
                         final ride_confirmed = await waitForRideUpdates('ride_finalized');
