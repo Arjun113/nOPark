@@ -3,7 +3,7 @@ class Car {
   final String carMake;
   final String carModel;
   String carColour;
-  final String carSeatingCapacity;
+  final String carModelYear;
   final String carImage;
 
   Car({
@@ -12,6 +12,6 @@ class Car {
     required this.carModel,
     required this.carImage,
     required this.carColour,
-    required this.carSeatingCapacity,
+    required this.carModelYear,
   });
 }

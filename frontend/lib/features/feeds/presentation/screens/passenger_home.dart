@@ -451,13 +451,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                     ),
 
                     RideCard(
-                      title: "Trip in Progress",
-                      carName: "Mercedes C200",
-                      carColor: "White",
-                      plateNumber: "ABC123",
-                      plateState: "VIC",
-                      carImageUrl:
-                          "https://www.mercedes-benz.com.au/content/dam/hq/passengercars/cars/c-class/c-class-saloon-w206-pi/modeloverview/06-2022/images/mercedes-benz-c-class-w206-modeloverview-696x392-06-2022.png",
+                      rideDataShare: rideDataStore,
                       onRideCompleted: (() async {
                         // TODO: Wait for ride to finish
 

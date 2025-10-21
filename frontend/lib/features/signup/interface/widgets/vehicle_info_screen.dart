@@ -13,6 +13,7 @@ class _VehicleInfoScreenState extends State<VehicleInfoScreen> {
   final _modelYearController = TextEditingController();
   final _colourController = TextEditingController();
   final _licensePlateController = TextEditingController();
+  final _makeController = TextEditingController();
 
   bool _isLoading = false;
 
@@ -28,6 +29,7 @@ class _VehicleInfoScreenState extends State<VehicleInfoScreen> {
     final modelYear = _modelYearController.text.trim();
     final colour = _colourController.text.trim();
     final licensePlate = _licensePlateController.text.trim().toUpperCase();
+    final make = _makeController.text;
 
     if (model.isEmpty ||
         modelYear.isEmpty ||
@@ -60,6 +62,7 @@ class _VehicleInfoScreenState extends State<VehicleInfoScreen> {
           'model_year': year,
           'colour': colour,
           'license_plate': licensePlate,
+          'make': make
         },
       );
 
@@ -69,7 +72,7 @@ class _VehicleInfoScreenState extends State<VehicleInfoScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Vehicle added successfully!')),
         );
-        Navigator.pop(context);
+        Navigator.of(context).pushReplacementNamed('/login');
       } else if (response.statusCode == 409) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -122,6 +125,22 @@ class _VehicleInfoScreenState extends State<VehicleInfoScreen> {
               const SizedBox(height: 30),
               Image.asset('assets/vehicle_icon.png', height: 100),
               const SizedBox(height: 30),
+
+              // Make
+              TextField(
+                controller: _makeController,
+                decoration: InputDecoration(
+                  labelText: 'Make',
+                  labelStyle: const TextStyle(color: Colors.black87),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 20,
+                  ),
+                  enabledBorder: _customBorder(const Color(0xFFFFB74D)),
+                  focusedBorder: _customBorder(const Color(0xFFFFB74D)),
+                ),
+              ),
+              const SizedBox(height: 16),
 
               // Model
               TextField(

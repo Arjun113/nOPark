@@ -5,6 +5,7 @@ import 'package:nopark/features/authentications/datasources/local_datastorer.dar
 import 'package:nopark/features/authentications/presentation/screens/otp_entry_screen.dart';
 import 'package:nopark/features/feeds/presentation/screens/driver_home.dart';
 import 'package:nopark/features/feeds/presentation/screens/passenger_home.dart';
+import 'package:nopark/features/signup/interface/widgets/vehicle_info_screen.dart';
 import 'package:nopark/features/trip/entities/user.dart';
 import 'package:nopark/logic/network/dio_client.dart';
 
@@ -41,6 +42,15 @@ class _LoginScreenState extends State<LoginScreen> {
           'fcm_token': (await FirebaseMessaging.instance.getToken())
         },
       );
+
+      // Get car details
+      // If no car: throw to Vehicle Login
+      // Else: go to driver/passenger screen
+      final car_details = await DioClient().client.get(
+        '/accounts/vehicle?user_id=${response.data['id']}',
+        data: {}
+      );
+
       final token = response.data['token'];
       CredentialStorage.setLoginToken(token);
       CredentialStorage.setUser(User.fromJson(response.data));
@@ -65,17 +75,31 @@ class _LoginScreenState extends State<LoginScreen> {
               MaterialPageRoute(
                 builder:
                     (context) =>
-                        OTPEntryScreen(email: _emailController.text.trim()),
+                    OTPEntryScreen(email: _emailController.text.trim()),
               ),
             );
           }
           return;
         }
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to login')));
+        else if (e.response?.data != null &&
+            e.response!.data.toString().contains(
+                "vehicle not found for user")) {
+          if (mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder:
+                      (context) =>
+                      VehicleInfoScreen()),
+            );
+          }
+          return;
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Failed to login')));
+        }
       }
     } finally {
       setState(() {

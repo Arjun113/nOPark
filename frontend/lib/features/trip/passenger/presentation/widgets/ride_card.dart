@@ -1,22 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:nopark/features/feeds/datamodels/data_controller.dart';
+import 'package:nopark/features/trip/entities/car.dart';
+import 'package:nopark/logic/network/dio_client.dart';
 
 class RideCard extends StatefulWidget {
-  final String? title;
-  final String? carName;
-  final String? carColor;
-  final String? plateNumber;
-  final String? plateState;
-  final String? carImageUrl;
+  final DataController rideDataShare;
   final VoidCallback? onRideCompleted;
 
   const RideCard({
     super.key,
-    required this.title,
-    required this.carName,
-    required this.carColor,
-    required this.plateNumber,
-    required this.plateState,
-    required this.carImageUrl,
+    required this.rideDataShare,
     required this.onRideCompleted
   });
 
@@ -27,24 +20,45 @@ class RideCard extends StatefulWidget {
 }
 
 class RideCardState extends State<RideCard> {
-
+  Car? carDetails;
   @override
   void initState() {
     super.initState();
     if (mounted) {
       widget.onRideCompleted?.call();
     }
+    // Get car details
+  }
+
+  Future<void> fetchCarDetails () async {
+    // Fetch car details and store them as needed
+    try {
+      final car_details = await DioClient().client.get(
+        '/accounts/vehicle?user_id=${widget.rideDataShare.getCurrentPassengerRideProposal()!.driverID}'
+      );
+
+      if (car_details.statusCode != 200) {
+        carDetails = Car(carLicensePlate: "DEMO12", carMake: "Demo", carModel: "Demo", carImage: "", carColour: "White", carModelYear: "1984");
+        return;
+      }
+
+      carDetails = Car(
+          carLicensePlate: car_details.data['license_plate'],
+          carMake: car_details.data['make'],
+          carModel: car_details.data['model'],
+          carImage: "",
+          carColour: car_details.data['colour'],
+          carModelYear: car_details.data['model_year']);
+    }
+    catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error fetching car details")));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     // Check if required data is available
-    if (widget.title == null ||
-        widget.carName == null ||
-        widget.carColor == null ||
-        widget.plateNumber == null ||
-        widget.plateState == null ||
-        widget.carImageUrl == null) {
+    if (carDetails == null) {
       return const Center(
         child: CircularProgressIndicator(),
       );
@@ -71,20 +85,20 @@ class RideCardState extends State<RideCard> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  widget.title!,
+                  "You are on your way!",
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 14),
-                Image.network(widget.carImageUrl!, height: 120),
+                Image.network(carDetails!.carImage, height: 120),
                 const SizedBox(height: 10),
                 Text(
-                  widget.carName!,
+                  (carDetails!.carMake ?? "") + (carDetails!.carModel),
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  widget.carColor!,
+                  carDetails!.carColour,
                   style: const TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 const SizedBox(height: 13),
@@ -97,7 +111,7 @@ class RideCardState extends State<RideCard> {
                   child: Column(
                     children: [
                       Text(
-                        widget.plateNumber!,
+                        carDetails!.carLicensePlate,
                         style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
@@ -105,7 +119,7 @@ class RideCardState extends State<RideCard> {
                         ),
                       ),
                       Text(
-                        widget.plateState!,
+                        "VIC",
                         style: const TextStyle(fontSize: 12, color: Colors.black54),
                       ),
                     ],
