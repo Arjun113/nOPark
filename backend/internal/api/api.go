@@ -111,22 +111,13 @@ func (a *api) Routes() *mux.Router {
 	p.HandleFunc("/v1/rides/compensation", a.compensationEstimateHandler).Methods("GET")
 	p.HandleFunc("/v1/rides/history", a.getRideHistoryHandler).Methods("GET")
 	p.HandleFunc("/v1/rides/route", a.getRouteForRideHandler).Methods("GET")
-	// p.HandleFunc("/rides", a.listRidesHandler).Methods("GET")
-	// p.HandleFunc("/rides/{rideID}", a.getRideHandler).Methods("GET")
-	// p.HandleFunc("/rides/{rideID}", a.updateRideHandler).Methods("PUT")
-	// p.HandleFunc("/rides/{rideID}", a.deleteRideHandler).Methods("DELETE")
 
 	// Admin IP management routes (protected by admin check within handlers)
 	p.HandleFunc("/v1/admin/ip/block", a.blockIPHandler).Methods("POST")
 	p.HandleFunc("/v1/admin/ip/unblock", a.unblockIPHandler).Methods("GET")
 
-	// Protected map routes (commented out for now)
+	// Protected map routes
 	p.HandleFunc("/v1/maps/route", a.getRouteHandler).Methods("POST")
-	// p.HandleFunc("/maps", a.listMapsHandler).Methods("GET")
-	// p.HandleFunc("/maps", a.createMapHandler).Methods("POST")
-	// p.HandleFunc("/maps/{mapID}", a.getMapHandler).Methods("GET")
-	// p.HandleFunc("/maps/{mapID}", a.updateMapHandler).Methods("PUT")
-	// p.HandleFunc("/maps/{mapID}", a.deleteMapHandler).Methods("DELETE")
 
 	return r
 }
