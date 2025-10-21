@@ -256,7 +256,8 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
                         final response = await DioClient().client.post(
                           '/accounts/${rider.riderID}/review',
                           data: {
-                            'stars': rider.rating.floor(),
+                            'stars':
+                                rider.rating > 0 ? rider.rating.toInt() : 1,
                             'comment': rider.comment,
                           },
                         );

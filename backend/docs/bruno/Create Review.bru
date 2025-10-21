@@ -1,0 +1,23 @@
+meta {
+  name: Create Review
+  type: http
+  seq: 27
+}
+
+post {
+  url: https://nopark-api.lachlanmacphee.com/v1/accounts/6/review
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "stars": 0,
+    "comment": "Great ride!"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
