@@ -28,36 +28,5 @@ services:
       - OSM_IMPORT_MODE=raw # raw or saved
     restart: "no" # This is a one-off init job, don't restart it.
 
-  obj:
-    image: minio/minio
-    restart: unless-stopped
-    ports:
-      - 9000:9000
-      - 9001:9001
-    environment:
-      MINIO_ACCESS_KEY: minio
-      MINIO_SECRET_KEY: minio123
-      MINIO_ROOT_USER: minio
-      MINIO_ROOT_PASSWORD: minio123
-    volumes:
-      - objdata:/data
-    command: server /data --console-address ":9001"
-
-  obj_buckets:
-    image: minio/mc
-    depends_on:
-      - obj
-    restart: on-failure
-    entrypoint: >
-      /bin/sh -c "
-      sleep 10;
-      /usr/bin/mc alias set myminio http://obj:9000 minio minio123;
-      /usr/bin/mc mb myminio/users;
-      /usr/bin/mc mb myminio/maps;
-      /usr/bin/mc anonymous set public myminio/maps;
-      exit 0;
-      "
-
 volumes:
   dbdata:
-  objdata:
