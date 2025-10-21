@@ -9,7 +9,7 @@ import 'package:nopark/logic/network/dio_client.dart';
 /// CRON job to maintain polyline, other users, etc
 /// Has access to internet to be able to poll for current location
 void maintainMap (DataController rideDataShare) {
-  Timer.periodic(Duration(seconds: 5), (time) async {
+  Timer.periodic(Duration(seconds: 10), (time) async {
 
 
     /// Part 1: if there exists a current ride, go into passenger,
@@ -47,6 +47,11 @@ void maintainMap (DataController rideDataShare) {
     /// We can use the list to fetch current passenger locations
 
     if (rideDataShare.getDriverReceivedProposalDetails() != null && rideDataShare.getDriverAcceptedProposals() != null) {
+
+      // All proposals have the same endpoint
+      final current_destination = rideDataShare.getCurrentDestination();
+      rideDataShare.addDestinationMarker(MapMarker(position: LatLng(current_destination!.lat, current_destination.long)));
+
       // For every ride that driver received, check if it was accepted
       for (var ride in rideDataShare.getDriverReceivedProposalDetails()!) {
         if (rideDataShare.getDriverAcceptedProposals()!.contains(ride.proposalID)) {

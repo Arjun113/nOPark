@@ -16,6 +16,7 @@ import 'package:nopark/features/trip/entities/user.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_cost_adjust_widget.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_over_card_rating.dart';
 import 'package:nopark/features/trip/unified/trip_scroller.dart';
+import 'package:nopark/logic/map/polyline_other_people_cron.dart';
 import 'package:nopark/logic/utilities/firebase_notif_waiter.dart';
 
 import '../../../../logic/map/polyline_decoder.dart';
@@ -54,6 +55,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
   void initState() {
     super.initState();
     _loadUserData();
+    maintainMap(rideDataStore);
   }
 
   Future<void> _loadUserData() async {

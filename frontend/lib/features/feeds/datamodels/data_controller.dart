@@ -237,5 +237,9 @@ class DataController extends ChangeNotifier {
     rideReqResp = null;
     startingString = null;
     destinationCode = null;
+    otherPeopleLocation = [];
+    destinationMarkers = [];
+    routePoints = [];
+    notifyListeners();
   }
 }

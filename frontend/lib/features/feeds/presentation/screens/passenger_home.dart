@@ -17,6 +17,7 @@ import 'package:nopark/features/trip/passenger/presentation/widgets/trip_over_ca
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_search_animation.dart';
 import 'package:nopark/features/trip/unified/trip_scroller.dart';
 import 'package:nopark/logic/map/polyline_decoder.dart';
+import 'package:nopark/logic/map/polyline_other_people_cron.dart';
 import 'package:nopark/logic/network/dio_client.dart';
 import 'package:nopark/logic/utilities/firebase_notif_waiter.dart';
 
@@ -55,6 +56,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
   void initState() {
     super.initState();
     _loadUserData();
+    maintainMap(rideDataStore);
   }
 
   Future<void> _loadUserData() async {
@@ -428,6 +430,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         if (acception == false) {
                           rideDataStore.clearForNextRide();
                           controller.jumpTo(0);
+                          return;
                         }
 
                         final ride_confirmed = await waitForRideUpdates('ride_finalized');

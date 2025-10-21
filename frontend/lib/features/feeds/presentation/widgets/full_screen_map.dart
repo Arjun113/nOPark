@@ -273,95 +273,100 @@ class FullScreenMapState extends State<FullScreenMap> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBody: true,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        systemOverlayStyle: SystemUiOverlayStyle.dark,
-      ),
-      body: Stack(
-        children: [
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _mapCenter,
-              initialZoom: widget.initialZoom,
-              minZoom: 5.0,
-              maxZoom: 18.0,
+    return AnimatedBuilder(
+        animation: widget.rideDataShare,
+        builder: ((context, _) {
+          return Scaffold(
+            extendBody: true,
+            extendBodyBehindAppBar: true,
+            appBar: AppBar(
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              systemOverlayStyle: SystemUiOverlayStyle.dark,
             ),
-            children: [
-              TileLayer(
-                urlTemplate: openStreetMapUri,
-                userAgentPackageName: openStreetMapUserAgent,
-              ),
+            body: Stack(
+              children: [
+                FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter: _mapCenter,
+                    initialZoom: widget.initialZoom,
+                    minZoom: 5.0,
+                    maxZoom: 18.0,
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: openStreetMapUri,
+                      userAgentPackageName: openStreetMapUserAgent,
+                    ),
 
-              // Route polyline layer
-              if (widget.rideDataShare.getRoutePoints().isNotEmpty)
-                PolylineLayer(
-                  polylines: [
-                    Polyline(
-                      points: widget.rideDataShare.getRoutePoints(),
-                      strokeWidth: 4.0,
-                      color: Colors.blue,
-                      pattern: StrokePattern.solid(),
+                    // Route polyline layer
+                    if (widget.rideDataShare.getRoutePoints().isNotEmpty)
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: widget.rideDataShare.getRoutePoints(),
+                            strokeWidth: 4.0,
+                            color: Colors.blue,
+                            pattern: StrokePattern.solid(),
+                          ),
+                        ],
+                      ),
+
+                    // All markers layer
+                    MarkerLayer(markers: _buildMarkers()),
+
+                    RichAttributionWidget(
+                      attributions: [
+                        TextSourceAttribution(
+                          'OpenStreetMap contributors',
+                          onTap:
+                              () => launchUrl(
+                            Uri.parse('https://openstreetmap.org/copyright'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
 
-              // All markers layer
-              MarkerLayer(markers: _buildMarkers()),
-
-              RichAttributionWidget(
-                attributions: [
-                  TextSourceAttribution(
-                    'OpenStreetMap contributors',
-                    onTap:
-                        () => launchUrl(
-                          Uri.parse('https://openstreetmap.org/copyright'),
+                // Floating action buttons
+                Positioned(
+                  right: 16,
+                  bottom: 16,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Fit bounds button (show both markers)
+                      if (widget.rideDataShare.getDestinationMarkers().isNotEmpty && currentLocation != null)
+                        FloatingActionButton(
+                          mini: true,
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.green,
+                          onPressed: fitBoundsToShowAllMarkers,
+                          heroTag: "fit_bounds",
+                          child: const Icon(Icons.fit_screen),
                         ),
-                  ),
-                ],
-              ),
-            ],
-          ),
 
-          // Floating action buttons
-          Positioned(
-            right: 16,
-            bottom: 16,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Fit bounds button (show both markers)
-                if (widget.rideDataShare.getDestinationMarkers().isNotEmpty && currentLocation != null)
-                  FloatingActionButton(
-                    mini: true,
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.green,
-                    onPressed: fitBoundsToShowAllMarkers,
-                    heroTag: "fit_bounds",
-                    child: const Icon(Icons.fit_screen),
-                  ),
+                      const SizedBox(height: 8),
 
-                const SizedBox(height: 8),
-
-                // Center on user location button
-                if (widget.showUserLocation && currentLocation != null)
-                  FloatingActionButton(
-                    mini: true,
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.blue,
-                    onPressed: _centerOnUserLocation,
-                    heroTag: "center_location",
-                    child: const Icon(Icons.my_location),
+                      // Center on user location button
+                      if (widget.showUserLocation && currentLocation != null)
+                        FloatingActionButton(
+                          mini: true,
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.blue,
+                          onPressed: _centerOnUserLocation,
+                          heroTag: "center_location",
+                          child: const Icon(Icons.my_location),
+                        ),
+                    ],
                   ),
+                ),
               ],
             ),
-          ),
-        ],
-      ),
+          );
+        })
     );
   }
 }
