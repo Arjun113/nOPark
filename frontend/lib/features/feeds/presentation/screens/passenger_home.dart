@@ -299,13 +299,6 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                           "ride_created",
                         );
 
-                        DriverSearchOverlay.updateDriverFound(
-                          rideDataStore.getCurrentUserResponse()!.firstName +
-                              rideDataStore
-                                  .getCurrentUserResponse()!
-                                  .lastName,
-                          "");
-
 
                         try {
                           final proposalData = await DioClient().client.get(
@@ -344,6 +337,13 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         while (rideDataStore.getCurrentUserResponse() == null) {
                           await Future.delayed(Duration(milliseconds: 100));
                         }
+
+                        DriverSearchOverlay.updateDriverFound(
+                            rideDataStore.getCurrentUserResponse()!.firstName +
+                                rideDataStore
+                                    .getCurrentUserResponse()!
+                                    .lastName,
+                            "");
 
                         // Store the prospective ride ID
                         bool acception = await showDialog(

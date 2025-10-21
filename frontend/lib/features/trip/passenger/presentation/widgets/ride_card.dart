@@ -28,6 +28,7 @@ class RideCardState extends State<RideCard> {
       widget.onRideCompleted?.call();
     }
     // Get car details
+    fetchCarDetails();
   }
 
   Future<void> fetchCarDetails () async {
@@ -37,21 +38,28 @@ class RideCardState extends State<RideCard> {
         '/accounts/vehicle?user_id=${widget.rideDataShare.getCurrentPassengerRideProposal()!.driverID}'
       );
 
+      debugPrint(car_details.data.toString());
+
       if (car_details.statusCode != 200) {
         carDetails = Car(carLicensePlate: "DEMO12", carMake: "Demo", carModel: "Demo", carImage: "", carColour: "White", carModelYear: "1984");
         return;
       }
 
-      carDetails = Car(
-          carLicensePlate: car_details.data['license_plate'],
-          carMake: car_details.data['make'],
-          carModel: car_details.data['model'],
-          carImage: "",
-          carColour: car_details.data['colour'],
-          carModelYear: car_details.data['model_year']);
+      setState(() {
+        carDetails = Car(
+          carLicensePlate: car_details.data['license_plate'] as String? ?? '',
+          carMake: car_details.data['make'] as String? ?? '',
+          carModel: car_details.data['model'] as String? ?? '',
+          carImage: '',
+          carColour: car_details.data['colour'] as String? ?? '',
+          carModelYear: car_details.data['model_year']?.toString() ?? '',
+        );
+      });
+
+      debugPrint(carDetails.toString());
     }
     catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error fetching car details")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error fetching car details:$e")));
     }
   }
 
