@@ -3,7 +3,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:nopark/features/trip/entities/user.dart';
 import 'package:nopark/features/feeds/presentation/widgets/top_fold.dart';
 
-typedef LocationSelectedCallback = void Function(double lat, double lng);
+typedef LocationSelectedCallback = void Function(double lat, double lng, String name, String code);
 
 class WhereNextOverlay extends StatefulWidget {
   final User user;
@@ -170,93 +170,58 @@ class _WhereNextOverlayState extends State<WhereNextOverlay>
                             bottomRight: Radius.circular(12),
                           ),
                         ),
-                        child: FutureBuilder<List<Location>>(
-                          future: locationFromAddress(locText.text),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const Center(child: CircularProgressIndicator());
-                            }
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(12),
+                          itemCount: locations.length,
+                          itemBuilder: (context, index) {
+                            final location = locations[index];
 
-                            if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-                              return Center(
-                                child: Text(
-                                  'No locations found for "${locText.text}"',
-                                  style: TextStyle(color: Colors.grey.shade600),
-                                ),
-                              );
-                            }
+                            final name = location['name'] as String? ?? 'Unknown';
+                            final code = location['code'] as String? ?? '';
+                            final lat = location['latitude'] as double;
+                            final lng = location['longitude'] as double;
 
-                            final locations = snapshot.data!.take(4).toList(); // Get up to 4 results
-
-                            return ListView.builder(
-                              padding: const EdgeInsets.all(12),
-                              itemCount: locations.length,
-                              itemBuilder: (context, index) {
-                                final location = locations[index];
-
-                                return FutureBuilder<List<Placemark>>(
-                                  future: placemarkFromCoordinates(
-                                    location.latitude,
-                                    location.longitude,
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  widget.onLocationSelected?.call(
+                                    lat, lng, name, code
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.all(16),
+                                  alignment: Alignment.centerLeft,
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.black87,
+                                  elevation: 1,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  builder: (context, placemarkSnapshot) {
-                                    String displayName = locText.text;
-                                    String subtitle = '${location.latitude.toStringAsFixed(6)}, ${location.longitude.toStringAsFixed(6)}';
-
-                                    if (placemarkSnapshot.hasData && placemarkSnapshot.data!.isNotEmpty) {
-                                      final placemark = placemarkSnapshot.data!.first;
-                                      // Build a nice place name from available data
-                                      displayName = (placemark.name ?? "") + (placemark.street ?? "");
-                                    }
-
-                                    return Padding(
-                                      padding: const EdgeInsets.only(bottom: 8),
-                                      child: ElevatedButton(
-                                        onPressed: () {
-                                          if (widget.onLocationSelected != null) {
-                                            widget.onLocationSelected!(
-                                              location.latitude,
-                                              location.longitude,
-                                            );
-                                          }
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          padding: const EdgeInsets.all(16),
-                                          alignment: Alignment.centerLeft,
-                                          backgroundColor: Colors.white,
-                                          foregroundColor: Colors.black87,
-                                          elevation: 1,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              displayName,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 16,
-                                              ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              subtitle,
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.grey.shade600,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16,
                                       ),
-                                    );
-                                  },
-                                );
-                              },
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '$code — ${lat.toStringAsFixed(6)}, ${lng.toStringAsFixed(6)}',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             );
                           },
                         ),
@@ -272,3 +237,11 @@ class _WhereNextOverlayState extends State<WhereNextOverlay>
     );
   }
 }
+
+
+List<Map<String, dynamic>> locations = [
+  {'name': 'Clayton', 'code': 'CL', 'latitude': -37.9078, 'longitude': 145.1339},
+  {'name': 'Caulfield', 'code': 'CA', 'latitude': -37.8768, 'longitude': 145.0458},
+  {'name': "Peninsula", "code": "PE", 'latitude': -38.1520, 'longitude': 145.1360},
+  {'name': "Law Chambers", "code": "LA", "latitude": -37.8145, 'longitude': 144.9560}
+];

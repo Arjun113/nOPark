@@ -117,7 +117,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                     WhereNextOverlay(
                       user: user!,
                       addresses: addresses,
-                      onLocationSelected: (lat, lng) async {
+                      onLocationSelected: (lat, lng, name, code) async {
                         final List<MapMarker> destinationMarker = [
                           MapMarker(position: LatLng(lat, lng)),
                         ];
@@ -162,9 +162,8 @@ class _DriverHomePageState extends State<DriverHomePage> {
                         rideDataStore.setCurrentDestination(
                           Location(lat: lat, long: lng),
                         );
-                        rideDataStore.setCurrentDestinationString(
-                          (await placemarkFromCoordinates(lat, lng))[0].name!,
-                        );
+                        rideDataStore.setCurrentDestinationString(name);
+                        rideDataStore.setDestinationCode(code);
                         controller.next();
                       },
                       onBack: Navigator.of(context).pop,

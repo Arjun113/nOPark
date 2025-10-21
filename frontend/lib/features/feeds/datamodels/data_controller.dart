@@ -19,6 +19,7 @@ class DataController extends ChangeNotifier {
   List<int>? driverAcceptedProposals;
   int? finalRideId;
   List<RideOption>? driverRideProposals;
+  String? destinationCode;
 
   Location? getCurrentDestination() => destination;
   RideRequestResponse? getRideReqResp() => rideReqResp;
@@ -31,6 +32,7 @@ class DataController extends ChangeNotifier {
   List<int>? getDriverAcceptedProposals() => driverAcceptedProposals;
   int? getFinalRideId() => finalRideId;
   List<RideOption>? getDriverReceivedProposalDetails() => driverRideProposals;
+  String? getRideDestinationCode() => destinationCode;
 
   void setCurrentDestination(Location destination) {
     this.destination = destination;
@@ -80,6 +82,11 @@ class DataController extends ChangeNotifier {
 
   void setFinalRideId(int newRideId) {
     finalRideId = newRideId;
+    notifyListeners();
+  }
+
+  void setDestinationCode (String newCode) {
+    destinationCode = newCode;
     notifyListeners();
   }
 
@@ -160,5 +167,6 @@ class DataController extends ChangeNotifier {
     rideProposalId = null;
     rideReqResp = null;
     startingString = null;
+    destinationCode = null;
   }
 }
