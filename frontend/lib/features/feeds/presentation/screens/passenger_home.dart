@@ -222,7 +222,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
 
                     PricingOverlay(
                       onBack: controller.back,
-                      fromAddressName: rideDataStore.getCurrentStartingString(),
+                      fromAddressName: "Current Location",
                       fromCampusCode: null,
                       toAddressName:
                           rideDataStore.getCurrentDestinationString(),
