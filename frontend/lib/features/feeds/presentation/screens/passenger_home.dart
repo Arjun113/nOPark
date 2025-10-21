@@ -160,9 +160,10 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                               content: Text("Error getting route details"),
                             ),
                           );
+                          return;
                         }
 
-                        _updateMap(destinationMarker, route!);
+                        _updateMap(destinationMarker, route);
                         rideDataStore.setCurrentDestination(
                           Location(lat: lat, long: lng),
                         );

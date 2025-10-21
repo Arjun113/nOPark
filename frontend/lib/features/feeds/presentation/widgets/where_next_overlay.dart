@@ -253,19 +253,19 @@ class _WhereNextOverlayState extends State<WhereNextOverlay>
 
 List<Map<String, dynamic>> locations = [
   {
-    'name': 'Clayton',
+    'name': 'Clayton Campus',
     'code': 'CL',
     'latitude': -37.9078,
     'longitude': 145.1339,
   },
   {
-    'name': 'Caulfield',
+    'name': 'Caulfield Campus',
     'code': 'CA',
     'latitude': -37.8768,
     'longitude': 145.0458,
   },
   {
-    'name': "Peninsula",
+    'name': "Peninsula Campus",
     "code": "PE",
     'latitude': -38.1520,
     'longitude': 145.1360,
