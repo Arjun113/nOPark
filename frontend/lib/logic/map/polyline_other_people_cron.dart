@@ -72,5 +72,25 @@ void maintainMap (DataController rideDataShare) {
         }
       }
     }
+
+  });
+
+  /// Part 3: Update route polyline every 10 seconds
+  Timer.periodic(Duration(seconds: 10), (time) async {
+    if (rideDataShare.getFinalRideId() != null) {
+      // Get route data from backend
+      try {
+        final ride_route_data = await DioClient().client.get(
+          '/rides/route?ride_id=${rideDataShare.getFinalRideId()}',
+          data: {}
+        );
+
+        // Assign polyline
+        rideDataShare.setPolyline(ride_route_data.data['polyline']);
+      }
+      catch (e) {
+        debugPrint("Error updating route polyline");
+      }
+    }
   });
 }
