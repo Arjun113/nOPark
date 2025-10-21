@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:nopark/features/feeds/datamodels/passenger/ride_proposal.dart';
 import 'package:nopark/features/feeds/datamodels/passenger/ride_request_response.dart';
+import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart';
+import 'package:nopark/logic/map/polyline_decoder.dart';
 
 import '../../trip/driver/presentation/widgets/ride_options_screen.dart';
 import '../../trip/entities/location.dart';
 import '../../trip/passenger/presentation/widgets/trip_over_card_rating.dart';
 import 'driver/user_data.dart';
+
 
 class DataController extends ChangeNotifier {
   Location? destination;
@@ -20,6 +24,11 @@ class DataController extends ChangeNotifier {
   int? finalRideId;
   List<RideOption>? driverRideProposals;
   String? destinationCode;
+  LatLng? currentLocation;
+  List<Map<String, dynamic>> otherPeopleLocation = [];
+  List<MapMarker> destinationMarkers = [];
+  List<LatLng> routePoints = [];
+
 
   Location? getCurrentDestination() => destination;
   RideRequestResponse? getRideReqResp() => rideReqResp;
@@ -33,6 +42,10 @@ class DataController extends ChangeNotifier {
   int? getFinalRideId() => finalRideId;
   List<RideOption>? getDriverReceivedProposalDetails() => driverRideProposals;
   String? getRideDestinationCode() => destinationCode;
+  LatLng? getCurrentLocation() => currentLocation;
+  List<Map<String, dynamic>> getOtherPeopleLocation() => otherPeopleLocation;
+  List<MapMarker> getDestinationMarkers() => destinationMarkers;
+  List<LatLng> getRoutePoints () => routePoints;
 
   void setCurrentDestination(Location destination) {
     this.destination = destination;
@@ -87,6 +100,62 @@ class DataController extends ChangeNotifier {
 
   void setDestinationCode (String newCode) {
     destinationCode = newCode;
+    notifyListeners();
+  }
+
+  void setCurrentLocation (LatLng newLocation) {
+    currentLocation = newLocation;
+    notifyListeners();
+  }
+
+  void addDestinationMarker (MapMarker newMarker) {
+    destinationMarkers.add(newMarker);
+    notifyListeners();
+  }
+
+  void clearDestinationMarkers () {
+    destinationMarkers = [];
+    notifyListeners();
+  }
+
+  void setDestinationMarkers (List<MapMarker> newMarkers) {
+    destinationMarkers = newMarkers;
+    notifyListeners();
+  }
+
+  void setRoutePoints (List<LatLng> newRoutePoints) {
+    routePoints = newRoutePoints;
+    notifyListeners();
+  }
+
+  void clearRoutePoints () {
+    routePoints = [];
+    notifyListeners();
+  }
+
+  void addNewOtherLocation (LatLng newOtherLocation, int userID) {
+    var matches = otherPeopleLocation.where((map) => map['user'] == userID).toList();
+    for (var match in matches) {
+      otherPeopleLocation.remove(match);
+    }
+    otherPeopleLocation.add({'user': userID, 'location': newOtherLocation});
+    notifyListeners();
+  }
+
+  void clearOtherLocation () {
+    otherPeopleLocation.clear();
+    notifyListeners();
+  }
+
+  void setOtherLocations (List<LatLng> newOtherLocations, List<int> userIDs) {
+    for (int i = 0; i < newOtherLocations.length; i = i + 1){
+      otherPeopleLocation.add({'user': userIDs[i], 'location': newOtherLocations[i]});
+    }
+    notifyListeners();
+  }
+
+  void setPolyline (String polyline) {
+    routePoints = decodePolyline(polyline);
     notifyListeners();
   }
 

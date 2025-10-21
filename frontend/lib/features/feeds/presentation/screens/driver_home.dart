@@ -320,9 +320,9 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
   void _updateMap(List<MapMarker> mapMarkers, List<LatLng> routePoints) {
     mapMarkers.map((marker) {
-      mapKey.currentState?.addDestinationMarker(marker);
+      rideDataStore.addDestinationMarker(marker);
     });
-    mapKey.currentState?.setRoutePoints(routePoints);
+    rideDataStore.setRoutePoints(routePoints);
     mapKey.currentState?.fitBoundsToShowAllMarkers();
   }
 
@@ -342,7 +342,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
       body: Stack(
         children: [
           // Background map
-          FullScreenMap(key: mapKey),
+          FullScreenMap(key: mapKey, rideDataShare: rideDataStore,userType: 'driver',),
 
           // Detect taps outside when expanded
           if (isExpanded)

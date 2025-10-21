@@ -493,9 +493,9 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
 
   void _updateMap(List<MapMarker> mapMarkers, List<LatLng> routePoints) {
     mapMarkers.map((marker) {
-      mapKey.currentState?.addDestinationMarker(marker);
+      rideDataStore.addDestinationMarker(marker);
     });
-    mapKey.currentState?.setRoutePoints(routePoints);
+    rideDataStore.setRoutePoints(routePoints);
     mapKey.currentState?.fitBoundsToShowAllMarkers();
   }
 
@@ -515,7 +515,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
       body: Stack(
         children: [
           // Background map
-          FullScreenMap(key: mapKey),
+          FullScreenMap(key: mapKey, rideDataShare: rideDataStore,userType: 'Passenger',),
 
           // Detect taps outside when expanded
           if (isExpanded)

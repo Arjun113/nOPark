@@ -8,6 +8,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:nopark/constants/api_uris.dart';
+import 'package:nopark/features/feeds/datamodels/data_controller.dart';
 import 'package:nopark/logic/location/loc_perms.dart';
 import 'package:nopark/logic/location/loc_stream.dart';
 import 'package:nopark/logic/location/loc_updater.dart';
@@ -33,10 +34,14 @@ class FullScreenMap extends StatefulWidget {
   final LatLng? initialCenter;
   final double initialZoom;
   final bool showUserLocation;
+  final DataController rideDataShare;
+  final String userType;
 
   const FullScreenMap({
     super.key,
     this.initialCenter,
+    required this.rideDataShare,
+    required this.userType,
     this.initialZoom = 15.0,
     this.showUserLocation = true,
   });
@@ -48,9 +53,6 @@ class FullScreenMap extends StatefulWidget {
 class FullScreenMapState extends State<FullScreenMap> {
   StreamSubscription<Position>? _locationSubscription;
   final MapController _mapController = MapController();
-  List<MapMarker> destinationMarker =
-      []; // New parameter for destination markers
-  List<LatLng> routePoints = []; // New parameter for route points
 
   LatLng? currentLocation;
   LatLng _mapCenter = const LatLng(
@@ -83,6 +85,7 @@ class FullScreenMapState extends State<FullScreenMap> {
         if (mounted) {
           setState(() {
             currentLocation = LatLng(position.latitude, position.longitude);
+            widget.rideDataShare.setCurrentLocation(LatLng(position.latitude, position.longitude));
           });
 
           // Optional: Auto-center map on user location
@@ -104,7 +107,7 @@ class FullScreenMapState extends State<FullScreenMap> {
 
   // Method to fit bounds to show both user location and destination
   void fitBoundsToShowAllMarkers() {
-    if (currentLocation == null && destinationMarker.isEmpty) return;
+    if (currentLocation == null && widget.rideDataShare.getDestinationMarkers().isEmpty) return;
 
     List<LatLng> points = [];
 
@@ -112,7 +115,7 @@ class FullScreenMapState extends State<FullScreenMap> {
       points.add(currentLocation!);
     }
 
-    for (var marker in routePoints) {
+    for (var marker in widget.rideDataShare.getRoutePoints()) {
       points.add(marker);
     }
 
@@ -156,42 +159,6 @@ class FullScreenMapState extends State<FullScreenMap> {
     _mapController.move(newLocation, 15.0);
   }
 
-  // Public method to add destination markers
-  void addDestinationMarker(MapMarker marker) {
-    setState(() {
-      destinationMarker.add(marker);
-    });
-  }
-
-  // Public method to clear destination markers
-  void clearDestinationMarkers() {
-    setState(() {
-      destinationMarker.clear();
-    });
-  }
-
-  // Public method to set route points
-  void setRoutePoints(List<LatLng> points) {
-    setState(() {
-      routePoints = points;
-    });
-  }
-
-  void setPolyLine(String polyline) {
-    // Decode polyline
-    final pointsList = decodePolyline(polyline);
-    setState(() {
-      routePoints = pointsList;
-    });
-  }
-
-  // Public method to clear route points
-  void clearRoute() {
-    setState(() {
-      routePoints.clear();
-    });
-  }
-
   // Helper method to build all markers
   List<Marker> _buildMarkers() {
     List<Marker> markers = [];
@@ -222,7 +189,7 @@ class FullScreenMapState extends State<FullScreenMap> {
     }
 
     // Destination markers
-    for (var marker in destinationMarker) {
+    for (var marker in widget.rideDataShare.getDestinationMarkers()) {
       markers.add(
         Marker(
           point: marker.position,
@@ -230,7 +197,7 @@ class FullScreenMapState extends State<FullScreenMap> {
           height: marker.height,
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.blue,
+              color: Colors.green,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 2),
               boxShadow: [
@@ -244,6 +211,54 @@ class FullScreenMapState extends State<FullScreenMap> {
           ),
         ),
       );
+    }
+
+    // Other users
+    for (var otherUser in widget.rideDataShare.getOtherPeopleLocation()) {
+      if (widget.userType == 'Passenger') {
+        markers.add(
+            Marker(
+              point: otherUser['location'],
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(30),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.directions_car, size: 20, color: Colors.white,),
+              ),
+            )
+        );
+      }
+      else {
+        markers.add(
+            Marker(
+              point: otherUser['location'],
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(30),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.person_pin_circle_rounded, size: 20, color: Colors.white,),
+              ),
+            )
+        );
+      }
     }
 
     return markers;
@@ -283,11 +298,11 @@ class FullScreenMapState extends State<FullScreenMap> {
               ),
 
               // Route polyline layer
-              if (routePoints.isNotEmpty)
+              if (widget.rideDataShare.getRoutePoints().isNotEmpty)
                 PolylineLayer(
                   polylines: [
                     Polyline(
-                      points: routePoints,
+                      points: widget.rideDataShare.getRoutePoints(),
                       strokeWidth: 4.0,
                       color: Colors.blue,
                       pattern: StrokePattern.solid(),
@@ -320,7 +335,7 @@ class FullScreenMapState extends State<FullScreenMap> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Fit bounds button (show both markers)
-                if (destinationMarker.isNotEmpty && currentLocation != null)
+                if (widget.rideDataShare.getDestinationMarkers().isNotEmpty && currentLocation != null)
                   FloatingActionButton(
                     mini: true,
                     backgroundColor: Colors.white,

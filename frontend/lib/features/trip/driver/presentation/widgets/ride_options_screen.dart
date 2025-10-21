@@ -65,8 +65,8 @@ Future<List<RideOption>> fetchObjects(DataController rideDataStore) async {
           lat: (mainData[i]['dropoff_latitude'] as num?)?.toDouble() ?? 0.0,
           long: (mainData[i]['dropoff_longitude'] as num?)?.toDouble() ?? 0.0,
         ),
-        detourKm: 0.0,
-        detourMin: 0,
+        detourKm: mainData[i]['detour_distance_m'] / 1000,
+        detourMin: (mainData[i]['detour_time_s'] / 60 as double).truncate(),
         price: (mainData[i]['compensation'] as num?)?.toDouble() ?? 0.0,
         proposalID: mainData[i]['id'] as int? ?? 0,
         polyline: mainData[i]['polyline'] ?? '', // Add ?? ''
