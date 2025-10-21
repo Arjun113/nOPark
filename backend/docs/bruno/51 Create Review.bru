@@ -1,0 +1,27 @@
+meta {
+  name: 51 Create Review
+  type: http
+  seq: 28
+}
+
+post {
+  url: http://localhost:4000/v1/accounts/1/review
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: a7cx6yg7dv6t9rdaf6mdazaf.84858hdq326nx5k6avmg4zeg
+}
+
+body:json {
+  {
+    "stars": 1,
+    "comment": "He's the goat"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -347,7 +347,7 @@ func (a *api) createRideDraftHandler(w http.ResponseWriter, r *http.Request) {
 		if len(rides) > 0 {
 			for _, ride := range rides {
 				// Check if the ride is already in progress
-				if ride.Status == "in_progress" || ride.Status == "completed" {
+				if ride.Status == "in_progress" || ride.Status == "completed" || ride.Status == "awaiting_confirmation" {
 					a.errorResponse(w, r, http.StatusConflict, fmt.Errorf("a ride is already in progress or completed for request ID %d", id))
 					return
 				}
