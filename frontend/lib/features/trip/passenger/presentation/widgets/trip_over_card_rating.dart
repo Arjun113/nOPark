@@ -6,14 +6,14 @@ class RideInfo {
   final String riderName;
   final double riderPrice;
   final int riderID;
-  double rating;
+  int rating;
   String comment;
 
   RideInfo({
     required this.riderName,
     required this.riderPrice,
     required this.riderID,
-    this.rating = 0.0,
+    this.rating = 0,
     this.comment = "",
   });
 }
@@ -56,7 +56,7 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
     super.dispose();
   }
 
-  void _updateRating(int index, double rating) {
+  void _updateRating(int index, int rating) {
     setState(() {
       widget.riders![index].rating = rating;
     });
@@ -299,8 +299,8 @@ class _RideCompletionWidgetState extends State<RideCompletionWidget> {
 }
 
 class StarRating extends StatefulWidget {
-  final double rating;
-  final Function(double) onRatingChanged;
+  final int rating;
+  final Function(int) onRatingChanged;
   final int maxRating;
 
   const StarRating({
@@ -321,23 +321,9 @@ class _StarRatingState extends State<StarRating> {
       mainAxisSize: MainAxisSize.min,
       children: List.generate(widget.maxRating, (index) {
         return GestureDetector(
-          onTapDown: (details) {
-            // Calculate if tap was on left or right half of star
-            final RenderBox box = context.findRenderObject() as RenderBox;
-            final localPosition = box.globalToLocal(details.globalPosition);
-            final starWidth = 40.0; // Width of each star container
-            final starIndex = (localPosition.dx / starWidth).floor();
-            final positionInStar = (localPosition.dx % starWidth) / starWidth;
-
-            double newRating;
-            if (positionInStar < 0.5) {
-              newRating = starIndex + 0.5;
-            } else {
-              newRating = starIndex + 1.0;
-            }
-
-            // Ensure rating is within bounds
-            newRating = newRating.clamp(0.5, widget.maxRating.toDouble());
+          onTap: () {
+            // Set rating to the star number (1-5)
+            int newRating = index + 1;
             widget.onRatingChanged(newRating);
           },
           child: Container(
@@ -352,35 +338,13 @@ class _StarRatingState extends State<StarRating> {
   }
 
   Widget _buildStar(int starNumber) {
-    double difference = widget.rating - starNumber + 1;
-
-    if (difference >= 1.0) {
+    // Only show full stars or empty stars
+    if (widget.rating >= starNumber) {
       // Full star
       return const Icon(Icons.star, color: Colors.amber, size: 32);
-    } else if (difference >= 0.5) {
-      // Half star
-      return Stack(
-        children: [
-          const Icon(Icons.star_border, color: Colors.amber, size: 32),
-          ClipRect(
-            clipper: HalfStarClipper(),
-            child: const Icon(Icons.star, color: Colors.amber, size: 32),
-          ),
-        ],
-      );
     } else {
       // Empty star
       return const Icon(Icons.star_border, color: Colors.amber, size: 32);
     }
   }
-}
-
-class HalfStarClipper extends CustomClipper<Rect> {
-  @override
-  Rect getClip(Size size) {
-    return Rect.fromLTRB(0, 0, size.width / 2, size.height);
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Rect> oldClipper) => false;
 }
