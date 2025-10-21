@@ -8,71 +8,86 @@ import 'package:nopark/logic/network/dio_client.dart';
 
 /// CRON job to maintain polyline, other users, etc
 /// Has access to internet to be able to poll for current location
-void maintainMap (DataController rideDataShare) {
+void maintainMap(DataController rideDataShare) {
   Timer.periodic(Duration(seconds: 10), (time) async {
-
-
     /// Part 1: if there exists a current ride, go into passenger,
     /// Fetch the driver ID, poll backend for its current location,
     /// And set it as "another location"
 
     if (rideDataShare.getCurrentPassengerRideProposal() != null) {
-      final current_polyline = rideDataShare.getCurrentPassengerRideProposal()!.polyline;
-      final current_driver_id = rideDataShare.getCurrentPassengerRideProposal()!.driverID;
-      final current_destination = rideDataShare.getCurrentDestination();
+      final currentPolyline =
+          rideDataShare.getCurrentPassengerRideProposal()!.polyline;
+      final currentDriverId =
+          rideDataShare.getCurrentPassengerRideProposal()!.driverID;
+      final currentDestination = rideDataShare.getCurrentDestination();
 
       // Update polyline
-      rideDataShare.setPolyline(current_polyline);
+      rideDataShare.setPolyline(currentPolyline);
       // Update destination marker
-      rideDataShare.addDestinationMarker(MapMarker(position: LatLng(current_destination!.lat, current_destination.long)));
+      rideDataShare.addDestinationMarker(
+        MapMarker(
+          position: LatLng(currentDestination!.lat, currentDestination.long),
+        ),
+      );
 
       // Fetch current driver location from server and update it
       try {
-        final driver_data_package = await DioClient().client.get(
-          '/accounts/${current_driver_id}',
-          data: {}
+        final driverDataPackage = await DioClient().client.get(
+          '/accounts/$currentDriverId',
+          data: {},
         );
 
-        final location_response = LatLng(driver_data_package.data['current_latitude'], driver_data_package.data['current_longitude']);
+        final locationResponse = LatLng(
+          driverDataPackage.data['current_latitude'],
+          driverDataPackage.data['current_longitude'],
+        );
 
-        rideDataShare.addNewOtherLocation(location_response, current_driver_id);
-      }
-      catch (e) {
+        rideDataShare.addNewOtherLocation(locationResponse, currentDriverId);
+      } catch (e) {
         debugPrint("error accessing driver location: $e");
       }
     }
 
-
     /// Part 2: if getdriverreceivedproposaldetails and getdriveracceptedproposals are non null
     /// We can use the list to fetch current passenger locations
 
-    if (rideDataShare.getDriverReceivedProposalDetails() != null && rideDataShare.getDriverAcceptedProposals() != null) {
-
+    if (rideDataShare.getDriverReceivedProposalDetails() != null &&
+        rideDataShare.getDriverAcceptedProposals() != null) {
       // All proposals have the same endpoint
-      final current_destination = rideDataShare.getCurrentDestination();
-      rideDataShare.addDestinationMarker(MapMarker(position: LatLng(current_destination!.lat, current_destination.long)));
+      final currentDestination = rideDataShare.getCurrentDestination();
+      rideDataShare.addDestinationMarker(
+        MapMarker(
+          position: LatLng(currentDestination!.lat, currentDestination.long),
+        ),
+      );
 
       // For every ride that driver received, check if it was accepted
       for (var ride in rideDataShare.getDriverReceivedProposalDetails()!) {
-        if (rideDataShare.getDriverAcceptedProposals()!.contains(ride.proposalID)) {
+        if (rideDataShare.getDriverAcceptedProposals()!.contains(
+          ride.proposalID,
+        )) {
           // Fetch current passenger location
           try {
-            final passenger_data_package = await DioClient().client.get(
-                '/accounts/${ride.passengerID}',
-                data: {}
+            final passengerDataPackage = await DioClient().client.get(
+              '/accounts/${ride.passengerID}',
+              data: {},
             );
 
-            final location_response = LatLng(passenger_data_package.data['current_latitude'], passenger_data_package.data['current_longitude']);
+            final locationResponse = LatLng(
+              passengerDataPackage.data['current_latitude'],
+              passengerDataPackage.data['current_longitude'],
+            );
 
-            rideDataShare.addNewOtherLocation(location_response, ride.passengerID);
-          }
-          catch (e) {
+            rideDataShare.addNewOtherLocation(
+              locationResponse,
+              ride.passengerID,
+            );
+          } catch (e) {
             debugPrint("error accessing passenger location: $e");
           }
         }
       }
     }
-
   });
 
   /// Part 3: Update route polyline every 10 seconds
@@ -80,15 +95,14 @@ void maintainMap (DataController rideDataShare) {
     if (rideDataShare.getFinalRideId() != null) {
       // Get route data from backend
       try {
-        final ride_route_data = await DioClient().client.get(
+        final rideRouteData = await DioClient().client.get(
           '/rides/route?ride_id=${rideDataShare.getFinalRideId()}',
-          data: {}
+          data: {},
         );
 
         // Assign polyline
-        rideDataShare.setPolyline(ride_route_data.data['polyline']);
-      }
-      catch (e) {
+        rideDataShare.setPolyline(rideRouteData.data['polyline']);
+      } catch (e) {
         debugPrint("Error updating route polyline");
       }
     }

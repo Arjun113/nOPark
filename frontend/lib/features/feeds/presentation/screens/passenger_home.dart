@@ -70,7 +70,6 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
           [];
       isLoading = false;
     });
-    print("User data loaded");
   }
 
   List<AddressCardData> convertListToAddressCard() {
@@ -297,10 +296,8 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         }
 
                         // Wait for FCM notification about prospective ride
-                        RemoteMessage driverProspectus = await waitForRideUpdates(
-                          "ride_created",
-                        );
-
+                        RemoteMessage driverProspectus =
+                            await waitForRideUpdates("ride_created");
 
                         try {
                           final proposalData = await DioClient().client.get(
@@ -341,51 +338,55 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         }
 
                         DriverSearchOverlay.updateDriverFound(
-                            rideDataStore.getCurrentUserResponse()!.firstName +
-                                rideDataStore
-                                    .getCurrentUserResponse()!
-                                    .lastName,
-                            "");
+                          rideDataStore.getCurrentUserResponse()!.firstName +
+                              rideDataStore.getCurrentUserResponse()!.lastName,
+                          "",
+                        );
 
                         // Store the prospective ride ID
                         bool acception = await showDialog(
                           context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text("Please confirm the ride."),
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min, // <-- Make column shrink to content
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Driver name: ${rideDataStore.getCurrentUserResponse()!.firstName}",
+                          builder:
+                              (context) => AlertDialog(
+                                title: const Text("Please confirm the ride."),
+                                content: Column(
+                                  mainAxisSize:
+                                      MainAxisSize
+                                          .min, // <-- Make column shrink to content
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Driver name: ${rideDataStore.getCurrentUserResponse()!.firstName}",
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      "Driver rating: ${rideDataStore.getCurrentUserResponse()!.rating} (${rideDataStore.getCurrentUserResponse()!.ratingCount})",
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  "Driver rating: ${rideDataStore.getCurrentUserResponse()!.rating} (${rideDataStore.getCurrentUserResponse()!.ratingCount})",
-                                ),
-                              ],
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(false),
-                                child: const Text("Reject Ride"),
+                                actions: [
+                                  TextButton(
+                                    onPressed:
+                                        () => Navigator.of(context).pop(false),
+                                    child: const Text("Reject Ride"),
+                                  ),
+                                  TextButton(
+                                    onPressed:
+                                        () => Navigator.of(context).pop(true),
+                                    child: const Text("Accept Ride"),
+                                  ),
+                                ],
                               ),
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(true),
-                                child: const Text("Accept Ride"),
-                              ),
-                            ],
-                          ),
                         );
-
 
                         // Send server yes or no
                         try {
                           final response = await DioClient().client.post(
                             '/rides/confirm',
                             data: {
-                              'proposal_id':
-                                  int.parse(driverProspectus.data['proposal_id']),
+                              'proposal_id': int.parse(
+                                driverProspectus.data['proposal_id'],
+                              ),
                               'confirm':
                                   acception == true ? 'accept' : 'reject',
                             },
@@ -433,7 +434,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                           return;
                         }
 
-                        final ride_confirmed = await waitForRideUpdates('ride_finalized');
+                        await waitForRideUpdates('ride_finalized');
 
                         controller.next();
                       }),
@@ -443,9 +444,8 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                       driverName: rideDataStore.getCurrentUserResponse(),
                       profileImageUrl: "",
                       lookForCompletion: (() async {
-                        // TODO: Wait for pickup to say yes
                         debugPrint('instantiated async lookforcompletion');
-                        final riderPickedUp = await waitForDriverProximity('proximity');
+                        await waitForDriverProximity('proximity');
                         debugPrint("reached driver pickup");
                         controller.next();
                       }),
@@ -454,12 +454,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                     RideCard(
                       rideDataShare: rideDataStore,
                       onRideCompleted: (() async {
-                        // TODO: Wait for ride to finish
-
-                        final riderRideDone = await waitForRideUpdates(
-                          'ride_completed',
-                        );
-
+                        await waitForRideUpdates('ride_completed');
                         controller.next();
                       }),
                     ),
@@ -484,12 +479,12 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
         barrierColor: Colors.black.withAlpha(30),
         pageBuilder:
             (_, __, ___) => OverlayFlow(
-          onClose: () => Navigator.of(context).pop(),
-          stepsBuilder:
-              (controller) => [
-            PastRidesOverlay(onBack: () => Navigator.of(context).pop()),
-          ],
-        ),
+              onClose: () => Navigator.of(context).pop(),
+              stepsBuilder:
+                  (controller) => [
+                    PastRidesOverlay(onBack: () => Navigator.of(context).pop()),
+                  ],
+            ),
       ),
     );
   }
@@ -518,7 +513,11 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
       body: Stack(
         children: [
           // Background map
-          FullScreenMap(key: mapKey, rideDataShare: rideDataStore,userType: 'Passenger',),
+          FullScreenMap(
+            key: mapKey,
+            rideDataShare: rideDataStore,
+            userType: 'Passenger',
+          ),
 
           // Detect taps outside when expanded
           if (isExpanded)

@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
         data: {
           'email': _emailController.text.trim(),
           'password': _passwordController.text.trim(),
-          'fcm_token': (await FirebaseMessaging.instance.getToken())
+          'fcm_token': (await FirebaseMessaging.instance.getToken()),
         },
       );
 
@@ -47,9 +47,9 @@ class _LoginScreenState extends State<LoginScreen> {
       // If no car: throw to Vehicle Login
       // Else: go to driver/passenger screen
       if (response.data['type'] == 'driver') {
-        final car_details = await DioClient().client.get(
-            '/accounts/vehicle?user_id=${response.data['id']}',
-            data: {}
+        await DioClient().client.get(
+          '/accounts/vehicle?user_id=${response.data['id']}',
+          data: {},
         );
       }
 
@@ -77,22 +77,19 @@ class _LoginScreenState extends State<LoginScreen> {
               MaterialPageRoute(
                 builder:
                     (context) =>
-                    OTPEntryScreen(email: _emailController.text.trim()),
+                        OTPEntryScreen(email: _emailController.text.trim()),
               ),
             );
           }
           return;
-        }
-        else if (e.response?.data != null &&
+        } else if (e.response?.data != null &&
             e.response!.data.toString().contains(
-                "vehicle not found for user")) {
+              "vehicle not found for user",
+            )) {
           if (mounted) {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                  builder:
-                      (context) =>
-                      VehicleInfoScreen()),
+              MaterialPageRoute(builder: (context) => VehicleInfoScreen()),
             );
           }
           return;

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:nopark/features/trip/entities/user.dart';
 import 'package:nopark/features/feeds/presentation/widgets/top_fold.dart';
+import 'package:nopark/features/trip/entities/user.dart';
 
-typedef LocationSelectedCallback = void Function(double lat, double lng, String name, String code);
+typedef LocationSelectedCallback =
+    void Function(double lat, double lng, String name, String code);
 
 class WhereNextOverlay extends StatefulWidget {
   final User user;
@@ -82,8 +82,11 @@ class _WhereNextOverlayState extends State<WhereNextOverlay>
           AnimatedBuilder(
             animation: moveAnimation,
             builder: (context, child) {
-              final top = widget.initialPosition.dy -
-                  (widget.initialPosition.dy - MediaQuery.of(context).padding.top - 10) *
+              final top =
+                  widget.initialPosition.dy -
+                  (widget.initialPosition.dy -
+                          MediaQuery.of(context).padding.top -
+                          10) *
                       moveAnimation.value;
 
               return Positioned(
@@ -126,13 +129,17 @@ class _WhereNextOverlayState extends State<WhereNextOverlay>
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: const [
-                                  Icon(Icons.location_on_outlined,
-                                      color: Colors.grey),
+                                  Icon(
+                                    Icons.location_on_outlined,
+                                    color: Colors.grey,
+                                  ),
                                   SizedBox(width: 8),
                                   Text(
                                     "Where to next?",
                                     style: TextStyle(
-                                        color: Colors.grey, fontSize: 18),
+                                      color: Colors.grey,
+                                      fontSize: 18,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -141,7 +148,9 @@ class _WhereNextOverlayState extends State<WhereNextOverlay>
                               focusNode: focusNode,
                               textAlign: TextAlign.left,
                               style: const TextStyle(
-                                  color: Colors.black, fontSize: 18),
+                                color: Colors.black,
+                                fontSize: 18,
+                              ),
                               decoration: const InputDecoration(
                                 border: InputBorder.none,
                                 isDense: true,
@@ -176,7 +185,8 @@ class _WhereNextOverlayState extends State<WhereNextOverlay>
                           itemBuilder: (context, index) {
                             final location = locations[index];
 
-                            final name = location['name'] as String? ?? 'Unknown';
+                            final name =
+                                location['name'] as String? ?? 'Unknown';
                             final code = location['code'] as String? ?? '';
                             final lat = location['latitude'] as double;
                             final lng = location['longitude'] as double;
@@ -186,7 +196,10 @@ class _WhereNextOverlayState extends State<WhereNextOverlay>
                               child: ElevatedButton(
                                 onPressed: () {
                                   widget.onLocationSelected?.call(
-                                    lat, lng, name, code
+                                    lat,
+                                    lng,
+                                    name,
+                                    code,
                                   );
                                 },
                                 style: ElevatedButton.styleFrom(
@@ -238,10 +251,29 @@ class _WhereNextOverlayState extends State<WhereNextOverlay>
   }
 }
 
-
 List<Map<String, dynamic>> locations = [
-  {'name': 'Clayton', 'code': 'CL', 'latitude': -37.9078, 'longitude': 145.1339},
-  {'name': 'Caulfield', 'code': 'CA', 'latitude': -37.8768, 'longitude': 145.0458},
-  {'name': "Peninsula", "code": "PE", 'latitude': -38.1520, 'longitude': 145.1360},
-  {'name': "Law Chambers", "code": "LA", "latitude": -37.8145, 'longitude': 144.9560}
+  {
+    'name': 'Clayton',
+    'code': 'CL',
+    'latitude': -37.9078,
+    'longitude': 145.1339,
+  },
+  {
+    'name': 'Caulfield',
+    'code': 'CA',
+    'latitude': -37.8768,
+    'longitude': 145.0458,
+  },
+  {
+    'name': "Peninsula",
+    "code": "PE",
+    'latitude': -38.1520,
+    'longitude': 145.1360,
+  },
+  {
+    'name': "Law Chambers",
+    "code": "LA",
+    "latitude": -37.8145,
+    'longitude': 144.9560,
+  },
 ];

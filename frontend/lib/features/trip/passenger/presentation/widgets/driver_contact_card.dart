@@ -27,7 +27,6 @@ class _DriverInfoCardState extends State<DriverInfoCard> {
   @override
   void initState() {
     super.initState();
-    // TODO: Actually wait for firebase notif
     if (mounted) {
       widget.lookForCompletion?.call();
     }
@@ -37,9 +36,7 @@ class _DriverInfoCardState extends State<DriverInfoCard> {
   Widget build(BuildContext context) {
     // Check if required data is available
     if (widget.driverName == null || widget.profileImageUrl == null) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     return SafeArea(
@@ -95,7 +92,8 @@ class _DriverInfoCardState extends State<DriverInfoCard> {
 
                     // Driver name
                     Text(
-                      widget.driverName!.firstName + widget.driverName!.lastName,
+                      widget.driverName!.firstName +
+                          widget.driverName!.lastName,
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w500,
