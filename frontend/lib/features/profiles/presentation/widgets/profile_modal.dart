@@ -15,7 +15,7 @@ class ProfileBottomSheet extends StatefulWidget {
   final List<Map<String, dynamic>> addresses;
   final VoidCallback? onLogOut;
   final VoidCallback? onBecomeDriver;
-  final Widget? savedAddressesWidget; // Your existing saved addresses widget
+  final Widget? savedAddressesWidget;
 
   const ProfileBottomSheet({
     super.key,
@@ -37,22 +37,23 @@ class ProfileBottomSheet extends StatefulWidget {
 class _ProfileBottomSheetState extends State<ProfileBottomSheet>
     with SingleTickerProviderStateMixin {
   ProfileSheetState _currentState = ProfileSheetState.collapsed;
-  late AnimationController _animationController;
-  late Animation<double> _heightAnimation;
+  late final AnimationController _animationController;
+  late final Animation<double> _heightAnimation;
   bool _isDarkMode = false;
   bool _isEmailEditing = false;
 
   @override
   void initState() {
     super.initState();
+    debugPrint("onLogOut is ${widget.onLogOut == null ? 'null' : 'set!'}");
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
 
     _heightAnimation = Tween<double>(
-      begin: 0.5, // Collapsed height (50% of screen)
-      end: 0.9, // Expanded height (90% of screen)
+      begin: 0.5,
+      end: 0.9,
     ).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
@@ -92,18 +93,17 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
           ),
         ],
       ),
-      child:
-          widget.profileImageUrl != null
-              ? ClipOval(
-                child: Image.network(
-                  widget.profileImageUrl!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return _buildDefaultAvatar();
-                  },
-                ),
-              )
-              : _buildDefaultAvatar(),
+      child: widget.profileImageUrl != null
+          ? ClipOval(
+        child: Image.network(
+          widget.profileImageUrl!,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildDefaultAvatar();
+          },
+        ),
+      )
+          : _buildDefaultAvatar(),
     );
   }
 
@@ -124,22 +124,17 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
   Widget _buildCollapsedContent() {
     return Column(
       children: [
-        // Profile section
         _buildProfileImage(),
-
         const SizedBox(height: 16),
-
         Text(
-          '${widget.user.firstName} ${widget.user.lastName}',
+          '${widget.user.firstName ?? ""} ${widget.user.lastName ?? ""}',
           style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: Colors.black87,
           ),
         ),
-
         const SizedBox(height: 4),
-
         Text(
           widget.userRole,
           style: TextStyle(
@@ -148,10 +143,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
             fontWeight: FontWeight.w500,
           ),
         ),
-
         const SizedBox(height: 24),
-
-        // Rides count
         Text(
           '${widget.ridesCount}',
           style: const TextStyle(
@@ -160,9 +152,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
             color: Colors.black87,
           ),
         ),
-
         const SizedBox(height: 4),
-
         const Text(
           'Rides Taken',
           style: TextStyle(
@@ -171,10 +161,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
             fontWeight: FontWeight.w500,
           ),
         ),
-
         const Spacer(),
-
-        // Update Profile button
         Container(
           width: double.infinity,
           margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -195,10 +182,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
             ),
           ),
         ),
-
         const SizedBox(height: 12),
-
-        // Log Out button
         Container(
           width: double.infinity,
           margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -219,7 +203,6 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
             ),
           ),
         ),
-
         const SizedBox(height: 24),
       ],
     );
@@ -229,20 +212,16 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Profile section (same as collapsed)
         _buildProfileImage(),
-
         Text(
-          '${widget.user.firstName} ${widget.user.lastName}',
+          '${widget.user.firstName ?? ""} ${widget.user.lastName ?? ""}',
           style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: Colors.black87,
           ),
         ),
-
         const SizedBox(height: 4),
-
         Text(
           widget.userRole,
           style: TextStyle(
@@ -251,10 +230,9 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
             fontWeight: FontWeight.w500,
           ),
         ),
-
         const SizedBox(height: 24),
 
-        // Contact info (left-aligned from here)
+        // Contact info
         Align(
           alignment: Alignment.centerLeft,
           child: Column(
@@ -265,7 +243,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                 Icons.email,
                 widget.emailController,
                 _isEmailEditing,
-                () {
+                    () {
                   setState(() {
                     _isEmailEditing = !_isEmailEditing;
                   });
@@ -277,152 +255,159 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
 
         const SizedBox(height: 24),
 
-        // Saved Addresses section
-        if (widget.savedAddressesWidget != null) ...[
-          widget.savedAddressesWidget!,
-          const SizedBox(height: 24),
-        ] else ...[
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Saved Addresses',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Horizontally scrollable addresses
-                SizedBox(
-                  height: 80, // Adjust based on your content height
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: widget.addresses.map((address) {
-                        return Container(
-                          margin: const EdgeInsets.only(right: 8),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                address['name'],
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                address['line1'],
-                                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
+        if (widget.savedAddressesWidget != null)
+          ...[
+            widget.savedAddressesWidget!,
+            const SizedBox(height: 24),
+          ]
+        else
+          ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Saved Addresses',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey[200]!),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 80,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: widget.addresses.map((address) {
+                          final name = address['name']?.toString() ?? 'Unnamed';
+                          final line1 = address['line1']?.toString() ?? '';
+                          return Container(
+                            margin: const EdgeInsets.only(right: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  name,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  line1,
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600]),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
                   ),
-                  child: GestureDetector(
-                    onTap: (() async {
-                      final newAddress = await showAddressPopup(context);
-                      print(widget.addresses.length);
 
-                      try {
-                        final response = await DioClient().client.post(
-                          '/accounts/addresses',
-                          data: {
-                            'address_name':
-                            newAddress!.addressNameController.text,
-                            'address_line':
-                            newAddress!.addressLine1Controller.text +
-                                newAddress!.addressLine2Controller.text,
-                          },
-                        );
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: GestureDetector(
+                      onTap: () async {
+                        final newAddress = await showAddressPopup(context);
+                        if (newAddress == null) return;
 
-                        if (response.statusCode == 204) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Address Added!")),
-                            );
-                            // Add the new address to the list
-                            setState(() {
-                              widget.addresses.add({
-                                'name': newAddress.addressNameController.text,
-                                'line1': newAddress.addressLine1Controller.text,
-                                'line2': newAddress.addressLine2Controller.text
-                              });
+                        try {
+                          final response = await DioClient().client.post(
+                            '/accounts/addresses',
+                            data: {
+                              'address_name':
+                              newAddress.addressNameController.text,
+                              'address_line':
+                              (newAddress.addressLine1Controller.text) +
+                                  (newAddress.addressLine2Controller.text),
+                            },
+                          );
+
+                          if (response.statusCode == 204) {
+                            // Always update data, even if widget unmounted
+                            widget.addresses.add({
+                              'name':
+                              newAddress.addressNameController.text.trim(),
+                              'line1':
+                              newAddress.addressLine1Controller.text.trim(),
+                              'line2':
+                              newAddress.addressLine2Controller.text.trim(),
                             });
-                          }
-                        } else {
-                          if (mounted) {
+
+                            debugPrint(
+                                'Address list updated: ${widget.addresses.length}');
+
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text("Address Added!")),
+                              );
+                              setState(() {});
+                            }
+                          } else if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
-                                  "Failed to add address. Please try again",
-                                ),
+                                    "Failed to add address. Please try again."),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    "Error communicating with the server: $e"),
                               ),
                             );
                           }
                         }
-                      } catch (e) {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                "Error communicating with the server: $e",
-                              ),
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Center(
+                          child: Text(
+                            'Add',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black54,
                             ),
-                          );
-                        }
-                      }
-                    }),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: const Center(
-                        child: Text(
-                          'Add',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black54,
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
-        ],
+            const SizedBox(height: 24),
+          ],
 
         // Dark mode toggle
         Container(
@@ -445,9 +430,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
               Switch(
                 value: _isDarkMode,
                 onChanged: (value) {
-                  setState(() {
-                    _isDarkMode = value;
-                  });
+                  setState(() => _isDarkMode = value);
                 },
                 activeThumbColor: Colors.orange,
               ),
@@ -456,8 +439,6 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
         ),
 
         const SizedBox(height: 16),
-
-        // Log Out button
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
@@ -477,59 +458,59 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
             ),
           ),
         ),
-
         const SizedBox(height: 8),
-
-        // Made with love text
         const Center(
           child: Text(
             'Made with ❤️ in Australia',
             style: TextStyle(fontSize: 12, color: Colors.grey),
           ),
         ),
-
         const SizedBox(height: 24),
       ],
     );
   }
 
   Widget _buildContactRow(
-    IconData icon,
-    TextEditingController controller,
-    bool isEditing,
-    VoidCallback onEditToggle,
-  ) {
+      IconData icon,
+      TextEditingController controller,
+      bool isEditing,
+      VoidCallback onEditToggle,
+      ) {
     return Row(
       children: [
         Icon(icon, size: 20, color: Colors.grey[600]),
         const SizedBox(width: 12),
         Expanded(
-          child:
-              isEditing
-                  ? TextField(
-                    controller: controller,
-                    style: const TextStyle(fontSize: 16, color: Colors.black87),
-                    decoration: InputDecoration(
-                      border: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.blue[300]!),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.blue[500]!),
-                      ),
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                    ),
-                    autofocus: true,
-                    onEditingComplete: () {
-                      setState(() {
-                        _isEmailEditing = false;
-                      });
-                    },
-                  )
-                  : Text(
-                    controller.text,
-                    style: const TextStyle(fontSize: 16, color: Colors.black87),
-                  ),
+          child: isEditing
+              ? TextField(
+            controller: controller,
+            style:
+            const TextStyle(fontSize: 16, color: Colors.black87),
+            decoration: InputDecoration(
+              border: UnderlineInputBorder(
+                borderSide:
+                BorderSide(color: Colors.blue[300]!),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide:
+                BorderSide(color: Colors.blue[500]!),
+              ),
+              isDense: true,
+              contentPadding:
+              const EdgeInsets.symmetric(vertical: 4),
+            ),
+            autofocus: true,
+            onEditingComplete: () {
+              setState(() {
+                _isEmailEditing = false;
+              });
+            },
+          )
+              : Text(
+            controller.text,
+            style: const TextStyle(
+                fontSize: 16, color: Colors.black87),
+          ),
         ),
         const SizedBox(width: 8),
         GestureDetector(
@@ -550,14 +531,15 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
       animation: _heightAnimation,
       builder: (context, child) {
         return Container(
-          height: MediaQuery.of(context).size.height * _heightAnimation.value,
+          height: MediaQuery.of(context).size.height *
+              _heightAnimation.value,
           decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: BorderRadius.vertical(
+                top: Radius.circular(20)),
           ),
           child: Column(
             children: [
-              // Drag handle
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 12),
                 height: 4,
@@ -567,11 +549,11 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-
-              // Back button for expanded state
-              if (_currentState == ProfileSheetState.expanded)
+              if (_currentState ==
+                  ProfileSheetState.expanded)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
                       IconButton(
@@ -581,15 +563,14 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                     ],
                   ),
                 ),
-
-              // Content
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child:
-                      _currentState == ProfileSheetState.collapsed
-                          ? _buildCollapsedContent()
-                          : _buildExpandedContent(),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 24),
+                  child: _currentState ==
+                      ProfileSheetState.collapsed
+                      ? _buildCollapsedContent()
+                      : _buildExpandedContent(),
                 ),
               ),
             ],

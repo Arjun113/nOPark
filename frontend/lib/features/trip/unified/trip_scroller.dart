@@ -46,9 +46,14 @@ class _PastRidesOverlayState extends State<PastRidesOverlay> {
         List<Stop> tripStops = [];
 
         for (var trip in indivTrips) {
-          final distanceEst = await DioClient().client.get(
-            '/maps/route?start_lat=${trip['pickup_latitude']}&start_lng=${trip['pickup_longitude']}&end_lat=${trip['dropoff_latitude']}&end_lng=${trip['dropoff_longitude']}',
-            data: {},
+          final distanceEst = await DioClient().client.post(
+            '/maps/route',
+            data: {
+              "start_lat": trip['pickup_latitude'],
+              "start_lng": trip['pickup_longitude'],
+              "end_lat": trip['dropoff_latitude'],
+              "end_lng": trip['dropoff_longitude']
+            },
           );
 
           if (distanceEst.statusCode != 200) {
@@ -56,25 +61,36 @@ class _PastRidesOverlayState extends State<PastRidesOverlay> {
           }
 
           final newStop = Stop(
-            label: trip['pickup_location'],
-            time: DateTime.parse(trip['updated_at']),
-            distanceKm: double.parse(distanceEst.data['distance']),
+            label: trip['pickup_location'] ?? 'Unknown Location',
+            time: DateTime.tryParse(tripHistory['created_at'] ?? '') ?? DateTime.now(),
+            distanceKm: (distanceEst.data['distance'] / 1000) ?? 0.0,
             duration: Duration(
-              minutes: int.parse(distanceEst.data['duration']),
+              minutes: ((distanceEst.data['duration'] / 60))?.round() ?? 0,
             ),
           );
           tripStops.add(newStop);
+
+          final destinationStop = Stop(
+            label: trip['dropoff_location'] ?? 'Unknown Location',
+            time: DateTime.tryParse(tripHistory['updated_at'] ?? '') ?? DateTime.now(),
+            distanceKm: distanceEst.data['distance'] ?? 0.0,
+            duration: Duration(
+              minutes: distanceEst.data['duration'] ?? 0,
+            ),
+          );
+          tripStops.add(destinationStop);
+
+          if (tripStops.isNotEmpty) {
+            final newTrip = Trip(
+              from: tripStops[0].label,
+              to: trip['dropoff_location'] ?? 'Unknown Destination',
+              startTime: DateTime.tryParse(tripHistory['created_at'] ?? '') ?? DateTime.now(),
+              stops: tripStops,
+            );
+            loadedRides.add(newTrip);
+          }
         }
 
-        if (tripStops.isNotEmpty) {
-          final newTrip = Trip(
-            from: tripStops[0].label,
-            to: tripHistory['dropoff_location'],
-            startTime: tripHistory['updated_at'],
-            stops: tripStops,
-          );
-          loadedRides.add(newTrip);
-        }
       }
 
       setState(() {
@@ -82,7 +98,7 @@ class _PastRidesOverlayState extends State<PastRidesOverlay> {
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error fetching past rides")),
+        SnackBar(content: Text("Error fetching past rides:$e")),
       );
     }
   }
@@ -339,7 +355,7 @@ class StopWidget extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                '${stop.distanceKm}km, ${stop.duration.inMinutes}min',
+                '${stop.distanceKm.toStringAsFixed(2)}km, ${stop.duration.inMinutes}min',
                 style: const TextStyle(
                   fontSize: 18,
                   color: Colors.black,

@@ -88,15 +88,12 @@ class _OverlayFlowState extends State<OverlayFlow> {
   Widget build(BuildContext context) {
     final steps = widget.stepsBuilder(_controller);
 
-    return PopScope(
-      onPopInvokedWithResult: _onWillPop,
-      child: Material(
-        color: Colors.transparent,
-        child: PageView(
-          controller: _pageController,
-          physics: const NeverScrollableScrollPhysics(),
-          children: steps,
-        ),
+    return Material(
+      color: Colors.transparent,
+      child: PageView(
+        controller: _pageController,
+        physics: const NeverScrollableScrollPhysics(),
+        children: steps,
       ),
     );
   }

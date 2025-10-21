@@ -83,9 +83,17 @@ class DataController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setDriverReceivedProposalDetails(List<RideOption> newProposalSet) {
-    driverRideProposals = newProposalSet;
-    notifyListeners();
+  void setDriverReceivedProposalDetails(List<RideOption> proposals) {
+    debugPrint("📝 setDriverReceivedProposalDetails called");
+    debugPrint("   Input length: ${proposals.length}");
+    debugPrint("   DataController instance: ${this.hashCode}");
+
+    driverRideProposals = proposals;
+
+    debugPrint("   After set, length: ${driverRideProposals?.length ?? 0}");
+
+    // If using state management, notify listeners
+    notifyListeners(); // or whatever your pattern is
   }
 
   List<RideInfo>? getCurrentRiderInfo(String yourRole) {
@@ -105,12 +113,25 @@ class DataController extends ChangeNotifier {
       ];
     } else {
       // Check if required data exists
-      if (driverRideProposals == null || driverAcceptedProposals == null) {
+
+      debugPrint("getting to start of driver fetch");
+      // Use null-safe operators
+      final proposals = driverRideProposals;
+      final accepted = driverAcceptedProposals;
+
+      if (proposals == null) {
+        debugPrint("⚠️ No ride proposals");
+        return null;
+      }
+
+      if (accepted == null) {
+        debugPrint("⚠️ No accepted proposals");
         return null;
       }
 
       List<RideInfo> passengerInfos = [];
       for (var passenger in driverRideProposals!) {
+        debugPrint("at passenger fetch");
         if (driverAcceptedProposals!.contains(passenger.proposalID)) {
           passengerInfos.add(
             RideInfo(
@@ -121,6 +142,8 @@ class DataController extends ChangeNotifier {
           );
         }
       }
+
+      debugPrint(passengerInfos.toString());
       return passengerInfos;
     }
   }

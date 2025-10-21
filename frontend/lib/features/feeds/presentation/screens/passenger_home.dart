@@ -296,7 +296,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                         }
 
                         // Wait for FCM notification about prospective ride
-                        RemoteMessage driverProspectus = await waitForJob(
+                        RemoteMessage driverProspectus = await waitForRideUpdates(
                           "ride_created",
                         );
                         try {
@@ -431,6 +431,9 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                             "",
                           );
                         }
+
+                        final ride_confirmed = await waitForRideUpdates('ride_finalized');
+
                         controller.next();
                       }),
                     ),
@@ -440,9 +443,9 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                       profileImageUrl: "",
                       lookForCompletion: (() async {
                         // TODO: Wait for pickup to say yes
-
-                        final riderPickedUp = await waitForJob('proximity');
-
+                        debugPrint('instantiated async lookforcompletion');
+                        final riderPickedUp = await waitForDriverProximity('proximity');
+                        debugPrint("reached driver pickup");
                         controller.next();
                       }),
                     ),
@@ -458,7 +461,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                       onRideCompleted: (() async {
                         // TODO: Wait for ride to finish
 
-                        final riderRideDone = await waitForJob(
+                        final riderRideDone = await waitForRideUpdates(
                           'ride_completed',
                         );
 
@@ -467,7 +470,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                     ),
 
                     RideCompletionWidget(
-                      riders: rideDataStore.getCurrentRiderInfo('passenger'),
+                      riders: rideDataStore.getCurrentRiderInfo('Passenger'),
                       moveToZero: (() {
                         rideDataStore.clearForNextRide();
                         controller.jumpTo(0);
@@ -486,12 +489,12 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
         barrierColor: Colors.black.withAlpha(30),
         pageBuilder:
             (_, __, ___) => OverlayFlow(
-              onClose: () => Navigator.of(context).pop(),
-              stepsBuilder:
-                  (controller) => [
-                    PastRidesOverlay(onBack: () => Navigator.of(context).pop()),
-                  ],
-            ),
+          onClose: () => Navigator.of(context).pop(),
+          stepsBuilder:
+              (controller) => [
+            PastRidesOverlay(onBack: () => Navigator.of(context).pop()),
+          ],
+        ),
       ),
     );
   }
@@ -660,7 +663,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                                   '/accounts/logout',
                                 );
 
-                                if (response.statusCode == 201) {
+                                if (response.statusCode == 200) {
                                   CredentialStorage.deleteLoginToken();
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(

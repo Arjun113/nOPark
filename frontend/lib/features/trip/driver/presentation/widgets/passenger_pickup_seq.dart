@@ -113,7 +113,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
         final rideStatus = ride['status'];
         if (rideStatus == "accepted") {
           for (var rideRequest in receivedRequests!) {
-            if (rideRequest.proposalID == (ride['id'] as int)) {
+            if (widget.rideData!.getDriverAcceptedProposals()!.contains(rideRequest.proposalID)) {
               tempPickups.add(rideRequest);
               tempPickupAddresses.add(ride['request']['pickup_location']);
               tempPickupAddressesCoords.add(Location(lat: ride['request']['pickup_latitude'], long: ride['request']['pickup_longitude']));
@@ -129,6 +129,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
           pickupAddresses = tempPickupAddresses;
           _isLoading = false;
         });
+        debugPrint(pickups.toString());
       }
     } catch (e) {
       if (mounted) {
@@ -149,19 +150,20 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
     super.dispose();
   }
 
-  void _moveToNext() {
+  Future<void> _moveToNext() async {
     if (pickups == null || pickups!.isEmpty) return;
 
     if (_currentIndex < pickups!.length - 1) {
-      _animationController.reverse().then((_) {
-        setState(() {
-          _currentIndex++;
-        });
-        _animationController.forward();
-        widget.onLocationReached?.call(_currentIndex - 1);
-      });
+      await _animationController.reverse();
+
+      if (!mounted) return;
+
+      setState(() => _currentIndex++);
+      _animationController.forward();
+
+      await widget.onLocationReached?.call(_currentIndex - 1);
     } else {
-      widget.onLocationReached?.call(_currentIndex);
+      await widget.onLocationReached?.call(_currentIndex);
     }
   }
 

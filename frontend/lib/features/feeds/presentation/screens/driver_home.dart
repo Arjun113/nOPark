@@ -10,6 +10,7 @@ import 'package:nopark/features/feeds/presentation/widgets/full_screen_map.dart'
 import 'package:nopark/features/profiles/presentation/widgets/address_scroller.dart';
 import 'package:nopark/features/profiles/presentation/widgets/profile_modal.dart';
 import 'package:nopark/features/trip/driver/presentation/widgets/passenger_pickup_seq.dart';
+import 'package:nopark/features/trip/driver/presentation/widgets/ride_in_progress.dart';
 import 'package:nopark/features/trip/driver/presentation/widgets/ride_options_screen.dart';
 import 'package:nopark/features/trip/entities/user.dart';
 import 'package:nopark/features/trip/passenger/presentation/widgets/trip_cost_adjust_widget.dart';
@@ -202,7 +203,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                         }
 
                         // Wait for the Ride ID to be allocated
-                        RemoteMessage message = await waitForJob(
+                        RemoteMessage message = await waitForRideUpdates(
                           'ride_finalized',
                         );
                         rideDataStore.setFinalRideId(
@@ -217,6 +218,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                     PickupSequenceWidget(
                       rideData: rideDataStore,
                       onLocationReached: ((index) async {
+                        debugPrint("reached top line of onlocationreached");
                         if (index <
                             rideDataStore
                                 .getDriverAcceptedProposals()!
@@ -228,12 +230,12 @@ class _DriverHomePageState extends State<DriverHomePage> {
                                   '/rides/pickup',
                                   data: {
                                     'ride_id': rideDataStore.getFinalRideId(),
-                                    'current_latitude':
+                                    'current_lat':
                                         mapKey
                                             .currentState
                                             ?.currentLocation
                                             ?.latitude,
-                                    'current_longitude':
+                                    'current_lon':
                                         mapKey
                                             .currentState
                                             ?.currentLocation
@@ -241,9 +243,6 @@ class _DriverHomePageState extends State<DriverHomePage> {
                                   },
                                 );
 
-                            if (locReachedResponse.statusCode != 201) {
-                              return;
-                            }
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -255,6 +254,9 @@ class _DriverHomePageState extends State<DriverHomePage> {
                           }
                         }
 
+                        debugPrint(index.toString());
+                        debugPrint(rideDataStore.getDriverAcceptedProposals()!.toString());
+
                         // If this is the last pickup, move to next screen
                         if (index ==
                             rideDataStore.getDriverAcceptedProposals()!.length -
@@ -262,6 +264,29 @@ class _DriverHomePageState extends State<DriverHomePage> {
                           controller.next();
                         }
                       }),
+                    ),
+
+                    // Card showing ride in progress and waiting for completion
+                    DriverRideCard(
+                        title: "Ride In Progress",
+                        onRideCompleted: () async {
+                          // Send ride completion to backend
+
+                          try {
+                            final complete_ride_response = await DioClient().client.post(
+                              '/rides/complete',
+                              data: {
+                                'ride_id': rideDataStore.getFinalRideId()
+                              }
+                            );
+                          }
+                          catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error closing ride: $e")));
+                          }
+
+                          // Move to ride rating completion widget
+                          controller.next();
+                        }
                     ),
 
                     RideCompletionWidget(
@@ -452,6 +477,38 @@ class _DriverHomePageState extends State<DriverHomePage> {
                               text: user!.email,
                             ),
                             addresses: addresses,
+                              onLogOut: (() async {
+                                try {
+                                  final response = await DioClient().client.post(
+                                    '/accounts/logout',
+                                  );
+
+                                  if (response.statusCode == 200) {
+                                    CredentialStorage.deleteLoginToken();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text("Successfully Logged Out"),
+                                      ),
+                                    );
+                                    Navigator.of(context).pushNamedAndRemoveUntil(
+                                      '/login',
+                                          (Route<dynamic> route) => false,
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text("Unable to log out."),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text("Unable to contact server."),
+                                    ),
+                                  );
+                                }
+                              })
                           ),
                     );
                   }

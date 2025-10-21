@@ -80,6 +80,7 @@ Future<List<RideOption>> fetchObjects(DataController rideDataStore) async {
     print(e);
   }
   rideDataStore.setDriverReceivedProposalDetails(possibleRides);
+  debugPrint("driver received proposal details set");
   return possibleRides;
 }
 
@@ -103,6 +104,7 @@ class RideOptionsScreen extends StatefulWidget {
 
 class _RideOptionsScreenState extends State<RideOptionsScreen> {
   List<int> selectedIndices = [];
+  late Future<List<RideOption>> rideOptions = fetchObjects(widget.rideDataStore!);
 
   void _handleSelection(int index) {
     setState(() {
@@ -113,6 +115,13 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
       }
     });
     widget.onSelectionChanged?.call(selectedIndices);
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
   }
 
   @override
@@ -139,7 +148,7 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
             ],
           ),
           child: FutureBuilder<List<RideOption>>(
-            future: fetchObjects(widget.rideDataStore!),
+            future: rideOptions,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(
