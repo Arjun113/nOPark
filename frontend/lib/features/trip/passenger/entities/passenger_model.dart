@@ -1,7 +1,7 @@
 import '../../entities/user.dart';
 
 class Passenger extends User {
-  final double rating;
+  final int rating;
 
   Passenger({
     required this.rating,

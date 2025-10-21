@@ -7,7 +7,7 @@ import '../../../entities/location.dart';
 // Data model for Ride Options
 class RideOption {
   final String name;
-  final double rating;
+  final int rating;
   final String address;
   final Location addressCoords;
   final double detourKm;
@@ -104,7 +104,9 @@ class RideOptionsScreen extends StatefulWidget {
 
 class _RideOptionsScreenState extends State<RideOptionsScreen> {
   List<int> selectedIndices = [];
-  late Future<List<RideOption>> rideOptions = fetchObjects(widget.rideDataStore!);
+  late Future<List<RideOption>> rideOptions = fetchObjects(
+    widget.rideDataStore!,
+  );
 
   void _handleSelection(int index) {
     setState(() {
@@ -121,7 +123,6 @@ class _RideOptionsScreenState extends State<RideOptionsScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
-
   }
 
   @override

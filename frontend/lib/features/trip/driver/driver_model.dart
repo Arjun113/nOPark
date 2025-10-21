@@ -2,7 +2,7 @@ import '../../../constants/licensetype.dart';
 import '../entities/user.dart';
 
 class Driver extends User {
-  final double rating;
+  final int rating;
   final LicenseType licenseType;
 
   Driver({

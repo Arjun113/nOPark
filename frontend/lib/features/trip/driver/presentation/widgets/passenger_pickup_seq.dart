@@ -7,7 +7,7 @@ import '../../../entities/location.dart';
 
 class PickupInfo {
   final String name;
-  final double rating;
+  final int rating;
   final String address;
   final double detourKm;
   final int detourMin;
@@ -244,7 +244,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
     }
 
     final pickup = pickups![_currentIndex];
-    final pickup_address = pickupAddresses![_currentIndex];
+    final pickupAddress = pickupAddresses![_currentIndex];
 
     return SafeArea(
       child: Align(
@@ -303,7 +303,7 @@ class _PickupSequenceWidgetState extends State<PickupSequenceWidget>
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          pickup_address,
+                          pickupAddress,
                           style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.w700,

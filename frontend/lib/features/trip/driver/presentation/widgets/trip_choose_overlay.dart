@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class BidData {
   final String name;
-  final double rating;
+  final int rating;
   final String address;
   final String distance;
   final String bid;
