@@ -43,19 +43,19 @@ class _LoginScreenState extends State<LoginScreen> {
         },
       );
 
+      final token = response.data['token'];
+      CredentialStorage.setLoginToken(token);
+      CredentialStorage.setUser(User.fromJson(response.data));
+
       // Get car details for driver
       // If no car: throw to Vehicle Login
       // Else: go to driver/passenger screen
       if (response.data['type'] == 'driver') {
         await DioClient().client.get(
           '/accounts/vehicle?user_id=${response.data['id']}',
-          data: {},
         );
       }
 
-      final token = response.data['token'];
-      CredentialStorage.setLoginToken(token);
-      CredentialStorage.setUser(User.fromJson(response.data));
       if (response.data["type"] == "driver" && mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => DriverHomePage()),
@@ -97,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Failed to login')));
+          ).showSnackBar(SnackBar(content: Text('Failed to login: $e')));
         }
       }
     } finally {
