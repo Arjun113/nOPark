@@ -50,7 +50,7 @@ class RideCardState extends State<RideCard> {
           carLicensePlate: "DEMO12",
           carMake: "Demo",
           carModel: "Demo",
-          carImage: "",
+          carImage: "https://images.netdirector.co.uk/gforces-auto/image/upload/q_auto,c_fill,f_auto,fl_lossy/auto-client/ac0ffd18e7a826e2a1559978ff3a21fa/e_200.png",
           carColour: "White",
           carModelYear: "1984",
         );
