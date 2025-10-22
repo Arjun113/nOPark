@@ -131,6 +131,10 @@ func (p *postgresMapsRepository) GetRouteFromWaypoints(ctx context.Context, star
 	// waypoints are in any-order
 	var bestRoute *domain.RouteDBModel
 
+	if len(waypoints) == 0 {
+		return p.GetDirectRoute(ctx, start, dest)
+	}
+
 	// Exhaustive search
 	for _, waypointOrder := range permutations(waypoints) {
 		route, err := p.GetMultistopRoute(ctx, start, waypointOrder, dest)
