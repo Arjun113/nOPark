@@ -98,7 +98,7 @@ class DataController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setDestinationCode (String newCode) {
+  void setDestinationCode(String newCode) {
     destinationCode = newCode;
     notifyListeners();
   }
@@ -162,7 +162,7 @@ class DataController extends ChangeNotifier {
   void setDriverReceivedProposalDetails(List<RideOption> proposals) {
     debugPrint("📝 setDriverReceivedProposalDetails called");
     debugPrint("   Input length: ${proposals.length}");
-    debugPrint("   DataController instance: ${this.hashCode}");
+    debugPrint("   DataController instance: $hashCode");
 
     driverRideProposals = proposals;
 

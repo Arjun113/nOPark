@@ -51,10 +51,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
       vsync: this,
     );
 
-    _heightAnimation = Tween<double>(
-      begin: 0.5,
-      end: 0.9,
-    ).animate(
+    _heightAnimation = Tween<double>(begin: 0.5, end: 0.9).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
   }
@@ -93,17 +90,18 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
           ),
         ],
       ),
-      child: widget.profileImageUrl != null
-          ? ClipOval(
-        child: Image.network(
-          widget.profileImageUrl!,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return _buildDefaultAvatar();
-          },
-        ),
-      )
-          : _buildDefaultAvatar(),
+      child:
+          widget.profileImageUrl != null
+              ? ClipOval(
+                child: Image.network(
+                  widget.profileImageUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return _buildDefaultAvatar();
+                  },
+                ),
+              )
+              : _buildDefaultAvatar(),
     );
   }
 
@@ -127,7 +125,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
         _buildProfileImage(),
         const SizedBox(height: 16),
         Text(
-          '${widget.user.firstName ?? ""} ${widget.user.lastName ?? ""}',
+          '${widget.user.firstName} ${widget.user.lastName}',
           style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -214,7 +212,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
       children: [
         _buildProfileImage(),
         Text(
-          '${widget.user.firstName ?? ""} ${widget.user.lastName ?? ""}',
+          '${widget.user.firstName} ${widget.user.lastName}',
           style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -243,7 +241,7 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                 Icons.email,
                 widget.emailController,
                 _isEmailEditing,
-                    () {
+                () {
                   setState(() {
                     _isEmailEditing = !_isEmailEditing;
                   });
@@ -255,159 +253,161 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
 
         const SizedBox(height: 24),
 
-        if (widget.savedAddressesWidget != null)
-          ...[
-            widget.savedAddressesWidget!,
-            const SizedBox(height: 24),
-          ]
-        else
-          ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Saved Addresses',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
+        if (widget.savedAddressesWidget != null) ...[
+          widget.savedAddressesWidget!,
+          const SizedBox(height: 24),
+        ] else ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Saved Addresses',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 80,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: widget.addresses.map((address) {
-                          final name = address['name']?.toString() ?? 'Unnamed';
-                          final line1 = address['line1']?.toString() ?? '';
-                          return Container(
-                            margin: const EdgeInsets.only(right: 8),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  name,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 80,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children:
+                          widget.addresses.map((address) {
+                            final name =
+                                address['name']?.toString() ?? 'Unnamed';
+                            final line1 = address['line1']?.toString() ?? '';
+                            return Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    name,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  line1,
-                                  style: TextStyle(
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    line1,
+                                    style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.grey[600]),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[200]!),
-                    ),
-                    child: GestureDetector(
-                      onTap: () async {
-                        final newAddress = await showAddressPopup(context);
-                        if (newAddress == null) return;
-
-                        try {
-                          final response = await DioClient().client.post(
-                            '/accounts/addresses',
-                            data: {
-                              'address_name':
-                              newAddress.addressNameController.text,
-                              'address_line':
-                              (newAddress.addressLine1Controller.text) +
-                                  (newAddress.addressLine2Controller.text),
-                            },
-                          );
-
-                          if (response.statusCode == 204) {
-                            // Always update data, even if widget unmounted
-                            widget.addresses.add({
-                              'name':
-                              newAddress.addressNameController.text.trim(),
-                              'line1':
-                              newAddress.addressLine1Controller.text.trim(),
-                              'line2':
-                              newAddress.addressLine2Controller.text.trim(),
-                            });
-
-                            debugPrint(
-                                'Address list updated: ${widget.addresses.length}');
-
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text("Address Added!")),
-                              );
-                              setState(() {});
-                            }
-                          } else if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    "Failed to add address. Please try again."),
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
                               ),
                             );
-                          }
-                        } catch (e) {
+                          }).toList(),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[200]!),
+                  ),
+                  child: GestureDetector(
+                    onTap: () async {
+                      final newAddress = await showAddressPopup(context);
+                      if (newAddress == null) return;
+
+                      try {
+                        final response = await DioClient().client.post(
+                          '/accounts/addresses',
+                          data: {
+                            'address_name':
+                                newAddress.addressNameController.text,
+                            'address_line':
+                                (newAddress.addressLine1Controller.text) +
+                                (newAddress.addressLine2Controller.text),
+                          },
+                        );
+
+                        if (response.statusCode == 204) {
+                          // Always update data, even if widget unmounted
+                          widget.addresses.add({
+                            'name':
+                                newAddress.addressNameController.text.trim(),
+                            'line1':
+                                newAddress.addressLine1Controller.text.trim(),
+                            'line2':
+                                newAddress.addressLine2Controller.text.trim(),
+                          });
+
+                          debugPrint(
+                            'Address list updated: ${widget.addresses.length}',
+                          );
+
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                    "Error communicating with the server: $e"),
-                              ),
+                              const SnackBar(content: Text("Address Added!")),
                             );
+                            setState(() {});
                           }
-                        }
-                      },
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Center(
-                          child: Text(
-                            'Add',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black54,
+                        } else if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "Failed to add address. Please try again.",
+                              ),
                             ),
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                "Error communicating with the server: $e",
+                              ),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Center(
+                        child: Text(
+                          'Add',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black54,
                           ),
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
-          ],
+          ),
+          const SizedBox(height: 24),
+        ],
 
         // Dark mode toggle
         Container(
@@ -471,46 +471,42 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
   }
 
   Widget _buildContactRow(
-      IconData icon,
-      TextEditingController controller,
-      bool isEditing,
-      VoidCallback onEditToggle,
-      ) {
+    IconData icon,
+    TextEditingController controller,
+    bool isEditing,
+    VoidCallback onEditToggle,
+  ) {
     return Row(
       children: [
         Icon(icon, size: 20, color: Colors.grey[600]),
         const SizedBox(width: 12),
         Expanded(
-          child: isEditing
-              ? TextField(
-            controller: controller,
-            style:
-            const TextStyle(fontSize: 16, color: Colors.black87),
-            decoration: InputDecoration(
-              border: UnderlineInputBorder(
-                borderSide:
-                BorderSide(color: Colors.blue[300]!),
-              ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide:
-                BorderSide(color: Colors.blue[500]!),
-              ),
-              isDense: true,
-              contentPadding:
-              const EdgeInsets.symmetric(vertical: 4),
-            ),
-            autofocus: true,
-            onEditingComplete: () {
-              setState(() {
-                _isEmailEditing = false;
-              });
-            },
-          )
-              : Text(
-            controller.text,
-            style: const TextStyle(
-                fontSize: 16, color: Colors.black87),
-          ),
+          child:
+              isEditing
+                  ? TextField(
+                    controller: controller,
+                    style: const TextStyle(fontSize: 16, color: Colors.black87),
+                    decoration: InputDecoration(
+                      border: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.blue[300]!),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.blue[500]!),
+                      ),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                    ),
+                    autofocus: true,
+                    onEditingComplete: () {
+                      setState(() {
+                        _isEmailEditing = false;
+                      });
+                    },
+                  )
+                  : Text(
+                    controller.text,
+                    style: const TextStyle(fontSize: 16, color: Colors.black87),
+                  ),
         ),
         const SizedBox(width: 8),
         GestureDetector(
@@ -531,12 +527,10 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
       animation: _heightAnimation,
       builder: (context, child) {
         return Container(
-          height: MediaQuery.of(context).size.height *
-              _heightAnimation.value,
+          height: MediaQuery.of(context).size.height * _heightAnimation.value,
           decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.vertical(
-                top: Radius.circular(20)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
             children: [
@@ -549,11 +543,9 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              if (_currentState ==
-                  ProfileSheetState.expanded)
+              if (_currentState == ProfileSheetState.expanded)
                 Padding(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
                       IconButton(
@@ -565,12 +557,11 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet>
                 ),
               Expanded(
                 child: Padding(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 24),
-                  child: _currentState ==
-                      ProfileSheetState.collapsed
-                      ? _buildCollapsedContent()
-                      : _buildExpandedContent(),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child:
+                      _currentState == ProfileSheetState.collapsed
+                          ? _buildCollapsedContent()
+                          : _buildExpandedContent(),
                 ),
               ),
             ],

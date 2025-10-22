@@ -62,7 +62,7 @@ class _VehicleInfoScreenState extends State<VehicleInfoScreen> {
           'model_year': year,
           'colour': colour,
           'license_plate': licensePlate,
-          'make': make
+          'make': make,
         },
       );
 
@@ -122,8 +122,6 @@ class _VehicleInfoScreenState extends State<VehicleInfoScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 30),
-              Image.asset('assets/vehicle_icon.png', height: 100),
               const SizedBox(height: 30),
 
               // Make

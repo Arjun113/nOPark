@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 
@@ -17,7 +18,8 @@ Future<RemoteMessage> waitForRideUpdates(String jobId) {
     message.data.forEach((key, value) {
       debugPrint('  $key: $value');
     });
-    if (message.data['notification'] == jobId && message.data['notification_type'] == "ride_updates") {
+    if (message.data['notification'] == jobId &&
+        message.data['notification_type'] == "ride_updates") {
       completer.complete(message);
       subscription.cancel(); // stop listening
     }
@@ -26,7 +28,7 @@ Future<RemoteMessage> waitForRideUpdates(String jobId) {
   return completer.future;
 }
 
-Future<RemoteMessage> waitForDriverProximity (String other_ride_type) {
+Future<RemoteMessage> waitForDriverProximity(String otherRideType) {
   final completer = Completer<RemoteMessage>();
 
   late StreamSubscription subscription;
@@ -41,7 +43,7 @@ Future<RemoteMessage> waitForDriverProximity (String other_ride_type) {
     message.data.forEach((key, value) {
       debugPrint('  $key: $value');
     });
-    if (message.data['notification_type'] == other_ride_type) {
+    if (message.data['notification_type'] == otherRideType) {
       completer.complete(message);
       subscription.cancel(); // stop listening
     }

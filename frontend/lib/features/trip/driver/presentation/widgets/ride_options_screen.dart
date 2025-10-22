@@ -47,7 +47,6 @@ Future<List<RideOption>> fetchObjects(DataController rideDataStore) async {
 
     // This has passenger ID; we need passenger name and rating also
     for (int i = 0; i < mainData.length; i = i + 1) {
-      print(mainData[i]);
       final passengerResponse = await DioClient().client.get(
         '/accounts/${mainData[i]['passenger_id']}',
       );
@@ -76,8 +75,7 @@ Future<List<RideOption>> fetchObjects(DataController rideDataStore) async {
       possibleRides.add(newRide);
     }
   } catch (e) {
-    // Add context if needed
-    print(e);
+    debugPrint(e.toString());
   }
   rideDataStore.setDriverReceivedProposalDetails(possibleRides);
   debugPrint("driver received proposal details set");

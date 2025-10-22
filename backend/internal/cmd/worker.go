@@ -31,11 +31,10 @@ func WorkerCmd(ctx context.Context) *cobra.Command {
 			}
 			defer db.Close()
 
-			// Initialize repositories
 			accountRepo := repository.NewPostgresAccounts(db)
 			notificationRepo := repository.NewPostgresNotifications(db)
 			ratelimitRepo := repository.NewPostgresRatelimit(db)
-			ridesRepo := repository.NewPostgresRides(db) // Initialize FCM service for notifications
+			ridesRepo := repository.NewPostgresRides(db)
 			fcmService, err := services.NewFCMService(ctx, logger)
 			if err != nil {
 				logger.Error("failed to initialise FCM service", zap.Error(err))
@@ -46,7 +45,7 @@ func WorkerCmd(ctx context.Context) *cobra.Command {
 
 			// Setup scheduler
 			s := gocron.NewScheduler(time.UTC)
-			s.SetMaxConcurrentJobs(1, gocron.RescheduleMode)
+			s.SetMaxConcurrentJobs(4, gocron.RescheduleMode)
 
 			// Schedule notification creation job every 5 seconds
 			_, err = s.Every(5).Seconds().Do(func() {

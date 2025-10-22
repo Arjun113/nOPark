@@ -76,14 +76,6 @@ class _OverlayFlowState extends State<OverlayFlow> {
     );
   }
 
-  void _onWillPop(bool didPop, dynamic result) {
-    if (_currentPage != 0) {
-      _back();
-    } else {
-      widget.onClose();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final steps = widget.stepsBuilder(_controller);

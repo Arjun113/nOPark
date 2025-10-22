@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nopark/features/authentications/presentation/widgets/otp_entry_widget.dart';
-import 'package:nopark/features/signup/interface/widgets/vehicle_info_screen.dart';
+import 'package:nopark/features/signup/interface/widgets/login_screen.dart';
 import 'package:nopark/logic/network/dio_client.dart';
 
 class OTPEntryScreen extends StatefulWidget {
@@ -33,8 +33,9 @@ class OTPEntryScreenState extends State<OTPEntryScreen> {
       if (otpVerifyResponse.statusCode == 200) {
         if (mounted) {
           Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => VehicleInfoScreen()),
-                  (Route<dynamic> route) => false);
+            MaterialPageRoute(builder: (context) => LoginScreen()),
+            (Route<dynamic> route) => false,
+          );
         }
       }
     }

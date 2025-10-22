@@ -103,7 +103,7 @@ git reset --hard origin/main
 docker compose down --volumes --remove-orphans
 pkill -f "nOPark"
 sleep 5
-docker compose up --detach --build --force-recreate
+docker compose up --detach --build
 sleep 5
 go mod download
 make build

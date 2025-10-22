@@ -41,7 +41,7 @@ class LocationService {
         data: {'lat': position.latitude, 'lon': position.longitude},
       );
     } catch (e) {
-      print("Location could not be sent.");
+      debugPrint("Location could not be sent.");
     }
   }
 

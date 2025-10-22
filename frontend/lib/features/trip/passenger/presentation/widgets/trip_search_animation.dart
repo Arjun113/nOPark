@@ -342,18 +342,6 @@ class _DriverSearchPopupState extends State<DriverSearchPopup>
 
                 const SizedBox(height: 20),
 
-                // "or" text
-                const Text(
-                  'or',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
                 // Success message
                 const Text(
                   'Your bid has been\naccepted by:',

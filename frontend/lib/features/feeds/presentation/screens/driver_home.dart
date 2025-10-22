@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:geocoding/geocoding.dart' hide Location;
 import 'package:latlong2/latlong.dart';
 import 'package:nopark/features/authentications/datasources/local_datastorer.dart';
 import 'package:nopark/features/feeds/datamodels/data_controller.dart';
@@ -177,10 +176,8 @@ class _DriverHomePageState extends State<DriverHomePage> {
                       rideDataStore: rideDataStore,
                       destinationCode: null,
                       onConfirm: (proposalIndices) async {
-                        // TODO: Send the selections to the backend
                         try {
                           // Send the preferences to the backend
-                          print(proposalIndices);
                           final response = await DioClient().client.post(
                             '/rides/',
                             data: {
@@ -210,7 +207,9 @@ class _DriverHomePageState extends State<DriverHomePage> {
                         rideDataStore.setFinalRideId(
                           int.parse(message.data['ride_id']),
                         );
-                        rideDataStore.setDriverAcceptedProposals(proposalIndices);
+                        rideDataStore.setDriverAcceptedProposals(
+                          proposalIndices,
+                        );
 
                         controller.next();
                       },
@@ -226,24 +225,22 @@ class _DriverHomePageState extends State<DriverHomePage> {
                                 .length) {
                           // Tell API to ping passenger
                           try {
-                            final locReachedResponse = await DioClient().client
-                                .post(
-                                  '/rides/pickup',
-                                  data: {
-                                    'ride_id': rideDataStore.getFinalRideId(),
-                                    'current_lat':
-                                        mapKey
-                                            .currentState
-                                            ?.currentLocation
-                                            ?.latitude,
-                                    'current_lon':
-                                        mapKey
-                                            .currentState
-                                            ?.currentLocation
-                                            ?.longitude,
-                                  },
-                                );
-
+                            await DioClient().client.post(
+                              '/rides/pickup',
+                              data: {
+                                'ride_id': rideDataStore.getFinalRideId(),
+                                'current_lat':
+                                    mapKey
+                                        .currentState
+                                        ?.currentLocation
+                                        ?.latitude,
+                                'current_lon':
+                                    mapKey
+                                        .currentState
+                                        ?.currentLocation
+                                        ?.longitude,
+                              },
+                            );
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -256,7 +253,11 @@ class _DriverHomePageState extends State<DriverHomePage> {
                         }
 
                         debugPrint(index.toString());
-                        debugPrint(rideDataStore.getDriverAcceptedProposals()!.toString());
+                        debugPrint(
+                          rideDataStore
+                              .getDriverAcceptedProposals()!
+                              .toString(),
+                        );
 
                         // If this is the last pickup, move to next screen
                         if (index ==
@@ -269,25 +270,24 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
                     // Card showing ride in progress and waiting for completion
                     DriverRideCard(
-                        title: "Ride In Progress",
-                        onRideCompleted: () async {
-                          // Send ride completion to backend
+                      title: "Ride In Progress",
+                      onRideCompleted: () async {
+                        // Send ride completion to backend
 
-                          try {
-                            final complete_ride_response = await DioClient().client.post(
-                              '/rides/complete',
-                              data: {
-                                'ride_id': rideDataStore.getFinalRideId()
-                              }
-                            );
-                          }
-                          catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error closing ride: $e")));
-                          }
-
-                          // Move to ride rating completion widget
-                          controller.next();
+                        try {
+                          await DioClient().client.post(
+                            '/rides/complete',
+                            data: {'ride_id': rideDataStore.getFinalRideId()},
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Error closing ride: $e")),
+                          );
                         }
+
+                        // Move to ride rating completion widget
+                        controller.next();
+                      },
                     ),
 
                     RideCompletionWidget(
@@ -478,38 +478,38 @@ class _DriverHomePageState extends State<DriverHomePage> {
                               text: user!.email,
                             ),
                             addresses: addresses,
-                              onLogOut: (() async {
-                                try {
-                                  final response = await DioClient().client.post(
-                                    '/accounts/logout',
-                                  );
+                            onLogOut: (() async {
+                              try {
+                                final response = await DioClient().client.post(
+                                  '/accounts/logout',
+                                );
 
-                                  if (response.statusCode == 200) {
-                                    CredentialStorage.deleteLoginToken();
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text("Successfully Logged Out"),
-                                      ),
-                                    );
-                                    Navigator.of(context).pushNamedAndRemoveUntil(
-                                      '/login',
-                                          (Route<dynamic> route) => false,
-                                    );
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text("Unable to log out."),
-                                      ),
-                                    );
-                                  }
-                                } catch (e) {
+                                if (response.statusCode == 200) {
+                                  CredentialStorage.deleteLoginToken();
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text("Unable to contact server."),
+                                      content: Text("Successfully Logged Out"),
+                                    ),
+                                  );
+                                  Navigator.of(context).pushNamedAndRemoveUntil(
+                                    '/login',
+                                    (Route<dynamic> route) => false,
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text("Unable to log out."),
                                     ),
                                   );
                                 }
-                              })
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Unable to contact server."),
+                                  ),
+                                );
+                              }
+                            }),
                           ),
                     );
                   }
