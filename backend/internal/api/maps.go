@@ -99,6 +99,10 @@ func (a *api) getRouteForRideHandler(w http.ResponseWriter, r *http.Request) {
 		a.errorResponse(w, r, http.StatusInternalServerError, err)
 		return
 	}
+	if driver.CurrentLatitude == nil || driver.CurrentLongitude == nil {
+		a.errorResponse(w, r, http.StatusBadRequest, fmt.Errorf("driver location data is not available"))
+		return
+	}
 
 	// Collect waypoints from proposals and determine destination
 	waypoints := make([]domain.Coordinates, 0)
