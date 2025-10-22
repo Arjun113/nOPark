@@ -8,7 +8,7 @@ import 'package:nopark/logic/network/dio_client.dart';
 
 /// CRON job to maintain polyline, other users, etc
 /// Has access to internet to be able to poll for current location
-void maintainMap(DataController rideDataShare) {
+void maintainMap(DataController rideDataShare, GlobalKey<FullScreenMapState> mapController) {
   Timer.periodic(Duration(seconds: 10), (time) async {
     /// Part 1: if there exists a current ride, go into passenger,
     /// Fetch the driver ID, poll backend for its current location,
@@ -23,6 +23,7 @@ void maintainMap(DataController rideDataShare) {
 
       // Update polyline
       rideDataShare.setPolyline(currentPolyline);
+      mapController.currentState?.fitBoundsToShowAllMarkers();
       // Update destination marker
       rideDataShare.addDestinationMarker(
         MapMarker(
@@ -102,6 +103,7 @@ void maintainMap(DataController rideDataShare) {
 
         // Assign polyline
         rideDataShare.setPolyline(rideRouteData.data['polyline']);
+        mapController.currentState?.fitBoundsToShowAllMarkers();
       } catch (e) {
         debugPrint("Error updating route polyline");
       }

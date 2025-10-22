@@ -54,7 +54,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
   void initState() {
     super.initState();
     _loadUserData();
-    maintainMap(rideDataStore);
+    maintainMap(rideDataStore, mapKey);
   }
 
   Future<void> _loadUserData() async {

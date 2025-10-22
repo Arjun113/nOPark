@@ -56,7 +56,7 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
   void initState() {
     super.initState();
     _loadUserData();
-    maintainMap(rideDataStore);
+    maintainMap(rideDataStore, mapKey);
   }
 
   Future<void> _loadUserData() async {
@@ -392,6 +392,9 @@ class _PassengerHomePageState extends State<PassengerHomePage> {
                                   acception == true ? 'accept' : 'reject',
                             },
                           );
+
+                          // set ride ID
+                          rideDataStore.setFinalRideId(response.data['ride_id']);
 
                           if (response.statusCode == 200) {
                             if (mounted) {
