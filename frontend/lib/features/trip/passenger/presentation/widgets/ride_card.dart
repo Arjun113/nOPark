@@ -63,7 +63,7 @@ class RideCardState extends State<RideCard> {
               carDetailsResponse.data['license_plate'] as String? ?? '',
           carMake: carDetailsResponse.data['make'] as String? ?? '',
           carModel: carDetailsResponse.data['model'] as String? ?? '',
-          carImage: '',
+          carImage: "https://images.netdirector.co.uk/gforces-auto/image/upload/q_auto,c_fill,f_auto,fl_lossy/auto-client/ac0ffd18e7a826e2a1559978ff3a21fa/e_200.png",
           carColour: carDetailsResponse.data['colour'] as String? ?? '',
           carModelYear: carDetailsResponse.data['model_year']?.toString() ?? '',
         );
